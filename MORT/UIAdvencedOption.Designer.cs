@@ -123,6 +123,7 @@ namespace MORT
             cbOverlayAutoColor = new System.Windows.Forms.CheckBox();
             cbOverlayKeepSourceDirection = new System.Windows.Forms.CheckBox();
             cbOverlayUseFontOutline = new System.Windows.Forms.CheckBox();
+            cbOverlayUseBackgroundAlpha = new System.Windows.Forms.CheckBox();
             cbOverlayAutoMerge = new System.Windows.Forms.CheckBox();
             lbOverlaySnapShotRemainTime = new System.Windows.Forms.Label();
             udSnapShotRemainTime = new System.Windows.Forms.NumericUpDown();
@@ -1300,6 +1301,7 @@ namespace MORT
             // 
             gbOverlay.Controls.Add(gbAutoColor);
             gbOverlay.Controls.Add(cbOverlayAutoColor);
+            gbOverlay.Controls.Add(cbOverlayUseBackgroundAlpha);
             gbOverlay.Controls.Add(cbOverlayUseFontOutline);
             gbOverlay.Controls.Add(cbOverlayKeepSourceDirection);
             gbOverlay.Controls.Add(cbOverlayAutoMerge);
@@ -1368,6 +1370,18 @@ namespace MORT
             cbOverlayAutoColor.Text = "배경, 폰트 자동색 사용";
             cbOverlayAutoColor.UseVisualStyleBackColor = true;
             cbOverlayAutoColor.CheckedChanged += cbOverlayAutoColor_CheckedChanged;
+            //
+            // cbOverlayUseBackgroundAlpha
+            //
+            cbOverlayUseBackgroundAlpha.AutoSize = true;
+            cbOverlayUseBackgroundAlpha.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            cbOverlayUseBackgroundAlpha.Location = new System.Drawing.Point(500, 377);
+            cbOverlayUseBackgroundAlpha.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            cbOverlayUseBackgroundAlpha.Name = "cbOverlayUseBackgroundAlpha";
+            cbOverlayUseBackgroundAlpha.Size = new System.Drawing.Size(242, 29);
+            cbOverlayUseBackgroundAlpha.TabIndex = 14;
+            cbOverlayUseBackgroundAlpha.Text = "백그라운드 알파값 사용";
+            cbOverlayUseBackgroundAlpha.UseVisualStyleBackColor = true;
             //
             // cbOverlayKeepSourceDirection
             //
@@ -2361,6 +2375,7 @@ namespace MORT
         private System.Windows.Forms.CheckBox cbOverlayAutoColor;
         private System.Windows.Forms.CheckBox cbOverlayKeepSourceDirection;
         private System.Windows.Forms.CheckBox cbOverlayUseFontOutline;
+        private System.Windows.Forms.CheckBox cbOverlayUseBackgroundAlpha;
         private System.Windows.Forms.GroupBox gbAutoColor;
         private System.Windows.Forms.CheckBox cbAutoFontColor;
         private System.Windows.Forms.CheckBox cbAutoBackgroundColor;

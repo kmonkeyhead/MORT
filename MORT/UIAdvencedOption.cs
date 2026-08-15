@@ -121,6 +121,7 @@ namespace MORT
             cbOverlayAutoColor.Checked = AdvencedOptionManager.OverlayAutoColor;
             cbAutoFontColor.Checked = AdvencedOptionManager.OverlayAutoFontColor;
             cbAutoBackgroundColor.Checked = AdvencedOptionManager.OverlayAutoBackgroundColor;
+            cbOverlayUseBackgroundAlpha.Checked = AdvencedOptionManager.OverlayUseBackgroundAlpha;
             _fontData = AdvencedOptionManager.BasicFontData;
             cbLayerAlignmentBottom.Checked = AdvencedOptionManager.LayerTextAlignmentBottom;
             cbLayerAlignmentRight.Checked = AdvencedOptionManager.LayerTextAlignmentRight;
@@ -411,7 +412,8 @@ namespace MORT
                 cbOverlayKeepSourceDirection.Checked,
                 cbOverlayAutoColor.Checked,
                 cbAutoFontColor.Checked,
-                cbAutoBackgroundColor.Checked);
+                cbAutoBackgroundColor.Checked,
+                cbOverlayUseBackgroundAlpha.Checked);
             AdvencedOptionManager.SetOverlayFontOutline(cbOverlayUseFontOutline.Checked);
         }
 
@@ -835,6 +837,7 @@ namespace MORT
             cbOverlayAutoMerge.LocalizeLabel("Adv Overlay Auto Merge");
             cbOverlayKeepSourceDirection.LocalizeLabel("Adv Overlay Keep Source Direction");
             cbOverlayUseFontOutline.LocalizeLabel("Adv Overlay Use Font Outline");
+            cbOverlayUseBackgroundAlpha.LocalizeLabel("Adv Overlay Use Background Alpha");
             cbOverlayAutoColor.LocalizeLabel("Adv Overlay Auto Color Option");
             gbAutoColor.LocalizeLabel("Adv Overlay Auto Color");
             cbAutoFontColor.LocalizeLabel("Adv Overlay Auto Font Color");

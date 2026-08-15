@@ -105,6 +105,7 @@ namespace MORT
         public const string KeyOverlayAutoBackgroundColor = "@OverlayAutoBackgroundColor ";
         public const string KeyOverlayAutoFontColor = "@OverlayAutoFontColor ";
         public const string KeyOverlayUseFontOutline = "@OverlayUseFontOutline ";
+        public const string KeyOverlayUseBackgroundAlpha = "@OverlayUseBackgroundAlpha ";
         public const string KEY_FONT_AUTO_SIZE = "@OVERLAY_FONT_AUTO_SIZE ";
         public const string KEY_FONT_AUTO_MIN_SIZE = "@OVERLAY_FONT_AUTO_MIN_SIZE ";
         public const string KEY_FONT_AUTO_MAX_SIZE = "@OVERLAY_FONT_AUTO_MAX_SIZE ";
@@ -180,6 +181,7 @@ namespace MORT
             public ISettingData<bool> OverlayAutoBackgroundColor;
             public ISettingData<bool> OverlayAutoFontColor;
             public ISettingData<bool> OverlayUseFontOutline;
+            public ISettingData<bool> OverlayUseBackgroundAlpha;
             public ISettingData<bool> EnableAdvencedHideTransform;
 
             public ISettingData<string> BasicFont;
@@ -391,6 +393,7 @@ namespace MORT
         public static bool OverlayAutoBackgroundColor => data.OverlayAutoBackgroundColor.Value;
         public static bool OverlayAutoFontColor => data.OverlayAutoFontColor.Value;
         public static bool OverlayUseFontOutline => data.OverlayUseFontOutline.Value;
+        public static bool OverlayUseBackgroundAlpha => data.OverlayUseBackgroundAlpha.Value;
         public static bool UseAutoMerge => data.UseAutoMerge.Value;
         public static bool OverlayKeepSourceDirection => data.OverlayKeepSourceDirection.Value;
         public static bool IsAutoFontSize
@@ -449,7 +452,7 @@ namespace MORT
         public static int TranslateMemoryLimit => data.TranslateMemoryLimit.Value;
         public static int TranslateMemoryRemainTime => data.TranslateMemoryRemainTime.Value;
 
-        public static void SetOverLay(bool isAutoSize, int minSize, int maxSize, int snapShotRemainTime, bool autoMerge, bool keepSourceDirection, bool autoColor, bool autoFontColor, bool autoBackgroundColor)
+        public static void SetOverLay(bool isAutoSize, int minSize, int maxSize, int snapShotRemainTime, bool autoMerge, bool keepSourceDirection, bool autoColor, bool autoFontColor, bool autoBackgroundColor, bool useBackgroundAlpha)
         {
             data.UseAutoSizeFont.Value = isAutoSize;
             data.MinAutoSizeFont.Value = minSize;
@@ -460,6 +463,7 @@ namespace MORT
             data.OverlayAutoColor.Value = autoColor;
             data.OverlayAutoBackgroundColor.Value = autoBackgroundColor;
             data.OverlayAutoFontColor.Value = autoFontColor;
+            data.OverlayUseBackgroundAlpha.Value = useBackgroundAlpha;
         }
 
         public static void SetOverlayFontOutline(bool useFontOutline)
@@ -692,6 +696,7 @@ namespace MORT
             data.OverlayAutoBackgroundColor = SettingDataFactory.Create<bool>(KeyOverlayAutoBackgroundColor, data.ParseList, true);
             data.OverlayAutoFontColor = SettingDataFactory.Create<bool>(KeyOverlayAutoFontColor, data.ParseList, true);
             data.OverlayUseFontOutline = SettingDataFactory.Create<bool>(KeyOverlayUseFontOutline, data.ParseList, false);
+            data.OverlayUseBackgroundAlpha = SettingDataFactory.Create<bool>(KeyOverlayUseBackgroundAlpha, data.ParseList, false);
             data.UseAutoSizeFont = SettingDataFactory.Create<bool>(KEY_FONT_AUTO_SIZE, data.ParseList, false);
             data.MinAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MIN_SIZE, data.ParseList, 10);
             data.MaxAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MAX_SIZE, data.ParseList, 50);

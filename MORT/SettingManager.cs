@@ -949,7 +949,7 @@ namespace MORT
 
         public void SetDefault()
         {
-            nowSkin = Skin.layer;
+            nowSkin = Skin.over;
             //nowTransType = TransType.db;
             nowTransType = TransType.google_url;
             TranslateTypeSubKey = string.Empty;
