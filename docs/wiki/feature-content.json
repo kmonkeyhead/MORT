@@ -7,9 +7,11 @@
       "OneOCR word boxes are normalized from all four corners and rounded outward. Line font size uses the median short axis, and direction-specific spatial connected components are built before reading order is assigned.",
       "Final translation blocks enforce a 1.2 source-font band, split explicit or contextual names and sentence terminators, and keep bullet or numbered list lines independent.",
       "Each block carries SourceRect, ViewRect, and ContentRect. Overlay layout resolves the largest overlaps first, preserves title source regions, and chooses the lower-area-loss split axis.",
-      "Auto font size uses the same GraphicsPath wrapping model as rendering. Every block is capped by its median source font size, and expansion remains limited to the permitted reading direction when the minimum font cannot fit.",
+      "Auto font size uses the same GraphicsPath wrapping model as rendering. Horizontal line height or vertical line width replaces word short-axis sampling; body blocks in the same OCR area and direction share one median preferred size, while explicit titles and a substantially larger leading title retain their own size.",
+      "The fit test lays every wrapped line into the exact slot the renderer will use, through the shared GetLineRect, and requires the resulting glyph ink to stay inside ContentRect. Summing line count and leading instead leaves out the space a line occupies inside its own slot: a vertical block once passed the check by 0.03px while the renderer needed 17px more, and because Rectangle.Intersect clips the slot but AddString does not clip glyphs, the text bled about 4px into the neighbouring block. Slots are measured unclipped here so that overflow stays visible to the test.",
       "@OverlayUseFontOutline defaults to false. When enabled the overlay keeps the existing two-pass rounded outline; when disabled it removes Bold from the configured font style, excludes stroke padding from fit checks, and fills only the text path.",
-      "New overlay localization entries are staged in the repository-root AdditionKey.txt file as a key line followed by its Korean-value line, with a blank line between entries, while Resources/localize.csv remains spreadsheet-managed. UIAdvencedOption binds the new direction and font-outline controls to those localization keys.",
+      "@OverlayUseBackgroundAlpha defaults to false. The configured background color remains unchanged, but overlay rendering forces its effective alpha to 255 unless the option is enabled. Manual and automatically sampled background RGB use the same policy in both current and legacy render paths.",
+      "New overlay localization entries are staged in the repository-root AdditionKey.txt file as a key line followed by its Korean-value line, with a blank line between entries, while Resources/localize.csv remains spreadsheet-managed. UIAdvencedOption binds the direction, font-outline, and background-alpha controls to those localization keys.",
       "Automatic background color first samples dominant colors from the four inner edge bands and four corner probes of every OCR word rectangle. A local candidate must be supported by multiple probes, and the block background must repeat across enough words. Only when that evidence is insufficient does sampling use a ring limited to 1-4 pixels and the SourceRect vicinity, then finally the SourceRect dominant color. Font color is sampled inside words against their local background, prioritizing word support before population and contrast.",
       "Automatic color sampling scales SourceRect and word rectangles from OCR dimensions to separately stored original-buffer dimensions. Stable layout cache entries receive the newest frame colors.",
       "TranslationProcessInitializationService owns per-request warning evaluation, OCR-mode selection, original-buffer requirements, and the synchronous ITransform.Prepare then StartTrans transition. ProcessTranslateService completes this initialization before creating the OCR worker thread, preventing the settings-confirm UI thread from joining a worker that is synchronously waiting for the same UI thread. The overlay Prepare implementation clears prior result data and layout cache, renders a transparent layered bitmap, and delegates DWM composition synchronization to OverlayRenderSynchronizationService; basic and layer windows currently require no preparation.",
@@ -22,13 +24,15 @@
       "Convert SourceRect to overlay coordinates and resolve all ViewRect intersections.",
       "Choose horizontal translated text by default or preserve source direction when @OverlayKeepSourceDirection is enabled.",
       "Apply the saved font-outline option before measuring: OFF uses regular-weight path fill, while ON measures and renders the current double outline.",
+      "Resolve the configured background into an effective overlay color before drawing: OFF forces alpha 255, while ON retains the saved alpha without changing the stored color.",
       "Extract repeated inner-edge and corner background RGB, use a narrowly constrained word ring only as fallback, then extract word-level foreground RGB. Enforce the minimum contrast once after analysis and again against the actual automatic/manual color combination immediately before rendering.",
       "Before snapshot or real-time translation starts, TranslationProcessInitializationService synchronously calls Prepare and then StartTrans on the caller side, and only then does ProcessTranslateService create the OCR worker thread. OverlayRenderSynchronizationService flushes composition only for the overlay window, so basic and layer windows do not carry a DwmFlush dependency.",
       "Ask TranslationImageModelService for the current OCR-area models; use either live screen extraction or attached capture while retaining capture origin and optional original-color buffers.",
-      "Fit and render text inside ContentRect without exceeding the source font cap; preserve non-overlap and clip with a diagnostic log if the minimum font still cannot fit."
+      "Fit and render text inside ContentRect with a shared body-font target enlarged by 15%. A horizontal block claims collision-free space to the right only when its translated wrapped-line count exceeds the OCR source-line count; vertical fit failure alone never widens the block. It only expands downward to guarantee the configured minimum font, and when outlines are disabled ContentRect uses the full OCR region. Preserve non-overlap and clip with a diagnostic log if the minimum font still cannot fit.",
+      "When blocks that were not merged would overlap, the background is reduced first: ViewRect intersections are split so the filled regions become disjoint. The font is only reduced afterwards, and only because the fit test rejects a size whose glyphs would leave the narrowed ContentRect. Two separate reductions, in that order, keep a shrunk background from also forcing an unnecessarily small font."
     ],
     "state": "ResultData owns translation blocks and current automatic colors; each TransData owns SourceRect, ViewRect, ContentRect, title state, and source direction.",
-    "failures": "If OCR boxes are inaccurate or two source regions are effectively identical, layout still prioritizes non-overlap. A block that cannot fit at minimum size is clipped and logged instead of covering another block. Retained background alpha can leave source glyphs visible even when sampled RGB is correct. A snapshot color buffer with fewer than three channels is treated as invalid instead of being misread as a black or white background. Missing automatic-color indices retain configured colors instead of drawing the old white-on-black sentinel pair.",
+    "failures": "If OCR boxes are inaccurate or two source regions are effectively identical, layout still prioritizes non-overlap. A block that cannot fit at minimum size is clipped and logged instead of covering another block. When background alpha is explicitly enabled, transparency can leave source glyphs visible even when sampled RGB is correct. A snapshot color buffer with fewer than three channels is treated as invalid instead of being misread as a black or white background. Missing automatic-color indices retain configured colors instead of drawing the old white-on-black sentinel pair.",
     "example": "Interleaved vertical columns from upper and lower speech bubbles form separate components. A bullet line or a line ending with Japanese full stop plus closing quote closes its block before the next line. A purple badge in one word rectangle does not override black text repeated across the other words, and dense black glyphs in a narrow vertical OCR box do not override the pink speech-bubble color sampled around the box.",
     "files": ["MORT/Interface/ITransform.cs", "MORT/TransForm.cs", "MORT/TransFormLayer.cs", "MORT/Manager/OCRDataManager.cs", "MORT/TransFormOver.cs", "MORT/Model/TranslationProcessInitializationResult.cs", "MORT/Service/ProcessTranslateService/ProcessTranslateService.cs", "MORT/Service/ProcessTranslateService/TranslationProcessInitializationService.cs", "MORT/Service/ProcessTranslateService/TranslationImageModelService.cs", "MORT/Service/Overlay/OverlayColorAnalyzer.cs", "MORT/Service/Overlay/OverlayRenderSynchronizationService.cs", "MORT/AdvencedOptionManager.cs", "MORT/UIAdvencedOption.cs", "MORT/UIAdvencedOption.Designer.cs"]
   },
@@ -84,7 +88,12 @@
     "implementation": [
       "서비스는 별도 Thread, CancellationTokenSource, OCR 처리 속도, 현재/이전 OCR 문자열을 보유한다. UI 메시지 루프와 장시간 OCR 작업을 분리하기 위한 오래된 Thread 모델 위에 일부 async 작업이 공존한다.",
       "캡처 후 OcrType별 결과를 만들고, 다중 영역은 영역별 ResultData로 유지한다. Overlay 스킨은 각 영역의 위치 데이터를 그대로 번역 결과에 적용하며 일반 스킨은 결합 문자열을 중심으로 처리한다.",
-      "formerOcrString과 NowOcrString을 비교해 변경이 있을 때 번역한다. db 방식과 특정 표시 모드는 같은 문자열이어도 별도 갱신 조건을 가질 수 있다."
+      "formerOcrString과 NowOcrString을 비교해 변경이 있을 때 번역한다. db 방식과 특정 표시 모드는 같은 문자열이어도 별도 갱신 조건을 가질 수 있다.",
+      "설정 적용 경로는 UI 스레드에서 thread.Join()으로 작업 스레드가 끝나기를 기다린다. 그래서 작업 스레드는 어떤 경우에도 스스로 끝날 수 있어야 한다. 작업 스레드에서 MessageBox를 띄우면 그 스레드에 모달 루프가 생겨 영영 끝나지 않고, Join 중인 UI와 함께 앱 전체가 멈춘다. 예외 알림은 BeginInvoke로 UI 스레드에 넘기고 작업 스레드는 그대로 종료한다.",
+      "작업 스레드가 OCR과 번역 결과를 기다릴 때는 그냥 Result를 읽지 않고 짧은 간격으로 끊어 기다리며 중단 요청을 확인한다. 작업 자체를 취소하지는 못하지만, 기다리기를 멈춰야 종료 플래그를 볼 기회가 생기고 Join이 풀린다. 중단으로 기다리기를 그만두면 OperationCanceledException으로 루프를 빠져나간다.",
+      "Join에는 시간 제한이 있다. 시간 안에 끝나지 않으면 호출부는 뒷작업을 하지 않는다. 아직 살아있는 스레드와 설정·캡쳐 영역 변경이 겹치기 때문이다. 이때 종료 플래그도 되돌리지 않는다. 되돌리면 그 스레드가 정지 요청을 못 보고 계속 번역한다.",
+      "저수준 키보드 훅에서 온 정지 요청은 더 짧게 기다린다. 훅 프로시저가 300ms 넘게 붙잡히면 윈도우가 훅을 제거해 이후 모든 단축키가 죽는다.",
+      "DoTrans는 전용 스레드 위에서 끝까지 동기로 돌아야 한다. async Task로 두고 await를 넣으면 스레드가 첫 await에서 끝나 Join이 즉시 돌아오고 IdleState와 ProcessingState가 거짓을 보고한다. 그러면 정지했다고 판단한 쪽이 아직 살아있는 파이프라인과 동시에 설정을 바꾼다."
     ],
     "operation": ["처리 모드와 OCR 속도, 취소 토큰을 초기화한다.", "활성 OCR 영역을 캡처한다.", "선택 OCR 엔진으로 영역별 결과를 얻는다.", "문장 병합·사전 전처리 후 이전 문장과 비교한다.", "필요한 경우 TransManager.StartTrans를 호출한다.", "현재 스킨의 폼을 갱신하고 다음 주기 또는 종료로 이동한다."],
     "state": "thread, isEndFlag, CancellationTokenSource, NowOcrString, clipboard 준비 상태가 한 실행 세션을 이룬다.",
@@ -114,7 +123,17 @@
     "implementation": [
       "FormManager는 현재 생성된 번역 폼을 추적하고 ITransform을 통해 공통 작업을 호출한다. 실제 글꼴, 배경, 투명도, TopMost 처리와 텍스트 배치는 각 폼이 담당한다.",
       "dark/basic 창은 연속 텍스트 표시가 중심이고 layer는 투명 레이어 표현을 제공한다. over는 OCRDataManager의 줄·단어 좌표와 번역 결과를 사용해 원문 위치 위에 문장을 배치한다.",
-      "Overlay 자동 색상은 캡처 원본에서 글자·배경색 후보를 얻어 ResultData의 영역별 색상과 연결한다."
+      "Overlay 자동 색상은 캡처 원본에서 글자·배경색 후보를 얻어 ResultData의 영역별 색상과 연결한다.",
+      "TransFormOver.UpdatePaint는 번역 스레드에서도 호출된다. 핸들이 없으면 InvokeRequired가 false라 번역 스레드가 그대로 그리게 되고, 그리는 도중 this.Handle을 읽으면 핸들이 그 스레드에 생겨 오버레이 메시지 펌프가 메시지를 돌리지 않는 스레드에 묶인다. 그래서 UI 스레드가 아닌데 핸들이 없으면 그리지 않고, 정리 중인 폼에 BeginInvoke가 실패해도 예외를 번역 스레드로 올리지 않는다.",
+      "isLockPaint 해제는 finally에 둔다. 중간 return이나 예외로 빠져나가 잠금이 남으면 이후 모든 갱신이 맨 위에서 막혀 오버레이가 멈춘 것처럼 보인다.",
+      "페인트가 만드는 Bitmap과 Graphics는 네이티브 GDI+ 자원을 들고 있어 반드시 놓아준다. 창 크기가 바뀔 때 이전 Bitmap을 버리지 않으면, OCR 영역을 끄는 동안 큰 비트맵이 매 페인트마다 새로 생겨 자원이 마르고 그리기가 실패해 레이어드 윈도우가 검게 남는다. over와 layer 두 창 모두 같은 구조라 한쪽만 고치면 다른 쪽이 그대로 느리다.",
+      "페인트 끝에서 GC.Collect를 부르지 않는다. 페인트마다 전체 블로킹 GC가 UI 스레드에서 돌면 번역 중 끊김이 된다. 이 호출은 위의 자원 누수를 덮고 있던 것이라, 누수를 먼저 막은 뒤에 걷어내야 한다.",
+      "OCR 결과가 직전과 같으면 매번 다시 그리지 않고 일정 간격으로만 그린다. 내용이 같아도 OCR 영역이나 대상 창이 움직이면 위치를 따라가야 하므로 완전히 멈출 수는 없다.",
+      "줄바꿈 길이는 이분 탐색으로 찾는다. 글자를 더할수록 길이는 줄어들 수 없어 들어가는 길이가 항상 앞쪽 구간이므로 결과가 선형 탐색과 같다. 이 함수는 폰트 이분 탐색 안에서 블록마다 수십 번 반복되어, 1부터 하나씩 재면 페인트 한 번이 통째로 느려진다. 실측으로 블록 세 개 기준 폰트 탐색이 140ms에서 47ms로 줄었다.",
+      "텍스트 측정 결과는 페인트 한 번 동안만 캐시한다. 키에 세로 여부와 StringFormat 플래그가 빠지면 다른 방향의 결과를 잘못 돌려준다. 다만 폰트 이분 탐색은 매번 다른 크기를 재므로 캐시가 맞는 경우는 많지 않다. 실측상 이득은 블록 전체 경로 기준 1.2배(측정 1036회에서 862회)로, 그리기와 사후 검증이 탐색이 이미 잰 크기를 다시 재는 부분에서만 나온다.",
+      "Font 객체 캐시는 넣지 않았다. 실측으로 new Font는 2.4us, 텍스트 측정 한 번은 35.1us라 블록당 아홉 번 만들어도 전체의 0.6%다. 캐시한 Font를 using으로 놓아주면 다음 사용에서 예외가 나므로 위험만 남는다.",
+      "폰트 크기 탐색은 원하는 크기를 먼저 시험하고, 탐색 범위가 0.25pt보다 좁아지면 멈춘다. 이분 탐색은 위 끝을 직접 시험하지 않아 원하는 크기가 그대로 들어가는 흔한 경우에도 아홉 번을 다 돈다. 탐색 한 번이 문자열 전체를 다시 재는 비용이라 반복 횟수가 페인트 시간을 좌우한다. 0.25pt보다 좁은 차이는 화면에서 구분되지 않는다.",
+      "실제 앱에서 잰 페인트 한 번은 45.9ms였고 그중 레이아웃과 드로잉이 37.4ms로 81%였다. 측정 캐시 적중은 375회 중 9회로 2.3%에 그쳤다. 폰트 이분 탐색이 매번 다른 크기를 재기 때문이며, 그래서 캐시보다 탐색 횟수를 줄이는 쪽이 효과가 크다."
     ],
     "operation": ["Skin 설정에 맞는 폼을 생성한다.", "OCR/번역 결과와 표시 옵션을 전달한다.", "폼이 텍스트 크기·정렬·색상·배경을 계산한다.", "Overlay는 바운딩 박스와 캡처 원점을 화면 좌표로 변환한다.", "번역 중 투명도와 TopMost 임시 상태를 복원한다."],
     "state": "각 폼 인스턴스, 표시 여부, TopMost 임시 해제, 자동 글꼴 범위, Overlay 색상과 위치가 상태로 유지된다.",
@@ -211,5 +230,24 @@
     "failures": "업데이트 폴더에 오래된 산출물이 섞이거나 네이티브 DLL 아키텍처가 맞지 않으면 C# 빌드는 성공해도 실행이 실패한다.",
     "example": "업데이트 관련 수정은 Updater 단독 성공뿐 아니라 MORT가 종료 대기와 임시 파일 정리를 올바르게 수행하는지 확인한다.",
     "files": ["MORT/VersionCheck/VersionCheckLogic.cs", "Updater/Program.cs", "Updater/Updater.cs", "MORT/PipeServer/PipeServer.cs", "PipeClient/Program.cs", "PipeClient/PipeClient.cs", "PipeClient/PipeEzTransAPI.cs", "MORT/TransAPI/EzTransAPI.cs"]
+  },
+  {
+    "name": "이미지 인식 결과 디버깅 스냅샷",
+    "intent": "오버레이가 왜 그렇게 그려졌는지 나중에 다시 확인하기 위해, 화면을 보지 않고도 판단할 수 있는 값만 골라 JSON 한 벌로 남긴다. 로그 문자열은 사람이 읽는 용도라 값을 비교하기 어렵고 렌더 결과는 화면에만 남기 때문에, 인식 단계와 렌더 단계의 최종값을 같은 파일에 묶는다.",
+    "entry": "OcrDebugSnapshotService.CaptureOcrResult 와 TransFormOver.AddText",
+    "implementation": [
+      "디버깅 탭의 '이미지 인식 결과 저장' 체크는 Form1.IsDebugSaveAnalysisResult 정적 플래그만 바꾼다. 기존 디버깅 체크들과 같이 설정 파일에 저장하지 않고 실행 중에만 유지한다.",
+      "OCR과 번역이 끝나 새 결과가 확정된 시점에 ProcessTranslateService가 ResultData 전체를 record로 복사한다. 이후 오버레이가 TransData.ViewRect와 ContentRect를 덮어쓰기 때문에, 인식 단계 값은 이때 복사해두어야 렌더 결과와 섞이지 않는다.",
+      "오버레이 스킨이면 저장을 미루고 대기 상태로 둔다. AddText가 블록을 실제로 그린 뒤 최종값을 채우면 그때 파일로 쓴다. 오버레이가 아닌 스킨은 대기 없이 즉시 저장한다.",
+      "그리는 색은 ResolveDrawColors로 분리해 DrawStringWithOutline2와 스냅샷이 같은 계산을 쓴다. 스냅샷이 별도 계산을 복제하면 실제 화면과 어긋난 값을 기록하게 된다.",
+      "OCR 영역 rect는 화면 좌표, 오버레이 블록 rect는 오버레이 폼 클라이언트 좌표다. 두 좌표계를 잇도록 FormRect에 폼의 화면 위치를 함께 남긴다.",
+      "저장 파일은 UserData/Debug/OcrAnalysis 아래 실행 시각 이름으로 계속 쌓인다. 문제가 된 특정 캡처를 되돌아봐야 하므로 한 파일을 덮어쓰지 않는다.",
+      "오버레이 정보에는 페인트 구간별 시간(전체·창 크기 계산·레이아웃과 드로잉·화면 반영)과 텍스트 측정 캐시 적중 횟수가 함께 들어간다. UI 스레드를 얼마나 잡고 있는지 화면을 보지 않고 판단하기 위한 값이며, 디버깅 저장이 켜진 동안에만 잰다. 스냅샷 전달은 화면 반영까지 끝난 뒤 DoUpdatePaint 마지막에 한다. AddText 안에서 넘기면 화면 반영 시간을 담을 수 없다."
+    ],
+    "operation": ["디버깅 탭에서 기능을 활성화하고 체크를 켠다.", "OCR·번역이 끝나면 인식 결과를 record로 복사해 대기시킨다.", "오버레이가 블록을 그리며 폰트 크기, 색, 줄바꿈, 잘림 여부를 채운다.", "JSON 파일을 UserData/Debug/OcrAnalysis에 쓴다.", "오버레이가 그려지지 않은 채 다음 인식이 오면 이전 스냅샷을 오버레이 정보 없이 저장한다."],
+    "state": "_pending 스냅샷과 _waitingOverlay 플래그를 lock으로 보호한다. 인식은 번역 쓰레드, 렌더는 UI 쓰레드에서 끝나기 때문에 한쪽만 보고 저장 시점을 정할 수 없다.",
+    "failures": "OCR 문장이 직전과 같으면 갱신 자체를 건너뛰므로 스냅샷도 남지 않는다. 오버레이가 비활성이거나 GDI가 준비되지 않아 AddText가 일찍 빠져나가면 그 회차 오버레이 값은 비고, 다음 인식 때 오버레이 없는 스냅샷으로 저장된다. 켜둔 동안 파일이 계속 쌓이므로 정리는 사용자 몫이다.",
+    "example": "오버레이 글자가 잘려 보이면 해당 시각 JSON에서 Clipped, FontSize, MinimumFontSize, ContentRect를 함께 본다. 자동 크기 계산 문제인지 블록 충돌 해소로 영역이 좁아진 문제인지 SourceRect와 ViewRect 차이로 구분한다.",
+    "files": ["MORT/Model/Debug/OcrDebugSnapshotModel.cs", "MORT/Service/Debug/OcrDebugSnapshotService.cs", "MORT/Service/ProcessTranslateService/ProcessTranslateService.cs", "MORT/TransFormOver.cs", "MORT/Form1.cs", "MORT/Form1Button.cs", "MORT/Form1.Designer.cs", "MORT/Program.cs"]
   }
 ]

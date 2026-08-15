@@ -613,7 +613,7 @@ namespace MORT
                 else if(_isStart && FormManager.Instace.MyMainForm.MySettingManager.NowIsUseBackColor)
                 {
                     drawBackground = true;
-                    Color background = FormManager.Instace.MyMainForm.MySettingManager.BackgroundColor;
+                    Color background = GetOverlayBackgroundColor(FormManager.Instace.MyMainForm.MySettingManager.BackgroundColor);
                     if(block.TargetData.UseAutoColor
                         && AdvencedOptionManager.OverlayAutoBackgroundColor
                         && block.TargetData.TryGetAutoColor(block.ColorIndex, out var autoColor))
@@ -1280,7 +1280,7 @@ namespace MORT
                 return;
 
             Rectangle rectangle = rectangleOriginal;
-            SolidBrush backColorBrush = new SolidBrush(FormManager.Instace.MyMainForm.MySettingManager.BackgroundColor);
+            SolidBrush backColorBrush = new SolidBrush(GetOverlayBackgroundColor(FormManager.Instace.MyMainForm.MySettingManager.BackgroundColor));
             SolidBrush defualtColorBrush = new SolidBrush(Color.FromArgb(90, 0, 0, 0));
             Color outlineColor1 = FormManager.Instace.MyMainForm.MySettingManager.OutLineColor1;
             Color outlineColor2 = FormManager.Instace.MyMainForm.MySettingManager.OutLineColor2;
@@ -1342,7 +1342,7 @@ namespace MORT
                             && AdvencedOptionManager.OverlayAutoBackgroundColor
                             && targetData.TryGetAutoColor(j, out var autoColor))
                         {
-                            byte alpha = FormManager.Instace.MyMainForm.MySettingManager.BackgroundColor.A;
+                            byte alpha = GetOverlayBackgroundColor(FormManager.Instace.MyMainForm.MySettingManager.BackgroundColor).A;
                             Color backColor = Color.FromArgb(alpha, autoColor.BackGround);
                             backColorBrush = new SolidBrush(backColor);
                         }
@@ -1537,13 +1537,23 @@ namespace MORT
 
         // 2중 아웃라인 + 본문 텍스트를 DrawString으로 그리는 함수
         /// <summary>
+        /// 저장된 배경색은 유지하고 오버레이에 실제로 적용할 알파만 결정한다.
+        /// </summary>
+        private static Color GetOverlayBackgroundColor(Color backgroundColor)
+        {
+            return AdvencedOptionManager.OverlayUseBackgroundAlpha
+                ? backgroundColor
+                : Color.FromArgb(255, backgroundColor);
+        }
+
+        /// <summary>
         /// 실제로 칠하는 색을 정한다. 디버깅 스냅샷도 같은 값을 기록해야 하므로 분리해두었다.
         /// </summary>
         private OverlayDrawColors ResolveDrawColors(OCRDataManager.ResultData targetData, int colorIdx, string text, Color outlineColor1, Color outlineColor2)
         {
             SettingManager setting = FormManager.Instace.MyMainForm.MySettingManager;
             Color fontColor = setting.TextColor;
-            Color backgroundColor = setting.BackgroundColor;
+            Color backgroundColor = GetOverlayBackgroundColor(setting.BackgroundColor);
             bool usesAutomaticColor = targetData.UseAutoColor
                 && (AdvencedOptionManager.OverlayAutoFontColor || AdvencedOptionManager.OverlayAutoBackgroundColor);
             (Color Font, Color BackGround) autoColor = default;

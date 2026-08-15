@@ -299,7 +299,8 @@ namespace MORT.Service.ProcessTranslateService
                                 $"Overlay auto color: font={colors.Font.R},{colors.Font.G},{colors.Font.B}, " +
                                 $"background={colors.Background.R},{colors.Background.G},{colors.Background.B}, " +
                                 $"wordSupport={colors.ForegroundWordSupport}, contrast={colors.ForegroundContrast:0.00}, " +
-                                $"fontFallback={colors.UsedFontFallback}, retainedAlpha={_settingManager.BackgroundColor.A}, rect={rect}");
+                                $"fontFallback={colors.UsedFontFallback}, configuredAlpha={_settingManager.BackgroundColor.A}, " +
+                                $"effectiveAlpha={(AdvencedOptionManager.OverlayUseBackgroundAlpha ? _settingManager.BackgroundColor.A : 255)}, rect={rect}");
                         }
                     }
                 }
