@@ -58,6 +58,7 @@ namespace MORT.Service.ProcessTranslateService
 
         public string NowOcrString { get; set; } = ""; //현재 ocr 문장
         public SettingManager.TransType TransType => _settingManager.NowTransType;
+        public OneOcr OneOcr => _oneOcr;
         public Action<bool> OnStopTranslate { get; }
 
         volatile bool isEndFlag = false; //번역 끝내는 플레그
