@@ -3,14 +3,14 @@
   <Profiles />
   <Settings>
     <Setting Name="MORT_VERSION" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">1.268V</Value>
+      <Value Profile="(Default)">1.270V</Value>
     </Setting>
     <Setting Name="LAYER_TEXT" Type="System.String" Scope="Application">
       <Value Profile="(Default)">MORT {0}
 레이어 번역창</Value>
     </Setting>
     <Setting Name="MORT_VERSION_VALUE" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">1268</Value>
+      <Value Profile="(Default)">1270</Value>
     </Setting>
     <Setting Name="TOOLTIP_LIST" Type="System.String" Scope="Application">
       <Value Profile="(Default)">MORT를 처음 쓰시면 그 외-&gt; MORT 사용법을 확인해 주세요,
@@ -70,7 +70,7 @@ OCR 영역을 빠르게 추가하고 싶을 땐 빠른 OCR 영역을 사용하�
       <Value Profile="(Default)">색 영역을 이용해 추출한 문장의 폰트색을 지정합니다.</Value>
     </Setting>
     <Setting Name="MORT_RELEASE" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">2025 12 07</Value>
+      <Value Profile="(Default)">2026 08 23</Value>
     </Setting>
     <Setting Name="TOOLTIP_MULTI_DB" Type="System.String" Scope="Application">
       <Value Profile="(Default)">DB 번역문 검색시 OCR 추출 문장에 포함 된 번역문을 모두 가져옵니다.</Value>
