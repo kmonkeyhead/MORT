@@ -32,7 +32,7 @@ namespace MORT
         {
             try
             {
-                System.Diagnostics.Process.Start("https://github.com/killkimno/MORT");
+                System.Diagnostics.Process.Start("https://github.com/kmonkeyhead/MORT");
             }
             catch { }
 

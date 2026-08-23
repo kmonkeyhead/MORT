@@ -1,12 +1,12 @@
 🌏[한국어](README.kr.md) | [English](README.en.md)
 
 
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkillkimno%2FMORT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
-[![GitHub downloads](https://img.shields.io/github/downloads/killkimno/MORT/total.svg?logo=github)](https://github.com/killkimno/MORT/releases)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkmonkeyhead%2FMORT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+[![GitHub downloads](https://img.shields.io/github/downloads/kmonkeyhead/MORT/total.svg?logo=github)](https://github.com/kmonkeyhead/MORT/releases)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Y8Y6DIUR2)
 
-<img src="https://github.com/killkimno/MORT/blob/main/MORT_LOGO.png" width="90%"></img>
+<img src="https://github.com/kmonkeyhead/MORT/blob/main/MORT_LOGO.png" width="90%"></img>
 
 
 [![Video Label](https://img.youtube.com/vi/LHTErVnsaws/0.jpg)](https://youtu.be/LHTErVnsaws)
@@ -64,13 +64,13 @@ MORT는 OCR을 이용해 화면상에 나온 대사를 추출 , DB나 기계번�
 ### 관련 프로젝트 ###
 
 * MORT Core - MORT_CORE_DLL
-  - https://github.com/killkimno/MORT_CORE
+  - https://github.com/kmonkeyhead/MORT_CORE
   
 * MORT Win OCR - MORT_WIN10OCR.DLL
-  - https://github.com/killkimno/MORT_WIN10OCR
+  - https://github.com/kmonkeyhead/MORT_WIN10OCR
   
 * MORT NHocr - nhocr.DLL
-  - https://github.com/killkimno/MORT_NHOCR
+  - https://github.com/kmonkeyhead/MORT_NHOCR
 
 ## 그 외 ##
 ### 개발 상황 트렐로 ###

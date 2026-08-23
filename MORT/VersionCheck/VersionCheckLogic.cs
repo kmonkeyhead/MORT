@@ -65,10 +65,10 @@ namespace MORT.VersionCheck
                 try
                 {
                     nowVersion = Properties.Settings.Default.MORT_VERSION_VALUE;
-                    //http://killkimno.github.io/MORT_VERSION/version.txt
+                    //http://kmonkeyhead.github.io/MORT_VERSION/version.txt
                     using (WebClient client = new WebClient())
                     {
-                        Stream stream = client.OpenRead("http://killkimno.github.io/MORT_VERSION/version.txt");
+                        Stream stream = client.OpenRead("http://kmonkeyhead.github.io/MORT_VERSION/version.txt");
                         using (StreamReader reader = new StreamReader(stream))
                         {
                             String content = reader.ReadToEnd();
@@ -97,10 +97,10 @@ namespace MORT.VersionCheck
         {
             try
             {
-                //http://killkimno.github.io/MORT_VERSION/default_setting.txt
+                //http://kmonkeyhead.github.io/MORT_VERSION/default_setting.txt
                 using (WebClient client = new WebClient())
                 {
-                    Stream stream = client.OpenRead("http://killkimno.github.io/MORT_VERSION/default_setting.txt");
+                    Stream stream = client.OpenRead("http://kmonkeyhead.github.io/MORT_VERSION/default_setting.txt");
                     using (StreamReader reader = new StreamReader(stream))
                     {
                         String content = reader.ReadToEnd();
