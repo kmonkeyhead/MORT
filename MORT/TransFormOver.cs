@@ -377,7 +377,7 @@ namespace MORT
                         {
                             SetWindowDisplayAffinity(this.Handle, WDA_EXCLUDEFROMCAPTURE);
                         }
-                       
+
                         timer.Stop();
                         timer.Dispose();
                     };
@@ -1303,7 +1303,7 @@ namespace MORT
                         else
                         {
                             Rectangle ocrAreaRect = FormManager.Instace.MyMainForm.GetOcrAreaProcessRect(_dataList[i].Index);
-                            if (ocrAreaRect == Rectangle.Empty)
+                            if(ocrAreaRect == Rectangle.Empty)
                             {
                                 continue;
                             }
@@ -1330,7 +1330,7 @@ namespace MORT
                         if(y < clientPositionY)
                             y = clientPositionY;
                     }
-         
+
 
                     var targetData = _dataList[i];
 
@@ -2116,8 +2116,6 @@ namespace MORT
         }
 
 
-
-
         #region:::::::::::::::::::::::::::::::::::::::::::레이어 창 이동 관련:::::::::::::::::::::::::::::::::::::::::::
 
 
@@ -2364,8 +2362,6 @@ namespace MORT
         }
 
         #endregion
-
-
 
 
     }
