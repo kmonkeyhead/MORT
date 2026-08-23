@@ -48,89 +48,219 @@ namespace MORT
             }
         }
 
+        private bool TryGetBatchExecuteResult(string original, string transCode, string resultCode, out string result)
+        {
+            result = "";
+
+            try
+            {
+                string rpcArgument = JsonSerializer.Serialize(new object[]
+                {
+                    new object[] { original, transCode, resultCode, true },
+                    new object[] { null }
+                });
+
+                string rpcRequest = JsonSerializer.Serialize(new object[]
+                {
+                    new object[]
+                    {
+                        new object[] { "MkEWBc", rpcArgument, null, "generic" }
+                    }
+                });
+
+                var client = new RestClient("https://translate.google.com/_/TranslateWebserverUi/data/batchexecute?rpcids=MkEWBc&rt=c");
+                var request = new RestRequest("", Method.Post);
+
+                request.AddHeader("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+                request.AddHeader("origin", "https://translate.google.com");
+                request.AddHeader("referer", "https://translate.google.com/");
+                request.AddParameter("application/x-www-form-urlencoded", "f.req=" + Uri.EscapeDataString(rpcRequest), ParameterType.RequestBody);
+                request.Timeout = TimeSpan.FromMilliseconds(3000);
+
+                RestResponse response = client.Execute(request);
+
+                Util.ShowLog($"Google Batch Result Status : Success = {response.IsSuccessful} StatusCode : {response.StatusCode}");
+
+                if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
+                {
+                    return false;
+                }
+
+                return TryParseBatchExecuteResponse(response.Content, out result);
+            }
+            catch (Exception e)
+            {
+                Util.ShowLog("Google Batch Error : " + e);
+                return false;
+            }
+        }
+
+        private bool TryParseBatchExecuteResponse(string content, out string result)
+        {
+            result = "";
+
+            try
+            {
+                string[] lines = content.Split('\n');
+                foreach (string line in lines)
+                {
+                    string frame = line.Trim();
+                    if (!frame.StartsWith("[") || !frame.Contains("\"MkEWBc\""))
+                    {
+                        continue;
+                    }
+
+                    using JsonDocument outerDocument = JsonDocument.Parse(frame);
+                    string innerJson = outerDocument.RootElement[0][2].GetString();
+                    if (string.IsNullOrEmpty(innerJson))
+                    {
+                        continue;
+                    }
+
+                    using JsonDocument innerDocument = JsonDocument.Parse(innerJson);
+                    JsonElement translations = innerDocument.RootElement[1][0][0][5];
+
+                    foreach (JsonElement item in translations.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Array
+                            && item.GetArrayLength() > 0
+                            && item[0].ValueKind == JsonValueKind.String)
+                        {
+                            result += item[0].GetString() ?? string.Empty;
+                        }
+                    }
+
+                    return !string.IsNullOrEmpty(result);
+                }
+            }
+            catch (Exception e)
+            {
+                Util.ShowLog("Google Batch Parse Error : " + e);
+            }
+
+            return false;
+        }
+
+        private bool TryGetGoogleApiResult(string original, string transCode, string resultCode, bool lowQuality, out string result, out bool isRateLimited)
+        {
+            result = "";
+            isRateLimited = false;
+
+            string encodedOriginal = Uri.EscapeDataString(original);
+            string url;
+
+            if (lowQuality)
+            {
+                url = $"https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl={transCode}&tl={resultCode}&q={encodedOriginal}";
+            }
+            else
+            {
+                url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={transCode}&tl={resultCode}&dt=t&q={encodedOriginal}";
+            }
+
+            try
+            {
+                var client = new RestClient(url);
+                var request = new RestRequest("", Method.Get);
+
+                request.AddHeader("content-type", "application/x-www-form-urlencoded");
+                request.AddHeader("cache-control", "no-cache");
+                request.AddHeader("charset", "UTF-8");
+                request.Timeout = TimeSpan.FromMilliseconds(2000);
+
+                RestResponse response = client.Execute(request);
+
+                Util.ShowLog($"Google {(lowQuality ? "Low Quality" : "GTX")} Result Status : Success = {response.IsSuccessful} StatusCode : {response.StatusCode}");
+
+                if ((int)response.StatusCode == 429)
+                {
+                    isRateLimited = true;
+                    return false;
+                }
+
+                if (!response.IsSuccessful || string.IsNullOrEmpty(response.Content))
+                {
+                    return false;
+                }
+
+                Util.ShowLog(response.Content);
+                using JsonDocument document = JsonDocument.Parse(response.Content);
+
+                if (lowQuality)
+                {
+                    foreach (JsonElement item in document.RootElement.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.String)
+                        {
+                            result += item.GetString() ?? string.Empty;
+                        }
+                    }
+                }
+                else
+                {
+                    JsonElement translations = document.RootElement[0];
+                    foreach (JsonElement item in translations.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Array
+                            && item.GetArrayLength() > 0
+                            && item[0].ValueKind == JsonValueKind.String)
+                        {
+                            result += (item[0].GetString() ?? string.Empty) + " ";
+                        }
+                    }
+                }
+
+                return !string.IsNullOrEmpty(result);
+            }
+            catch (Exception e)
+            {
+                Util.ShowLog("Google Translate Error : " + e);
+                return false;
+            }
+        }
+
         private string GetResult(string original, ref bool isError, string transCode , string resultCode )
         {
-            if ( string.IsNullOrWhiteSpace(original))
+            if (string.IsNullOrWhiteSpace(original))
             {
                 Util.ShowLog("Empty");
                 return "";
             }
 
-            string encodedOriginal = Uri.EscapeDataString(original);
-            Util.ShowLog("Original : " + original+ System.Environment.NewLine + "Result : " + encodedOriginal);
-            string result = "";
+            Util.ShowLog("Original : " + original);
 
-            //dict-chrome-ex , gtx , webapp
-            //var client = new RestClient("https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=" + transCode + "&tl=" + resultCode + "&dt=t&q=" + Uri.EscapeDataString(original));
-
-            string clientType = _lowQuailtyMode ? "dict-chrome-ex" : "gtx";
-
-            //string requestLog = $"https://translate.googleapis.com/translate_a/single?client={clientType}&sl={transCode}&tl={resultCode}&dt=t&q={encodedOriginal}";
-
-            //Util.ShowLog($"Google Request : {requestLog}");
-
-            var client = new RestClient($"https://translate.googleapis.com/translate_a/single?client={clientType}&sl={transCode}&tl={resultCode}&dt=t&q={encodedOriginal}");
-
-            var request = new RestRequest("", Method.Get);
-
-            request.AddHeader("content-type", "application/x-www-form-urlencoded");  //이건 폼형식.
-            request.AddHeader("cache-control", "no-cache");
-            request.AddHeader("charset", "UTF-8");
-
-            request.Timeout = TimeSpan.FromMilliseconds(2000);
-            try
-            {               
-                RestResponse response = client.Execute(request);
-               
-                if(response != null)
-                {
-                    Util.ShowLog($"Result Status : Success = {response.IsSuccessful} StatusCode : {response.StatusCode}");
-                    if((int)response.StatusCode == 429) 
-                    {
-                        isError = true;
-                        if (_lowQuailtyMode)
-                        {
-                            return "시간당 사용할 수 있는 쿼리 모두 소모 - 다른 번역 방법을 선택하거나, 최대 한 시간 뒤에 다시 사용해 주세요";
-                        }
-                        else
-                        {
-                            //저품질로 다시 한 번 해본다
-                            isError = false;
-                            _dtNextCheck = DateTime.Now.AddHours(1);
-                            _lowQuailtyMode = true;
-                            UpdateCondition();
-                            return GetResult(original, ref isError, transCode, resultCode);
-                        }
-                    }
-                    else
-                    {
-                        string re = response.Content ?? string.Empty;
-
-                        Util.ShowLog(re);
-                        using JsonDocument doc = JsonDocument.Parse(re);
-                        JsonElement translations = doc.RootElement[0];
-
-                        Util.ShowLog(translations.GetArrayLength() + " @@@@");
-                        foreach(var item in translations.EnumerateArray())
-                        {
-                            if(item.ValueKind == JsonValueKind.Array
-                                && item.GetArrayLength() > 0
-                                && item[0].ValueKind == JsonValueKind.String)
-                            {
-                                result += (item[0].GetString() ?? string.Empty) + " ";
-                            }
-                        }
-                    }
-                }
-        
-            }
-            catch (Exception e)
+            if (!_lowQuailtyMode)
             {
-                isError = true;
-                return "처리하는 도중 오류가 발생했습니다" + System.Environment.NewLine + e.Message;
+                if (TryGetBatchExecuteResult(original, transCode, resultCode, out string batchResult))
+                {
+                    isError = false;
+                    return batchResult;
+                }
+
+                if (TryGetGoogleApiResult(original, transCode, resultCode, false, out string gtxResult, out _))
+                {
+                    isError = false;
+                    return gtxResult;
+                }
+
+                _dtNextCheck = DateTime.Now.AddMinutes(10);
+                _lowQuailtyMode = true;
+                UpdateCondition();
             }
 
-            return result;
+            if (TryGetGoogleApiResult(original, transCode, resultCode, true, out string lowQualityResult, out bool isRateLimited))
+            {
+                isError = false;
+                return lowQualityResult;
+            }
+
+            isError = true;
+            if (isRateLimited)
+            {
+                return "시간당 사용할 수 있는 쿼리 모두 소모 - 다른 번역 방법을 선택하거나, 잠시 뒤에 다시 사용해 주세요";
+            }
+
+            return "처리하는 도중 오류가 발생했습니다";
         }
 
         public string DoTrans(string original, ref bool isError)
