@@ -97,7 +97,7 @@
   "MORT/QuickSetting/UIQuickSetting.cs": {
     "category": "빠른 설정 UI",
     "intent": "번역 중 자주 바꾸는 OCR 언어와 표시 옵션을 메인 옵션 창 없이 즉시 변경한다.",
-    "operation": "현재 언어별 설정을 간단한 컨트롤에 표시하고 변경 즉시 SettingManager와 관련 OCR 초기화 흐름에 반영한다."
+    "operation": "현재 언어별 설정을 간단한 컨트롤에 표시한다. 설정 적용 시 ProcessTranslateService가 보유한 OneOCR 인스턴스를 비동기로 초기화해 사용 가능하면 우선 선택하고, 실패하면 Tesseract 또는 지원 언어가 있는 Windows OCR로 폴백한다."
   },
   "MORT/SettingData/BaseSettingData.cs": {
     "category": "설정 데이터 모델",

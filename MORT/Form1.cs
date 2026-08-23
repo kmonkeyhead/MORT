@@ -181,6 +181,7 @@ namespace MORT
         private List<KeyInputLabel> inputKeyUIList = new List<KeyInputLabel>();
 
         private ProcessTranslateService _processTranslateService;
+        internal ProcessTranslateService ProcessTranslateService => _processTranslateService;
         private readonly MouseFollowOcrAreaService _mouseFollowOcrAreaService;
 
         #region ::::::::::::::::::::::::::DLL:::::::::::::::::::::::::::::::::::::::::::::::::

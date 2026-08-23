@@ -1,11 +1,11 @@
 🌏[한국어](README.kr.md) | [English](README.en.md)
 
 
-[![GitHub downloads](https://img.shields.io/github/downloads/killkimno/MORT/total.svg?logo=github)](https://github.com/killkimno/MORT/releases)
+[![GitHub downloads](https://img.shields.io/github/downloads/kmonkeyhead/MORT/total.svg?logo=github)](https://github.com/kmonkeyhead/MORT/releases)
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Y8Y6DIUR2)
 
-<img src="https://github.com/killkimno/MORT/blob/main/MORT_LOGO.png" width="90%"></img>
+<img src="https://github.com/kmonkeyhead/MORT/blob/main/MORT_LOGO.png" width="90%"></img>
 
 
 [![Video Label](https://img.youtube.com/vi/LHTErVnsaws/0.jpg)](https://youtu.be/LHTErVnsaws)
@@ -141,10 +141,10 @@ ex
 ### Related Project ###
 
 * MORT Core - MORT_CORE_DLL
-  - https://github.com/killkimno/MORT_CORE
+  - https://github.com/kmonkeyhead/MORT_CORE
   
 * MORT NHocr - nhocr.DLL
-  - https://github.com/killkimno/MORT_NHOCR
+  - https://github.com/kmonkeyhead/MORT_NHOCR
 
 ## ETC ##
 ### Development Plans Trello ###

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using MORT.LocalizeManager;
 
@@ -104,8 +105,17 @@ namespace MORT
             settingData.transType = transType;
         }
 
-        private void SetOcrType()
+        private async Task SetOcrType()
         {
+            var oneOcr = FormManager.Instace.MyMainForm.ProcessTranslateService.OneOcr;
+            await oneOcr.InitalizeAsync();
+
+            if(oneOcr.IsAvailable)
+            {
+                settingData.ocrType = SettingManager.OcrType.OneOcr;
+                return;
+            }
+
             settingData.ocrType = SettingManager.OcrType.Tesseract;
 
             if (FormManager.Instace.MyMainForm.isAvailableWinOCR)
@@ -123,14 +133,14 @@ namespace MORT
             }
         }
 
-        private void SetSetting()
+        private async Task SetSetting()
         {
             if (FormManager.Instace.MySearchOptionForm != null)
             {
                 FormManager.Instace.MySearchOptionForm.acceptCaptureArea();
             }
 
-            SetOcrType();
+            await SetOcrType();
             SetTranslatorType();
 
             bool isUseJpn = false;
@@ -216,7 +226,7 @@ namespace MORT
             btNext.Text = LocalizeManager.LocalizeManager.GetLocalizeString("Quick Setting Close", "");
         }
 
-        private void btNext_Click(object sender, EventArgs e)
+        private async void btNext_Click(object sender, EventArgs e)
         {
             switch(currentStepType)
             {
@@ -230,7 +240,7 @@ namespace MORT
                     break;
 
                 case StepType.OcrComplete:
-                    SetSetting();
+                    await SetSetting();
                     ShowFinal();
                     break;
                 case StepType.Final:

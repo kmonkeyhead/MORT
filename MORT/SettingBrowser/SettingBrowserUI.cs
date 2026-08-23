@@ -8,7 +8,7 @@ namespace MORT.SettingBrowser
 {
     public partial class SettingBrowserUI : Form
     {
-        private const string DATA_PATH = "https://killkimno.github.io/MORT_VERSION/Data/SETTING/";
+        private const string DATA_PATH = "https://kmonkeyhead.github.io/MORT_VERSION/Data/SETTING/";
         private const string MAIN_PATH = "Main";
         private class ListData
         {
@@ -215,7 +215,7 @@ namespace MORT.SettingBrowser
         {
             using(WebClient client = new WebClient())
             {
-                Stream stream = client.OpenRead("https://killkimno.github.io/MORT_VERSION/Data/SETTING/list.txt");
+                Stream stream = client.OpenRead("https://kmonkeyhead.github.io/MORT_VERSION/Data/SETTING/list.txt");
                 using(StreamReader reader = new StreamReader(stream))
                 {
                     gameDataList.Clear();
