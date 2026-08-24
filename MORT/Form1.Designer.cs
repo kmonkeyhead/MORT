@@ -325,6 +325,7 @@ namespace MORT
             panel24 = new System.Windows.Forms.Panel();
             panel26 = new System.Windows.Forms.Panel();
             plDebugOn = new System.Windows.Forms.Panel();
+            cbDisplayLowQuality = new System.Windows.Forms.CheckBox();
             cbSaveAnalysisResult = new System.Windows.Forms.CheckBox();
             cbShowOverlayWordArea = new System.Windows.Forms.CheckBox();
             cbSetLineTrans = new System.Windows.Forms.CheckBox();
@@ -3788,6 +3789,7 @@ namespace MORT
             // 
             // plDebugOn
             // 
+            plDebugOn.Controls.Add(cbDisplayLowQuality);
             plDebugOn.Controls.Add(cbSaveAnalysisResult);
             plDebugOn.Controls.Add(cbShowOverlayWordArea);
             plDebugOn.Controls.Add(cbSetLineTrans);
@@ -3801,6 +3803,19 @@ namespace MORT
             plDebugOn.Name = "plDebugOn";
             plDebugOn.Size = new System.Drawing.Size(507, 512);
             plDebugOn.TabIndex = 56;
+            //
+            // cbDisplayLowQuality
+            //
+            cbDisplayLowQuality.AutoSize = true;
+            cbDisplayLowQuality.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            cbDisplayLowQuality.ForeColor = System.Drawing.Color.White;
+            cbDisplayLowQuality.Location = new System.Drawing.Point(14, 267);
+            cbDisplayLowQuality.Name = "cbDisplayLowQuality";
+            cbDisplayLowQuality.Size = new System.Drawing.Size(222, 21);
+            cbDisplayLowQuality.TabIndex = 30;
+            cbDisplayLowQuality.Text = "번역 결과에 [저품질] 표시하기";
+            cbDisplayLowQuality.UseVisualStyleBackColor = true;
+            cbDisplayLowQuality.CheckedChanged += cbDisplayLowQuality_CheckedChanged;
             //
             // cbSaveAnalysisResult
             //
@@ -4301,6 +4316,7 @@ namespace MORT
         private System.Windows.Forms.Panel panel24;
         private System.Windows.Forms.Panel panel26;
         private System.Windows.Forms.Label lbDebugging;
+        private System.Windows.Forms.CheckBox cbDisplayLowQuality;
         private System.Windows.Forms.CheckBox cbSaveAnalysisResult;
         private System.Windows.Forms.CheckBox cbShowOCRIndex;
         private System.Windows.Forms.Button btnHideTransEmpty;

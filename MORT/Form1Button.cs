@@ -153,6 +153,14 @@ namespace MORT
             }
         }
 
+        private void cbDisplayLowQuality_CheckedChanged(object sender, EventArgs e)
+        {
+            if (MySettingManager.isDebugMode)
+            {
+                IsDebugDisplayLowQuality = cbDisplayLowQuality.Checked;
+            }
+        }
+
         #endregion
 
 

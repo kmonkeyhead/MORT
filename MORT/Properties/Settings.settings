@@ -45,7 +45,7 @@ OCR 영역을 빠르게 추가하고 싶을 땐 빠른 OCR 영역을 사용하�
 구글 OCR의 사용량은 실제 사용량과 다를 수 있습니다. 수시로 구글 콘솔에서 확인하셔야 합니다</Value>
     </Setting>
     <Setting Name="MORT_RELEASE" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">2026 08 23</Value>
+      <Value Profile="(Default)">2026 08 24</Value>
     </Setting>
     <Setting Name="BASIC_TEXT" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Monkeyhead's OCR Realtime TransLate {0}

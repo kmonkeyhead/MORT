@@ -289,7 +289,7 @@ namespace MORT
                 result = GetResult(original, ref isError, _transCode, _resultCode);
             }
 
-            if(_lowQuailtyMode)
+            if(_lowQuailtyMode && Form1.IsDebugDisplayLowQuality)
             {
                 result = "[저품질]" + result;
             }
