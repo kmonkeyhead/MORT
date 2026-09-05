@@ -129,14 +129,16 @@ namespace MORT
         private DeepLTranslateAPI _deepLTranslateAPI = new DeepLTranslateAPI();
         private PipeServer.PipeServer _ezTransPipeServer = new PipeServer.PipeServer();
         private PapagoWebTranslateAPI _papagoWebAPI = new PapagoWebTranslateAPI();
+        private readonly ChromeBridgeTranslateAPI _chromeBridgeAPI;
         private readonly GeminiTranslatorAPI _geminiTranslatorAPI;
 
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public TransManager(GeminiTranslatorAPI geminiTranslatorAPI, CustomAPI customAPI)
+        public TransManager(GeminiTranslatorAPI geminiTranslatorAPI, CustomAPI customAPI, ChromeBridgeTranslateAPI chromeBridgeAPI)
         {
             _customAPI = customAPI;
             _geminiTranslatorAPI = geminiTranslatorAPI;
+            _chromeBridgeAPI = chromeBridgeAPI;
         }
 
         public bool InitEzTrans()
@@ -147,6 +149,11 @@ namespace MORT
         public void InitCustomApi(string url, string source, string target, string presetName)
         {
             _customAPI.Init(url, source, target, presetName);
+        }
+
+        public void InitChromeBridge(string source, string target, string mode)
+        {
+            _chromeBridgeAPI.Init(source, target, mode);
         }
 
         public void InitDeeplApiKey(string apiKey) => _deeplapiranslateAPI.InitApiKey(apiKey);
@@ -268,6 +275,7 @@ namespace MORT
             LoadFormerResultFile(SettingManager.TransType.papago_web);
             LoadFormerResultFile(SettingManager.TransType.deeplApi);
             LoadFormerResultFile(SettingManager.TransType.gemini);
+            LoadFormerResultFile(SettingManager.TransType.chromeBridge);
         }
 
         private void MakeFormerDic(Dictionary<SettingManager.TransType, Dictionary<string, string>> dic)
@@ -289,6 +297,7 @@ namespace MORT
             Dictionary<string, string> papagoWebDic = new Dictionary<string, string>();
             Dictionary<string, string> deeplapiDic = new Dictionary<string, string>();
             Dictionary<string, string> geminiDic = new Dictionary<string, string>();
+            Dictionary<string, string> chromeBridgeDic = new Dictionary<string, string>();
 
             dic.Add(SettingManager.TransType.google, googleDic);
             dic.Add(SettingManager.TransType.naver, naverDic);
@@ -298,6 +307,7 @@ namespace MORT
             dic.Add(SettingManager.TransType.papago_web, papagoWebDic);
             dic.Add(SettingManager.TransType.deeplApi, deeplapiDic);
             dic.Add(SettingManager.TransType.gemini, geminiDic);
+            dic.Add(SettingManager.TransType.chromeBridge, chromeBridgeDic);
 
             if (saveResultDic == null)
             {
@@ -317,6 +327,7 @@ namespace MORT
             saveResultDic.Add(SettingManager.TransType.papago_web, new List<KeyValuePair<string, string>>());
             saveResultDic.Add(SettingManager.TransType.deeplApi, new List<KeyValuePair<string, string>>());
             saveResultDic.Add(SettingManager.TransType.gemini, new List<KeyValuePair<string, string>>());
+            saveResultDic.Add(SettingManager.TransType.chromeBridge, new List<KeyValuePair<string, string>>());
         }
 
         private void LoadFormerResultFile(SettingManager.TransType transType)
@@ -632,6 +643,13 @@ namespace MORT
                         else if (transType == SettingManager.TransType.customApi)
                         {
                             transResult = _customAPI.GetResult(ocrText, ref isError);
+                            transResult = transResult.Replace("\r\n", "\n");
+                            transResult = transResult.Replace("\n", System.Environment.NewLine);
+                        }
+                        else if (transType == SettingManager.TransType.chromeBridge)
+                        {
+                            transResult = await _chromeBridgeAPI.GetResultAsync(ocrText, _cts.Token);
+                            isError = _chromeBridgeAPI.IsError;
                             transResult = transResult.Replace("\r\n", "\n");
                             transResult = transResult.Replace("\n", System.Environment.NewLine);
                         }

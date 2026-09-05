@@ -153,6 +153,10 @@ namespace MORT
             //커스텀 api
             lbCustomApiInformation.LocalizeLabel("Custom Api Information");
 
+            //크롬 번역기
+            lbChromeBridgeInformation.LocalizeLabel("Chrome Bridge Information");
+            btChromeBridgeRun.LocalizeLabel("Chrome Bridge Run");
+
 
             //이미지 보정
             checkRGB.LocalizeLabel("Extract by RGB");

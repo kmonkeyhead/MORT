@@ -109,6 +109,12 @@ public class TranslateTypListService
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE CUSTOM API"),
             SettingManager.TransType.customApi));
 
+        _modelList.Add(new TranslateTypeModel(
+                10,
+            "TRANSLATE CHROME BRIDGE",
+            LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE CHROME BRIDGE"),
+            SettingManager.TransType.chromeBridge));
+
         InitializeCustomApi();
     }
 

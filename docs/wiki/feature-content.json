@@ -108,7 +108,8 @@
     "implementation": [
       "TransManager는 TransType과 언어 코드 매핑을 기준으로 제공자를 선택한다. 사용자 번역 사전과 이전 결과 파일을 먼저 확인해 동일 문장 호출을 줄인다.",
       "GetTransLinesAsync는 다중 문자열을 제공자 특성에 맞게 묶거나 나눈다. Gemini는 프롬프트와 응답 한도를 고려한 분할 경로를 사용하며 db와 EzTrans는 네트워크 API와 다른 방식으로 처리한다.",
-      "각 TransAPI 클래스는 인증, 요청 형식, 응답 파싱을 소유한다. Manager는 선택과 공통 캐시를 담당하고 제공자 세부 구현을 한 형식으로 억지로 통합하지 않는다."
+      "각 TransAPI 클래스는 인증, 요청 형식, 응답 파싱을 소유한다. Manager는 선택과 공통 캐시를 담당하고 제공자 세부 구현을 한 형식으로 억지로 통합하지 않는다.",
+      "Google Basic은 현재 Google 웹 번역의 MkEWBc batchexecute를 먼저 호출하고, 실패하면 기존 gtx, 두 정상 품질 경로가 모두 실패하면 dict-chrome-ex 저품질 경로를 사용한다. 저품질 상태는 번역 패널에 계속 표시하며, 번역 결과의 [저품질] 접두사는 디버그 탭의 '번역 결과에 [저품질] 표시하기'를 켠 경우에만 추가한다."
     ],
     "operation": ["사용자 번역과 이전 결과 캐시를 조회한다.", "번역 방식과 언어 코드를 결정한다.", "필요하면 문장 목록을 분할하거나 제공자 요청 형식으로 조립한다.", "API·WebView·IPC·DB 중 해당 구현을 호출한다.", "오류 상태와 결과를 합친다.", "성공 결과를 메모리와 저장 대기 목록에 추가한다."],
     "state": "제공자별 API 키, Naver 키 순환 상태, Gemini 모델/명령, DeepL WebView, 취소 토큰, 이전 결과 사전이 유지된다.",
@@ -249,5 +250,39 @@
     "failures": "OCR 문장이 직전과 같으면 갱신 자체를 건너뛰므로 스냅샷도 남지 않는다. 오버레이가 비활성이거나 GDI가 준비되지 않아 AddText가 일찍 빠져나가면 그 회차 오버레이 값은 비고, 다음 인식 때 오버레이 없는 스냅샷으로 저장된다. 켜둔 동안 파일이 계속 쌓이므로 정리는 사용자 몫이다.",
     "example": "오버레이 글자가 잘려 보이면 해당 시각 JSON에서 Clipped, FontSize, MinimumFontSize, ContentRect를 함께 본다. 자동 크기 계산 문제인지 블록 충돌 해소로 영역이 좁아진 문제인지 SourceRect와 ViewRect 차이로 구분한다.",
     "files": ["MORT/Model/Debug/OcrDebugSnapshotModel.cs", "MORT/Service/Debug/OcrDebugSnapshotService.cs", "MORT/Service/ProcessTranslateService/ProcessTranslateService.cs", "MORT/TransFormOver.cs", "MORT/Form1.cs", "MORT/Form1Button.cs", "MORT/Form1.Designer.cs", "MORT/Program.cs"]
+  },
+  {
+    "name": "크롬 번역기 (크롬 내장 AI)",
+    "intent": "크롬 안에서만 돌아가는 기기 내장 번역 모델과 LLM을 MORT의 번역 방식 하나로 끌어다 쓴다. API 키도 인터넷도 없이 번역을 끝내는 것이 목적이라, 외부 번역 API를 하나 더 붙이는 것과는 문제의 성격이 다르다.",
+    "entry": "TransType.chromeBridge 와 MORT/Service/ChromeBridge/, MORT/Service/ChromeBridge/Web/bridge.html",
+    "implementation": [
+      "크롬 내장 AI API에는 외부 프로세스가 직접 부를 수 없게 만드는 제약이 둘 있다. Web Worker에서 못 쓰고, 아직 내려받지 않은 모델은 create() 직전에 사용자 조작이 있어야 한다. 그래서 백그라운드 프로세스가 모델을 직접 호출하는 구조 자체가 성립하지 않고, 살아 있는 문서 하나를 반드시 거쳐야 한다. 확장 프로그램으로 만들어도 이 제약은 그대로라 설치 절차만 늘어난다. 브릿지 창을 닫으면 번역이 멈추는 것은 이 제약의 결과다.",
+      "사용자 조작이 필요한 범위는 문서보다 좁다. MDN은 create()가 항상 transient activation을 요구한다고 적어 두었지만, 조작 없이 부르면 크로미움이 돌려주는 문구는 'Requires a user gesture when availability is \"downloading\" or \"downloadable\".' 다. 즉 이미 받아 둔 모델은 조작 없이 만들어진다. 그래서 페이지는 열리자마자 연결하고 create()까지 시도하고, 거부당했을 때만 물러난다. 그래서 페이지에는 시작·중지 버튼을 두지 않는다. 문서만 보고 항상 버튼을 요구하게 짜면 이미 준비된 사용자에게까지 클릭을 시키게 된다.",
+      "모델이 없어서 거부당하면 크롬 창 안에 '지금 받으시겠습니까?' 대화상자를 띄운다. 이 대화상자는 반드시 크롬 창 쪽에 있어야 한다. MORT에서 MessageBox로 물으면 그 확인 클릭은 크롬의 transient activation이 아니라서 내려받기가 시작되지 않는다. 같은 이유로 MORT가 대신 눌러 줄 수 없고, 대신 패널 상태를 '모델이 없습니다 - 크롬 창에서 받기를 눌러 주세요'로 바꿔 어디를 봐야 하는지 알린다. 페이지는 status를 need-model로 올려 보내고 MORT는 ChromeBridgeService.NeedsModel로 읽는다.",
+      "크롬 창은 설정 적용이 아니라 번역 시작 시점에 띄운다. FormOption.ApplyTransSetting은 언어와 엔진만 넘기고, 창은 TranslationProcessInitializationService.Initialize에서 연다. 적용만 눌렀는데 브라우저가 튀어나오면 성가시고, 설정을 여러 번 만지는 동안 창이 반복해서 뜬다.",
+      "MORT 안에 WebView2를 얹어 크롬 창 없이 끝내려는 시도는 통하지 않는다. WebView2 런타임 152.0.4191.62 에서 확인한 결과 LanguageModel은 객체 자체가 없고, Translator는 객체는 있지만 availability(ja→ko)가 unavailable을 돌려주며 create()는 NotSupportedError로 실패한다. API 표면만 Edge 쪽에 노출되어 있고 기기 내장 모델은 붙어 있지 않다. 이걸 모르면 '웹뷰로 합치면 되지 않나'를 반복해서 다시 시도하게 된다.",
+      "로컬 서버는 MORT 프로세스 안에서 돈다. 처음에는 별도 실행 파일을 ExternDLL에 두고 EzTrans의 PipeClient처럼 띄우는 방식으로 만들었지만, 프로세스가 하나 더 늘고 배포와 수명 관리가 같이 늘어나서 MORT 안으로 넣었다. 덕분에 MORT를 끄면 서버도 같이 꺼지고, 번역 호출도 HTTP를 거치지 않고 허브를 바로 부른다.",
+      "TransType.chromeBridge 는 enum 맨 뒤에 붙였다. 설정 파일에는 이름 문자열로 저장되지만 순서 자체가 호환성에 묶여 있어서 중간에 끼워 넣을 수 없다. 저장은 nowTransType.ToString(), 읽기는 문자열 비교 체인이라 예전 설정 파일은 그대로 열리고, 새 값을 모르는 옛 버전은 기본값으로 떨어진다.",
+      "허브는 연결이 붙고 끊길 때 ConnectionChanged를 올리고 Form1이 UI 스레드로 넘겨 상태 라벨을 갱신한다. 이게 없으면 사용자가 크롬 창에서 [시작]을 눌러도 MORT 라벨이 그대로여서, 패널을 볼 이유가 없어진다. 이벤트는 서버 스레드에서 올라오므로 BeginInvoke로 넘긴다.",
+      "모델 관련 버튼은 전부 크롬 창에 모았다. [모델 관리 / 지우기]는 chrome://on-device-translation-internals/ 주소를 클립보드에 복사하고 화면에도 띄운다. chrome:// 주소는 웹페이지가 열 수도 링크로 걸 수도 없어서 주소창에 붙여 넣는 방법뿐이다. MORT가 네이티브로 크롬을 실행해 여는 경로를 먼저 만들었다가 실제로 동작하지 않아 걷어냈다. 비동기 Clipboard API는 권한이나 포커스로 막히는 환경이 있어서 임시 textarea + execCommand 폴백을 둔다. 둘 다 실패해도 주소를 화면에 그대로 띄우므로 사용자가 읽고 칠 수 있다.",
+      "모델 삭제는 MORT가 하지 않고 지울 수 있는 곳의 주소를 알려 준다. JS API에 삭제 기능이 없고(destroy()는 세션만 해제한다), 파일 직접 삭제는 구글이 권장하지 않으며 크롬 실행 중에는 잠겨 있고 컴포넌트 업데이터가 다시 받는다. LLM 모델(4GB)은 이 페이지가 아니라 크롬 설정 > 시스템 > 기기 내 AI 토글로 지운다.",
+      "브릿지 창을 앞으로 꺼내는 것은 사용자가 [설정 열기]를 눌렀을 때뿐이다. OpenPage의 requestedByUser가 그것만 가른다. 번역 시작은 매번 이 경로를 지나가는데, 여기서 ChromeBridgeWindow.TryFocus를 부르면 번역할 때마다 게임에서 포커스를 빼앗는다. 실제로 그렇게 만들었다가 되돌렸다. 화면을 번역하는 도구가 화면을 가로채면 안 된다. 같은 이유로, 붙었다가 끊긴 뒤에는 번역해도 창을 다시 띄우지 않는다. 사용자가 닫은 것으로 보고 [설정 열기]를 기다린다. 그러지 않으면 창을 닫은 채 번역할 때마다 게임 위로 창이 다시 올라온다.",
+      "OCR 영역이 여럿일 때는 이어 붙인 채로 넘기지 않고 ChromeBridgeTranslateAPI가 구분 토큰으로 쪼개 한 덩이씩 번역한 뒤 같은 모양으로 다시 잇는다. MORT는 영역들을 Util.GetSpliteToken 토큰으로 이어 붙여 한 번에 번역하고 Util.GetSpliteByToken으로 다시 쪼개는데, 크롬 내장 AI는 그 토큰을 보존하지 않는다. Translator는 줄바꿈을 공백으로 합쳐 '//////\\r\\n'을 '////// '로 만들어 분리 문자열과 어긋나게 하고, LLM은 마커째 지우기도 한다. 그러면 분리가 하나도 일어나지 않아 첫 영역에 전부 몰린다. 덩이마다 왕복이 늘지만 영역이 정확히 나뉘고, 구분 마커가 모델 입력에 섞이지 않아 번역 품질도 낫다. 한 덩이라도 실패하면 다른 번역기와 같이 사유를 그대로 올린다.",
+      "크롬 창에 번역 기록을 남기고 줄마다 어느 경로로 번역했는지 배지를 붙인다. translator는 초록, llm은 노랑, 실패는 빨강이다. auto 모드는 언어 쌍에 따라 Translator와 LanguageModel 사이를 말없이 오가는데, 결과 품질이 경로마다 다르므로 무엇이 처리했는지 보이지 않으면 '왜 이 문장만 이상한가'를 설명할 수 없다. 상단 카운터에도 마지막 경로를 같이 적는다. 기록은 50건까지 두고 새 것이 위로 쌓인다.",
+      "번역 패널은 상태 라벨과 [설정 열기] 버튼만 둔다. 엔진 선택과 모델 준비는 크롬 창 안에서만 할 수 있기 때문이다. 모델 내려받기가 사용자 조작 직후에만 시작되므로 MORT 쪽 창으로 대신해 줄 수 없고, 설정 UI를 MORT에 복제하면 실제로 동작하지 않는 화면이 된다.",
+      "HTTP /translate 는 남겨 두었다. MORT 자신은 쓰지 않지만 커스텀 API 프리셋으로 붙이거나 손으로 확인할 때 필요하다. 응답을 result 키로 돌려주는 것은 CustomAPI.ExtractValue 가 JsonDocument로 키를 재귀 탐색하는 방식에 맞춘 것이다.",
+      "HttpListener 대신 TcpListener로 직접 받는다. HttpListener는 비관리자 계정에서 URL ACL 등록을 요구할 때가 있는데, 설치 없이 실행 파일만 던져 주는 배포 방식과 맞지 않는다. WebSocket은 핸드셰이크만 직접 처리하고 프레임은 WebSocket.CreateFromStream 에 넘긴다.",
+      "MORT가 보내는 언어 코드는 구글 번역기 코드라 형태가 제각각이다. ChromeBridgeLanguage에서 zh-CN을 zh로, zh-TW를 zh-Hant로, pt-BR을 pt로 바꾸는 식으로 한 번 정리해 BCP-47로 넘긴다. Gemini가 GoogleTransCode/GoogleResultCode를 그대로 쓰는 것과 같은 자리를 쓴다.",
+      "엔진 경로가 두 개인 이유는 언어 지원 범위가 다르기 때문이다. Translator API는 ko를 포함한 38개 언어를 지원하고, LanguageModel(Prompt API)의 공식 지원 언어는 en/ja/es/de/fr 뿐이다. 일본어 게임을 한국어로 보는 보통의 MORT 사용에는 Translator 경로가 맞고, LLM 경로는 문맥 번역을 시험하거나 en/ja 결과가 필요할 때 쓴다. auto는 언어 쌍을 Translator가 지원하면 그쪽을, 아니면 LLM을 쓴다.",
+      "모델 준비 경로와 번역 요청 경로를 getTranslator와 getReadyTranslator로 나눠 두었다. 번역 요청 시점에는 사용자 조작이 없어 내려받기를 시작할 수 없고, 그 자리에서 만들려 들면 요청이 통째로 묶인다. 요청 경로는 이미 준비된 모델만 쓰고 아니면 어떤 버튼을 눌러야 하는지까지 적어 실패시킨다.",
+      "availability() 가 영영 응답하지 않는 크롬 빌드가 실제로 있다. Chrome 148 환경에서 Translator.availability(ja→ko) 가 응답하지 않는 것을 확인했다. 모델을 건드리는 호출에는 전부 제한 시간을 걸고, availability는 사전 확인일 뿐이므로 응답이 없으면 건너뛰고 create()로 직접 부딪힌다. 그대로 await 하면 순번 큐가 멈춰 그 뒤 번역이 전부 죽는다.",
+      "[시작]은 연결부터 맺고 모델 준비는 뒤에서 진행한다. 모델 내려받기는 몇 분이 걸리고 멈추기도 하는데, 준비를 먼저 기다리면 그동안 MORT가 브릿지를 아예 보지 못한다.",
+      "번역 요청은 페이지 안에서 프라미스 체인으로 한 건씩 처리한다. LanguageModel 세션은 요청마다 clone해서 쓰고 끝나면 버린다. 한 세션에 계속 프롬프트를 쌓으면 문맥이 넘친다. clone을 못 쓰는 환경에서는 매번 세션을 새로 만든다."
+    ],
+    "operation": ["번역 방식에서 크롬 번역기를 고르고 적용한다. FormOption은 언어와 엔진만 넘기고 창은 띄우지 않는다.", "번역을 시작하면 TranslationProcessInitializationService가 ChromeBridgeService.Prepare로 로컬 서버를 올리고 크롬 창을 띄운다.", "크롬 창은 열리자마자 스스로 붙고 모델 준비까지 시도한다. 모델이 없으면 창 안에서 받을지 물어본다.", "TransManager가 ChromeBridgeTranslateAPI.GetResultAsync를 부르고, 이건 HTTP 없이 허브를 바로 호출한다.", "페이지가 Translator 또는 LanguageModel로 번역하고 같은 id로 결과를 돌려준다.", "실패하면 사유 문자열을 그대로 번역 결과 자리에 넣어 화면에 보여 준다.", "MORT를 끄면 Form1_FormClosed에서 서버를 닫는다."],
+    "state": "크롬 창은 항상 한 개만 유지한다. 세 겹으로 막는다. 첫째, 이미 붙어 있으면 새로 띄우지 않는다. 둘째, 방금 띄웠는데 아직 안 붙었으면 12초 동안 다시 띄우지 않는다. 번역 시작과 [설정 열기]가 겹치는 구간이 실제로 있다. 셋째, 그래도 두 번째 창이 붙으면 먼저 있던 창을 'another tab connected' 사유로 끊고, 그 사유를 받은 페이지는 재접속을 멈춘 뒤 window.close()로 스스로 닫는다. --app 창에서 close()가 동작하는 것을 확인했다. 죽은 창이 화면에 남으면 사용자가 어느 창이 살아 있는지 알 수 없다. 진행 중인 요청은 ChromeBridgeHub의 id별 TaskCompletionSource로 들고 있고, 연결이 끊기면 전부 실패로 정리한다. 준비된 Translator 인스턴스와 LanguageModel 세션은 페이지 쪽에 남으므로 크롬 창을 닫으면 같이 사라진다.",
+    "failures": "크롬 창을 닫거나 다른 주소로 이동하면 번역이 멈춘다. 창을 오래 숨겨 두면 크롬이 동작을 늦춰 응답이 제한 시간을 넘길 수 있다. 아직 내려받지 않은 언어 쌍은 요청 시점에 만들 수 없어 실패한다. 모델 내려받기가 사용자 조작 직후에만 시작되기 때문이다. LLM 경로로 한국어를 뽑으면 공식 지원 언어가 아니라 품질이 보장되지 않는다. 포트가 이미 물려 있으면 서버가 뜨지 않는다.",
+    "example": "번역이 안 될 때는 번역 패널의 상태 라벨을 먼저 본다. '번역을 시작하면 연결합니다'면 서버가 아직 안 뜬 것이고, '크롬 창에서 [시작]을 누르세요'면 서버는 떴고 창이 안 붙은 것이다. 연결까지 됐는데 실패하면 크롬 창 아래쪽 로그에서 어느 경로가 실패해 어디로 넘어갔는지 본다. Translator 실패 뒤 LLM으로 넘어간 로그가 남으면 해당 언어 쌍 모델을 준비하지 않은 것이다.",
+    "files": ["MORT/Service/ChromeBridge/ChromeBridgeService.cs", "MORT/Service/ChromeBridge/ChromeBridgeServer.cs", "MORT/Service/ChromeBridge/ChromeBridgeHub.cs", "MORT/Service/ChromeBridge/ChromeBridgeLanguage.cs", "MORT/Service/ChromeBridge/ChromeBridgeHttpRequest.cs", "MORT/Service/ChromeBridge/ChromeLauncher.cs", "MORT/Service/ChromeBridge/ChromeBridgeWindow.cs", "MORT/Service/ChromeBridge/Web/bridge.html", "MORT/TransAPI/ChromeBridgeTranslateAPI.cs", "MORT/SettingManager.cs", "MORT/Manager/TransManager.cs", "MORT/FormOption.cs", "MORT/Form1.cs", "MORT/Form1Button.cs", "MORT/Form1.Designer.cs", "MORT/FormLocalize.cs", "MORT/AdvencedOptionManager.cs", "MORT/Service/TranslateTyp/TranslateTypListService.cs", "MORT/Program.cs", "docs/chrome-llm-bridge.md"]
   }
 ]

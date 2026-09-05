@@ -241,6 +241,8 @@ namespace MORT
             services.AddSingleton<CustomAPI>();
             services.AddSingleton<TranslateTypListService>();
             services.AddSingleton<CustomApiPresetService>();
+            services.AddSingleton<MORT.Service.ChromeBridge.ChromeBridgeService>();
+            services.AddSingleton<ChromeBridgeTranslateAPI>();
             services.AddSingleton<MouseFollowOcrAreaService>();
             //using System.Diagnostics 와 이름이 겹쳐서 네임스페이스를 그대로 적는다
             services.AddSingleton<Service.Debug.OcrDebugSnapshotService>();

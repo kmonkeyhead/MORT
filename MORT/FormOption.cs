@@ -874,6 +874,13 @@ namespace MORT
 
                 TransManager.Instace.InitCustomApi(url, source, target, MySettingManager.TranslateTypeSubKey);
             }
+            else if(MySettingManager.NowTransType == SettingManager.TransType.chromeBridge)
+            {
+                //여기는 설정 적용 경로다. 언어와 엔진만 넘기고 크롬 창은 띄우지 않는다.
+                //창을 띄우는 건 번역을 실제로 시작할 때(TranslationProcessInitializationService)로 미룬다.
+                TransManager.Instace.InitChromeBridge(MySettingManager.GoogleTransCode, MySettingManager.GoogleResultCode,
+                    AdvencedOptionManager.ChromeBridgeMode);
+            }
             else if(MySettingManager.NowTransType == SettingManager.TransType.deeplApi)
             {
                 string source = MySettingManager.DeepLTransCode;

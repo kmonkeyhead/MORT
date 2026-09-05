@@ -161,6 +161,10 @@ namespace MORT
             lbBasicStatus = new System.Windows.Forms.Label();
             pnCustomApi = new System.Windows.Forms.Panel();
             lbCustomApiInformation = new System.Windows.Forms.Label();
+            pnChromeBridge = new System.Windows.Forms.Panel();
+            lbChromeBridgeInformation = new System.Windows.Forms.Label();
+            lbChromeBridgeStatus = new System.Windows.Forms.Label();
+            btChromeBridgeRun = new System.Windows.Forms.Button();
             pnDeepLAPI = new System.Windows.Forms.Panel();
             tbDeeplApi = new System.Windows.Forms.TextBox();
             lbDeeplApi = new System.Windows.Forms.Label();
@@ -360,6 +364,7 @@ namespace MORT
             pnPapagoWeb.SuspendLayout();
             pnGoogleBasic.SuspendLayout();
             pnCustomApi.SuspendLayout();
+            pnChromeBridge.SuspendLayout();
             pnDeepLAPI.SuspendLayout();
             pnDeepl.SuspendLayout();
             DB_Panel.SuspendLayout();
@@ -1380,6 +1385,7 @@ namespace MORT
             pnTranslate.Controls.Add(pnPapagoWeb);
             pnTranslate.Controls.Add(pnGoogleBasic);
             pnTranslate.Controls.Add(pnCustomApi);
+            pnTranslate.Controls.Add(pnChromeBridge);
             pnTranslate.Controls.Add(pnDeepLAPI);
             pnTranslate.Controls.Add(pnDeepl);
             pnTranslate.Controls.Add(DB_Panel);
@@ -1779,7 +1785,48 @@ namespace MORT
             lbCustomApiInformation.TabIndex = 17;
             lbCustomApiInformation.Text = "커스텀 API는 고급 설정에서 설정하시면 됩니다";
             lbCustomApiInformation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
+            //
+            // pnChromeBridge
+            //
+            pnChromeBridge.Controls.Add(lbChromeBridgeInformation);
+            pnChromeBridge.Controls.Add(lbChromeBridgeStatus);
+            pnChromeBridge.Controls.Add(btChromeBridgeRun);
+            pnChromeBridge.Location = new System.Drawing.Point(7, 61);
+            pnChromeBridge.Name = "pnChromeBridge";
+            pnChromeBridge.Size = new System.Drawing.Size(483, 94);
+            pnChromeBridge.TabIndex = 56;
+            //
+            // lbChromeBridgeInformation
+            //
+            lbChromeBridgeInformation.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbChromeBridgeInformation.ForeColor = System.Drawing.Color.White;
+            lbChromeBridgeInformation.Location = new System.Drawing.Point(3, 4);
+            lbChromeBridgeInformation.Name = "lbChromeBridgeInformation";
+            lbChromeBridgeInformation.Size = new System.Drawing.Size(469, 34);
+            lbChromeBridgeInformation.TabIndex = 17;
+            lbChromeBridgeInformation.Text = "크롬 창이 열려 있어야 번역됩니다. 창이 열리면 자동으로 연결합니다";
+            lbChromeBridgeInformation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // lbChromeBridgeStatus
+            //
+            lbChromeBridgeStatus.ForeColor = System.Drawing.Color.White;
+            lbChromeBridgeStatus.Location = new System.Drawing.Point(3, 44);
+            lbChromeBridgeStatus.Name = "lbChromeBridgeStatus";
+            lbChromeBridgeStatus.Size = new System.Drawing.Size(340, 24);
+            lbChromeBridgeStatus.TabIndex = 18;
+            lbChromeBridgeStatus.Text = "상태 : 확인 전";
+            lbChromeBridgeStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // btChromeBridgeRun
+            //
+            btChromeBridgeRun.Location = new System.Drawing.Point(349, 42);
+            btChromeBridgeRun.Name = "btChromeBridgeRun";
+            btChromeBridgeRun.Size = new System.Drawing.Size(123, 28);
+            btChromeBridgeRun.TabIndex = 19;
+            btChromeBridgeRun.Text = "설정 열기";
+            btChromeBridgeRun.UseVisualStyleBackColor = true;
+            btChromeBridgeRun.Click += btChromeBridgeRun_Click;
+            //
             // pnDeepLAPI
             // 
             pnDeepLAPI.Controls.Add(tbDeeplApi);
@@ -4036,6 +4083,7 @@ namespace MORT
             pnPapagoWeb.ResumeLayout(false);
             pnGoogleBasic.ResumeLayout(false);
             pnCustomApi.ResumeLayout(false);
+            pnChromeBridge.ResumeLayout(false);
             pnDeepLAPI.ResumeLayout(false);
             pnDeepLAPI.PerformLayout();
             pnDeepl.ResumeLayout(false);
@@ -4397,6 +4445,10 @@ namespace MORT
         private System.Windows.Forms.Button btnCheckDeeplState;
         private System.Windows.Forms.Panel pnCustomApi;
         private System.Windows.Forms.Label lbCustomApiInformation;
+        private System.Windows.Forms.Panel pnChromeBridge;
+        private System.Windows.Forms.Label lbChromeBridgeInformation;
+        private System.Windows.Forms.Label lbChromeBridgeStatus;
+        private System.Windows.Forms.Button btChromeBridgeRun;
         private System.Windows.Forms.Panel pnDeepLAPI;
         private System.Windows.Forms.RadioButton rbDeepLAPIEndpointFree;
         private System.Windows.Forms.Panel pnEasyOcr;

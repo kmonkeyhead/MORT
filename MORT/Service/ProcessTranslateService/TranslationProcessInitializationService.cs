@@ -41,8 +41,36 @@ namespace MORT.Service.ProcessTranslateService
                 useGoogleOcr = true;
             }
 
+            PrepareChromeBridge();
             PrepareTranslationWindow();
             return new TranslationProcessInitializationResult(true, isOnce, useGoogleOcr, requireOriginalScreen);
+        }
+
+        /// <summary>
+        /// 크롬 창은 번역을 실제로 시작할 때만 띄운다. 설정 적용만 했는데 브라우저가 뜨면 성가시다.
+        /// 이미 창이 붙어 있으면 다시 띄우지 않는다. 창이 둘이면 서로 밀어내기 때문이다.
+        /// </summary>
+        private void PrepareChromeBridge()
+        {
+            if(_settingManager.NowTransType != TransType.chromeBridge)
+            {
+                return;
+            }
+
+            var service = Program.ServiceContainer?.GetService(typeof(ChromeBridge.ChromeBridgeService))
+                as ChromeBridge.ChromeBridgeService;
+
+            if(service == null)
+            {
+                return;
+            }
+
+            string error;
+
+            if(!service.Prepare(AdvencedOptionManager.ChromeBridgePort, AdvencedOptionManager.ChromeBridgeAutoRun, out error))
+            {
+                Util.ShowLog($"[ChromeBridge] 로컬 서버를 열지 못했습니다 : {error}");
+            }
         }
 
         private void PrepareTranslationWindow()

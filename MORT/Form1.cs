@@ -3200,6 +3200,7 @@ namespace MORT
             pnPapagoWeb.Visible = false;
             pnDeepLAPI.Visible = false;
             pnGemini.Visible = false;
+            pnChromeBridge.Visible = false;
 
             var translateType = _translateTypListService.GetTransType(_cbTranslateType.SelectedIndex);
 
@@ -3235,6 +3236,11 @@ namespace MORT
 
                 case SettingManager.TransType.customApi:
                     pnCustomApi.Visible = true;
+                    break;
+
+                case SettingManager.TransType.chromeBridge:
+                    pnChromeBridge.Visible = true;
+                    RefreshChromeBridgeStatus();
                     break;
 
                 case SettingManager.TransType.deeplApi:
@@ -3605,6 +3611,10 @@ namespace MORT
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
+            //로컬 서버는 MORT 프로세스 안에서 돌기 때문에 여기서 닫지 않으면 포트를 문 채로 남는다.
+            (Program.ServiceContainer?.GetService(typeof(Service.ChromeBridge.ChromeBridgeService))
+                as Service.ChromeBridge.ChromeBridgeService)?.Stop();
+
             _mouseFollowOcrAreaService.Dispose();
             notifyIcon1.Visible = false;
             notifyIcon1.Icon = null;
