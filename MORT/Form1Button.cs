@@ -330,6 +330,15 @@ namespace MORT
         private bool _chromeBridgeEventHooked;
 
         /// <summary>
+        /// 로컬 서버를 닫고 브릿지 창도 정리한다. 서버가 사라진 창은 아무것도 못 하고 재접속만 되풀이한다.
+        /// 종료 경로가 둘(CloseApplication / Form1_FormClosed)이라 양쪽에서 부르고, 두 번 불려도 문제없다.
+        /// </summary>
+        private void StopChromeBridge()
+        {
+            GetChromeBridgeService()?.Stop();
+        }
+
+        /// <summary>
         /// 브릿지 서버와 크롬 페이지는 따로 죽고 산다. 둘을 갈라서 보여 줘야 사용자가 무엇을 해야 하는지 안다.
         /// </summary>
         private void RefreshChromeBridgeStatus()
@@ -341,6 +350,7 @@ namespace MORT
                 //연결 변화는 서버 스레드에서 올라오므로 UI 스레드로 넘겨서 라벨을 갱신한다.
                 _chromeBridgeEventHooked = true;
                 service.ConnectionChanged += OnChromeBridgeConnectionChanged;
+                service.ModelMissing += OnChromeBridgeModelMissing;
             }
 
             if(service == null)
@@ -365,6 +375,52 @@ namespace MORT
             else
             {
                 lbChromeBridgeStatus.Text = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Status Ready");
+            }
+        }
+
+        /// <summary>
+        /// 쓸 모델이 없으면 번역을 멈추고 알린다.
+        ///
+        /// 그냥 두면 auto 모드가 조용히 LLM으로 떨어져 품질이 나쁜 결과가 계속 쌓인다.
+        /// 내려받기는 크롬 창에서 직접 눌러야 시작되므로 여기서는 그쪽을 보라고만 할 수 있다.
+        /// </summary>
+        private void OnChromeBridgeModelMissing(string detail)
+        {
+            if(IsDisposed || !IsHandleCreated)
+            {
+                return;
+            }
+
+            try
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    if(MySettingManager.NowTransType != SettingManager.TransType.chromeBridge)
+                    {
+                        return;
+                    }
+
+                    StopTrans();
+                    RefreshChromeBridgeStatus();
+
+                    string message = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Model Missing Message");
+
+                    if(!string.IsNullOrEmpty(detail))
+                    {
+                        message = detail + System.Environment.NewLine + System.Environment.NewLine + message;
+                    }
+
+                    MessageBox.Show(this, message,
+                        LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Model Missing Title"),
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                    //확인을 누르면 곧장 할 일이 있는 창으로 보낸다. 받기 버튼이 거기에만 있다.
+                    GetChromeBridgeService()?.FocusPage();
+                }));
+            }
+            catch(Exception)
+            {
+                //창이 닫히는 중이면 무시한다.
             }
         }
 

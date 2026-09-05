@@ -1807,6 +1807,10 @@ namespace MORT
         {
             StopTrans();
 
+            //로컬 서버는 MORT 프로세스 안에서 돌고 브릿지 창은 그 서버가 없으면 아무것도 못 한다.
+            //Form1_FormClosing 이 종료를 취소하고 이 경로로 오기 때문에 정리는 여기서 해야 한다.
+            StopChromeBridge();
+
             foreach (Form frm in Application.OpenForms)
             {
                 if (frm.Name == "Logo")
@@ -3611,9 +3615,9 @@ namespace MORT
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            //로컬 서버는 MORT 프로세스 안에서 돌기 때문에 여기서 닫지 않으면 포트를 문 채로 남는다.
-            (Program.ServiceContainer?.GetService(typeof(Service.ChromeBridge.ChromeBridgeService))
-                as Service.ChromeBridge.ChromeBridgeService)?.Stop();
+            //강제 종료(Program.IS_FORCE_QUITE)로 여기까지 오는 경로도 있어서 한 번 더 정리한다.
+            //이미 정리했으면 아무 일도 하지 않는다.
+            StopChromeBridge();
 
             _mouseFollowOcrAreaService.Dispose();
             notifyIcon1.Visible = false;
