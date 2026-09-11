@@ -57,63 +57,63 @@ public class TranslateTypListService
 
         _modelList.Add(new TranslateTypeModel(
                 1,
+            "TRANSLATE CHROME BRIDGE",
+            LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE CHROME BRIDGE"),
+            SettingManager.TransType.chromeBridge));
+
+        _modelList.Add(new TranslateTypeModel(
+                2,
             "TRANSLATE DB",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE DB"),
             SettingManager.TransType.db));
 
         _modelList.Add(new TranslateTypeModel(
-                2,
+                3,
             "TRANSLATE PAPAGO WEB",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE PAPAGO WEB"),
             SettingManager.TransType.papago_web));
 
         _modelList.Add(new TranslateTypeModel(
-                3,
+                4,
             "TRANSLATE NAVER",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE NAVER"),
             SettingManager.TransType.naver));
 
         _modelList.Add(new TranslateTypeModel(
-                4,
+                5,
             "TRANSLATE GOOGLE SHEET",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE GOOGLE SHEET"),
             SettingManager.TransType.google));
 
         _modelList.Add(new TranslateTypeModel(
-                5,
+                6,
             "TRANSLATE DEEPL",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE DEEPL"),
             SettingManager.TransType.deepl));
 
         _modelList.Add(new TranslateTypeModel(
-                6,
+                7,
             "TRANSLATE DEEPLAPI",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE DEEPLAPI"),
             SettingManager.TransType.deeplApi));
 
         _modelList.Add(new TranslateTypeModel(
-                7,
+                8,
             "TRANSLATE GEMINI API",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE GEMINI API"),
             SettingManager.TransType.gemini));
 
         _modelList.Add(new TranslateTypeModel(
-                8,
+                9,
             "TRANSLATE EZTRANS",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE EZTRANS"),
             SettingManager.TransType.ezTrans));
 
         _modelList.Add(new TranslateTypeModel(
-                9,
+                10,
             "TRANSLATE CUSTOM API",
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE CUSTOM API"),
             SettingManager.TransType.customApi));
-
-        _modelList.Add(new TranslateTypeModel(
-                10,
-            "TRANSLATE CHROME BRIDGE",
-            LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE CHROME BRIDGE"),
-            SettingManager.TransType.chromeBridge));
 
         InitializeCustomApi();
     }
