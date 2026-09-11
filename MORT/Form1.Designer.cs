@@ -246,19 +246,19 @@ namespace MORT
             cbTTSWaitEnd = new System.Windows.Forms.CheckBox();
             cbUseTTS = new System.Windows.Forms.CheckBox();
             label66 = new System.Windows.Forms.Label();
+            pnTransLanguage = new System.Windows.Forms.Panel();
+            lbTransLanguageInformation = new System.Windows.Forms.Label();
+            cbTransLanguageTo = new System.Windows.Forms.ComboBox();
+            lbTransLanguageTo = new System.Windows.Forms.Label();
+            lbTransLanguageArrow = new System.Windows.Forms.Label();
+            cbTransLanguageFrom = new System.Windows.Forms.ComboBox();
+            lbTransLanguage = new System.Windows.Forms.Label();
+            lbTransLanguageFrom = new System.Windows.Forms.Label();
             panel1 = new System.Windows.Forms.Panel();
             skinOverRadioButton = new System.Windows.Forms.RadioButton();
             skinLayerRadioButton = new System.Windows.Forms.RadioButton();
             lbTransformType = new System.Windows.Forms.Label();
             skinDarkRadioButton = new System.Windows.Forms.RadioButton();
-            pnTransLanguage = new System.Windows.Forms.Panel();
-            lbTransLanguage = new System.Windows.Forms.Label();
-            cbTransLanguageFrom = new System.Windows.Forms.ComboBox();
-            lbTransLanguageFrom = new System.Windows.Forms.Label();
-            lbTransLanguageArrow = new System.Windows.Forms.Label();
-            cbTransLanguageTo = new System.Windows.Forms.ComboBox();
-            lbTransLanguageTo = new System.Windows.Forms.Label();
-            lbTransLanguageInformation = new System.Windows.Forms.Label();
             tpETC = new System.Windows.Forms.TabPage();
             panel18 = new System.Windows.Forms.Panel();
             panel16 = new System.Windows.Forms.Panel();
@@ -377,8 +377,8 @@ namespace MORT
             tpTranslation.SuspendLayout();
             panel19.SuspendLayout();
             panel27.SuspendLayout();
-            panel1.SuspendLayout();
             pnTransLanguage.SuspendLayout();
+            panel1.SuspendLayout();
             tpETC.SuspendLayout();
             panel18.SuspendLayout();
             panel16.SuspendLayout();
@@ -1769,9 +1769,9 @@ namespace MORT
             lbCustomApiInformation.TabIndex = 17;
             lbCustomApiInformation.Text = "커스텀 API는 고급 설정에서 설정하시면 됩니다";
             lbCustomApiInformation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
+            // 
             // pnChromeBridge
-            //
+            // 
             pnChromeBridge.Controls.Add(lbChromeBridgeInformation);
             pnChromeBridge.Controls.Add(lbChromeBridgeStatus);
             pnChromeBridge.Controls.Add(btChromeBridgeRun);
@@ -1779,9 +1779,9 @@ namespace MORT
             pnChromeBridge.Name = "pnChromeBridge";
             pnChromeBridge.Size = new System.Drawing.Size(483, 94);
             pnChromeBridge.TabIndex = 56;
-            //
+            // 
             // lbChromeBridgeInformation
-            //
+            // 
             lbChromeBridgeInformation.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             lbChromeBridgeInformation.ForeColor = System.Drawing.Color.White;
             lbChromeBridgeInformation.Location = new System.Drawing.Point(3, 4);
@@ -1790,9 +1790,9 @@ namespace MORT
             lbChromeBridgeInformation.TabIndex = 17;
             lbChromeBridgeInformation.Text = "사용하기 위해서 크롬이 설치되어 있어야 합니다.";
             lbChromeBridgeInformation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
+            // 
             // lbChromeBridgeStatus
-            //
+            // 
             lbChromeBridgeStatus.ForeColor = System.Drawing.Color.White;
             lbChromeBridgeStatus.Location = new System.Drawing.Point(3, 44);
             lbChromeBridgeStatus.Name = "lbChromeBridgeStatus";
@@ -1800,9 +1800,9 @@ namespace MORT
             lbChromeBridgeStatus.TabIndex = 18;
             lbChromeBridgeStatus.Text = "상태 : 확인 전";
             lbChromeBridgeStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
+            // 
             // btChromeBridgeRun
-            //
+            // 
             btChromeBridgeRun.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
             btChromeBridgeRun.FlatAppearance.BorderColor = System.Drawing.Color.Gray;
             btChromeBridgeRun.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -1814,7 +1814,7 @@ namespace MORT
             btChromeBridgeRun.Text = "설정 열기";
             btChromeBridgeRun.UseVisualStyleBackColor = false;
             btChromeBridgeRun.Click += btChromeBridgeRun_Click;
-            //
+            // 
             // pnDeepLAPI
             // 
             pnDeepLAPI.Controls.Add(tbDeeplApi);
@@ -2757,107 +2757,13 @@ namespace MORT
             panel19.Name = "panel19";
             panel19.Size = new System.Drawing.Size(540, 585);
             panel19.TabIndex = 2;
-            //
-            // pnTransLanguage
-            //
-            pnTransLanguage.Controls.Add(lbTransLanguageInformation);
-            pnTransLanguage.Controls.Add(cbTransLanguageTo);
-            pnTransLanguage.Controls.Add(lbTransLanguageTo);
-            pnTransLanguage.Controls.Add(lbTransLanguageArrow);
-            pnTransLanguage.Controls.Add(cbTransLanguageFrom);
-            pnTransLanguage.Controls.Add(lbTransLanguage);
-            pnTransLanguage.Controls.Add(lbTransLanguageFrom);
-            pnTransLanguage.Location = new System.Drawing.Point(3, 58);
-            pnTransLanguage.Name = "pnTransLanguage";
-            pnTransLanguage.Size = new System.Drawing.Size(531, 137);
-            pnTransLanguage.TabIndex = 54;
-            pnTransLanguage.Paint += panealBorder_Paint;
-            //
-            // lbTransLanguage
-            //
-            lbTransLanguage.AutoSize = true;
-            lbTransLanguage.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
-            lbTransLanguage.ForeColor = System.Drawing.Color.White;
-            lbTransLanguage.Location = new System.Drawing.Point(4, 3);
-            lbTransLanguage.Name = "lbTransLanguage";
-            lbTransLanguage.Size = new System.Drawing.Size(80, 20);
-            lbTransLanguage.TabIndex = 50;
-            lbTransLanguage.Text = "번역 언어";
-            //
-            // cbTransLanguageFrom
-            //
-            cbTransLanguageFrom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cbTransLanguageFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            cbTransLanguageFrom.FormattingEnabled = true;
-            cbTransLanguageFrom.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cbTransLanguageFrom.Location = new System.Drawing.Point(21, 33);
-            cbTransLanguageFrom.Name = "cbTransLanguageFrom";
-            cbTransLanguageFrom.Size = new System.Drawing.Size(140, 25);
-            cbTransLanguageFrom.TabIndex = 51;
-            cbTransLanguageFrom.SelectedIndexChanged += cbTransLanguage_SelectedIndexChanged;
-            //
-            // lbTransLanguageFrom
-            //
-            lbTransLanguageFrom.AutoSize = true;
-            lbTransLanguageFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbTransLanguageFrom.ForeColor = System.Drawing.Color.White;
-            lbTransLanguageFrom.Location = new System.Drawing.Point(167, 36);
-            lbTransLanguageFrom.Name = "lbTransLanguageFrom";
-            lbTransLanguageFrom.Size = new System.Drawing.Size(34, 17);
-            lbTransLanguageFrom.TabIndex = 52;
-            lbTransLanguageFrom.Text = "에서";
-            //
-            // lbTransLanguageArrow
-            //
-            lbTransLanguageArrow.AutoSize = true;
-            lbTransLanguageArrow.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
-            lbTransLanguageArrow.ForeColor = System.Drawing.Color.White;
-            lbTransLanguageArrow.Location = new System.Drawing.Point(215, 34);
-            lbTransLanguageArrow.Name = "lbTransLanguageArrow";
-            lbTransLanguageArrow.Size = new System.Drawing.Size(24, 20);
-            lbTransLanguageArrow.TabIndex = 53;
-            lbTransLanguageArrow.Text = "→";
-            //
-            // cbTransLanguageTo
-            //
-            cbTransLanguageTo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cbTransLanguageTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            cbTransLanguageTo.FormattingEnabled = true;
-            cbTransLanguageTo.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cbTransLanguageTo.Location = new System.Drawing.Point(253, 33);
-            cbTransLanguageTo.Name = "cbTransLanguageTo";
-            cbTransLanguageTo.Size = new System.Drawing.Size(140, 25);
-            cbTransLanguageTo.TabIndex = 54;
-            cbTransLanguageTo.SelectedIndexChanged += cbTransLanguage_SelectedIndexChanged;
-            //
-            // lbTransLanguageTo
-            //
-            lbTransLanguageTo.AutoSize = true;
-            lbTransLanguageTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbTransLanguageTo.ForeColor = System.Drawing.Color.White;
-            lbTransLanguageTo.Location = new System.Drawing.Point(399, 36);
-            lbTransLanguageTo.Name = "lbTransLanguageTo";
-            lbTransLanguageTo.Size = new System.Drawing.Size(52, 17);
-            lbTransLanguageTo.TabIndex = 55;
-            lbTransLanguageTo.Text = "로 번역";
-            //
-            // lbTransLanguageInformation
-            //
-            lbTransLanguageInformation.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbTransLanguageInformation.ForeColor = System.Drawing.Color.White;
-            lbTransLanguageInformation.Location = new System.Drawing.Point(21, 66);
-            lbTransLanguageInformation.Name = "lbTransLanguageInformation";
-            lbTransLanguageInformation.Size = new System.Drawing.Size(489, 60);
-            lbTransLanguageInformation.TabIndex = 56;
-            lbTransLanguageInformation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            lbTransLanguageInformation.Visible = false;
-            //
+            // 
             // panel27
             // 
             panel27.Controls.Add(cbTTSWaitEnd);
             panel27.Controls.Add(cbUseTTS);
             panel27.Controls.Add(label66);
-            panel27.Location = new System.Drawing.Point(3, 201);
+            panel27.Location = new System.Drawing.Point(3, 183);
             panel27.Name = "panel27";
             panel27.Size = new System.Drawing.Size(531, 84);
             panel27.TabIndex = 54;
@@ -2899,6 +2805,100 @@ namespace MORT
             label66.Size = new System.Drawing.Size(35, 20);
             label66.TabIndex = 8;
             label66.Text = "TTS";
+            // 
+            // pnTransLanguage
+            // 
+            pnTransLanguage.Controls.Add(lbTransLanguageInformation);
+            pnTransLanguage.Controls.Add(cbTransLanguageTo);
+            pnTransLanguage.Controls.Add(lbTransLanguageTo);
+            pnTransLanguage.Controls.Add(lbTransLanguageArrow);
+            pnTransLanguage.Controls.Add(cbTransLanguageFrom);
+            pnTransLanguage.Controls.Add(lbTransLanguage);
+            pnTransLanguage.Controls.Add(lbTransLanguageFrom);
+            pnTransLanguage.Location = new System.Drawing.Point(3, 58);
+            pnTransLanguage.Name = "pnTransLanguage";
+            pnTransLanguage.Size = new System.Drawing.Size(531, 119);
+            pnTransLanguage.TabIndex = 54;
+            pnTransLanguage.Paint += panealBorder_Paint;
+            // 
+            // lbTransLanguageInformation
+            // 
+            lbTransLanguageInformation.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageInformation.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageInformation.Location = new System.Drawing.Point(21, 66);
+            lbTransLanguageInformation.Name = "lbTransLanguageInformation";
+            lbTransLanguageInformation.Size = new System.Drawing.Size(489, 42);
+            lbTransLanguageInformation.TabIndex = 56;
+            lbTransLanguageInformation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            lbTransLanguageInformation.Visible = false;
+            // 
+            // cbTransLanguageTo
+            // 
+            cbTransLanguageTo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbTransLanguageTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            cbTransLanguageTo.FormattingEnabled = true;
+            cbTransLanguageTo.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            cbTransLanguageTo.Location = new System.Drawing.Point(253, 33);
+            cbTransLanguageTo.Name = "cbTransLanguageTo";
+            cbTransLanguageTo.Size = new System.Drawing.Size(140, 25);
+            cbTransLanguageTo.TabIndex = 54;
+            cbTransLanguageTo.SelectedIndexChanged += cbTransLanguage_SelectedIndexChanged;
+            // 
+            // lbTransLanguageTo
+            // 
+            lbTransLanguageTo.AutoSize = true;
+            lbTransLanguageTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageTo.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageTo.Location = new System.Drawing.Point(399, 36);
+            lbTransLanguageTo.Name = "lbTransLanguageTo";
+            lbTransLanguageTo.Size = new System.Drawing.Size(52, 17);
+            lbTransLanguageTo.TabIndex = 55;
+            lbTransLanguageTo.Text = "로 번역";
+            // 
+            // lbTransLanguageArrow
+            // 
+            lbTransLanguageArrow.AutoSize = true;
+            lbTransLanguageArrow.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageArrow.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageArrow.Location = new System.Drawing.Point(215, 34);
+            lbTransLanguageArrow.Name = "lbTransLanguageArrow";
+            lbTransLanguageArrow.Size = new System.Drawing.Size(24, 20);
+            lbTransLanguageArrow.TabIndex = 53;
+            lbTransLanguageArrow.Text = "→";
+            // 
+            // cbTransLanguageFrom
+            // 
+            cbTransLanguageFrom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbTransLanguageFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            cbTransLanguageFrom.FormattingEnabled = true;
+            cbTransLanguageFrom.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            cbTransLanguageFrom.Location = new System.Drawing.Point(21, 33);
+            cbTransLanguageFrom.Name = "cbTransLanguageFrom";
+            cbTransLanguageFrom.Size = new System.Drawing.Size(140, 25);
+            cbTransLanguageFrom.TabIndex = 51;
+            cbTransLanguageFrom.SelectedIndexChanged += cbTransLanguage_SelectedIndexChanged;
+            // 
+            // lbTransLanguage
+            // 
+            lbTransLanguage.AutoSize = true;
+            lbTransLanguage.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
+            lbTransLanguage.ForeColor = System.Drawing.Color.White;
+            lbTransLanguage.Location = new System.Drawing.Point(4, 3);
+            lbTransLanguage.Name = "lbTransLanguage";
+            lbTransLanguage.Size = new System.Drawing.Size(74, 20);
+            lbTransLanguage.TabIndex = 50;
+            lbTransLanguage.Text = "번역 언어";
+            // 
+            // lbTransLanguageFrom
+            // 
+            lbTransLanguageFrom.AutoSize = true;
+            lbTransLanguageFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageFrom.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageFrom.Location = new System.Drawing.Point(167, 36);
+            lbTransLanguageFrom.Name = "lbTransLanguageFrom";
+            lbTransLanguageFrom.Size = new System.Drawing.Size(34, 17);
+            lbTransLanguageFrom.TabIndex = 52;
+            lbTransLanguageFrom.Text = "에서";
             // 
             // panel1
             // 
@@ -3672,35 +3672,35 @@ namespace MORT
             plDebugOn.Name = "plDebugOn";
             plDebugOn.Size = new System.Drawing.Size(507, 512);
             plDebugOn.TabIndex = 56;
-            //
+            // 
             // cbDisplayLowQuality
-            //
+            // 
             cbDisplayLowQuality.AutoSize = true;
             cbDisplayLowQuality.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             cbDisplayLowQuality.ForeColor = System.Drawing.Color.White;
             cbDisplayLowQuality.Location = new System.Drawing.Point(14, 267);
             cbDisplayLowQuality.Name = "cbDisplayLowQuality";
-            cbDisplayLowQuality.Size = new System.Drawing.Size(222, 21);
+            cbDisplayLowQuality.Size = new System.Drawing.Size(208, 21);
             cbDisplayLowQuality.TabIndex = 30;
             cbDisplayLowQuality.Text = "번역 결과에 [저품질] 표시하기";
             cbDisplayLowQuality.UseVisualStyleBackColor = true;
             cbDisplayLowQuality.CheckedChanged += cbDisplayLowQuality_CheckedChanged;
-            //
+            // 
             // cbSaveAnalysisResult
-            //
+            // 
             cbSaveAnalysisResult.AutoSize = true;
             cbSaveAnalysisResult.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             cbSaveAnalysisResult.ForeColor = System.Drawing.Color.White;
             cbSaveAnalysisResult.Location = new System.Drawing.Point(14, 240);
             cbSaveAnalysisResult.Name = "cbSaveAnalysisResult";
-            cbSaveAnalysisResult.Size = new System.Drawing.Size(383, 21);
+            cbSaveAnalysisResult.Size = new System.Drawing.Size(397, 21);
             cbSaveAnalysisResult.TabIndex = 29;
             cbSaveAnalysisResult.Text = "이미지 인식 결과 저장 - UserData/Debug/OcrAnalysis/*.json";
             cbSaveAnalysisResult.UseVisualStyleBackColor = true;
             cbSaveAnalysisResult.CheckedChanged += cbSaveAnalysisResult_CheckedChanged;
-            //
+            // 
             // cbShowOverlayWordArea
-            //
+            // 
             cbShowOverlayWordArea.AutoSize = true;
             cbShowOverlayWordArea.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             cbShowOverlayWordArea.ForeColor = System.Drawing.Color.White;
@@ -3946,10 +3946,10 @@ namespace MORT
             panel19.ResumeLayout(false);
             panel27.ResumeLayout(false);
             panel27.PerformLayout();
-            panel1.ResumeLayout(false);
-            panel1.PerformLayout();
             pnTransLanguage.ResumeLayout(false);
             pnTransLanguage.PerformLayout();
+            panel1.ResumeLayout(false);
+            panel1.PerformLayout();
             tpETC.ResumeLayout(false);
             panel18.ResumeLayout(false);
             panel16.ResumeLayout(false);
