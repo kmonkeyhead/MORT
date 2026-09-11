@@ -37,6 +37,9 @@ namespace MORT
             lbReProcessDic = new System.Windows.Forms.Label();
             udReProcessDicCount = new System.Windows.Forms.NumericUpDown();
             TransTab = new System.Windows.Forms.TabPage();
+            gbChromeBridge = new System.Windows.Forms.GroupBox();
+            cbChromeBridgeEngine = new System.Windows.Forms.ComboBox();
+            lbChromeBridgeEngine = new System.Windows.Forms.Label();
             gbGemini = new System.Windows.Forms.GroupBox();
             _gbGeminiThinking = new System.Windows.Forms.GroupBox();
             _rbGeminiPresetCustom = new System.Windows.Forms.RadioButton();
@@ -121,9 +124,9 @@ namespace MORT
             cbAutoFontColor = new System.Windows.Forms.CheckBox();
             cbAutoBackgroundColor = new System.Windows.Forms.CheckBox();
             cbOverlayAutoColor = new System.Windows.Forms.CheckBox();
-            cbOverlayKeepSourceDirection = new System.Windows.Forms.CheckBox();
-            cbOverlayUseFontOutline = new System.Windows.Forms.CheckBox();
             cbOverlayUseBackgroundAlpha = new System.Windows.Forms.CheckBox();
+            cbOverlayUseFontOutline = new System.Windows.Forms.CheckBox();
+            cbOverlayKeepSourceDirection = new System.Windows.Forms.CheckBox();
             cbOverlayAutoMerge = new System.Windows.Forms.CheckBox();
             lbOverlaySnapShotRemainTime = new System.Windows.Forms.Label();
             udSnapShotRemainTime = new System.Windows.Forms.NumericUpDown();
@@ -193,6 +196,7 @@ namespace MORT
             gbDic.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)udReProcessDicCount).BeginInit();
             TransTab.SuspendLayout();
+            gbChromeBridge.SuspendLayout();
             gbGemini.SuspendLayout();
             _gbGeminiThinking.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)_geminiTokenLimit).BeginInit();
@@ -273,11 +277,11 @@ namespace MORT
             // 
             DicTab.AutoScroll = true;
             DicTab.Controls.Add(gbDic);
-            DicTab.Location = new System.Drawing.Point(4, 64);
+            DicTab.Location = new System.Drawing.Point(4, 34);
             DicTab.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             DicTab.Name = "DicTab";
             DicTab.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            DicTab.Size = new System.Drawing.Size(1099, 812);
+            DicTab.Size = new System.Drawing.Size(1099, 842);
             DicTab.TabIndex = 19;
             DicTab.Text = "교정 사전";
             DicTab.UseVisualStyleBackColor = true;
@@ -332,19 +336,55 @@ namespace MORT
             // TransTab
             // 
             TransTab.AutoScroll = true;
+            TransTab.Controls.Add(gbChromeBridge);
             TransTab.Controls.Add(gbGemini);
             TransTab.Controls.Add(gbCustomApi);
             TransTab.Controls.Add(gbDeepL);
             TransTab.Controls.Add(gbClipboard);
             TransTab.Controls.Add(gbGoogleTrans);
-            TransTab.Location = new System.Drawing.Point(4, 64);
+            TransTab.Location = new System.Drawing.Point(4, 34);
             TransTab.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             TransTab.Name = "TransTab";
             TransTab.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            TransTab.Size = new System.Drawing.Size(1099, 812);
+            TransTab.Size = new System.Drawing.Size(1099, 842);
             TransTab.TabIndex = 18;
             TransTab.Text = "번역 설정";
             TransTab.UseVisualStyleBackColor = true;
+            // 
+            // gbChromeBridge
+            // 
+            gbChromeBridge.Controls.Add(cbChromeBridgeEngine);
+            gbChromeBridge.Controls.Add(lbChromeBridgeEngine);
+            gbChromeBridge.Location = new System.Drawing.Point(29, 2780);
+            gbChromeBridge.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            gbChromeBridge.Name = "gbChromeBridge";
+            gbChromeBridge.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            gbChromeBridge.Size = new System.Drawing.Size(1016, 175);
+            gbChromeBridge.TabIndex = 73;
+            gbChromeBridge.TabStop = false;
+            gbChromeBridge.Text = "크롬 로컬 번역기";
+            // 
+            // cbChromeBridgeEngine
+            // 
+            cbChromeBridgeEngine.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbChromeBridgeEngine.FormattingEnabled = true;
+            cbChromeBridgeEngine.Items.AddRange(new object[] { "Adv Chrome Bridge Engine Auto", "Adv Chrome Bridge Engine Llm", "Adv Chrome Bridge Engine Translator" });
+            cbChromeBridgeEngine.Location = new System.Drawing.Point(184, 48);
+            cbChromeBridgeEngine.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            cbChromeBridgeEngine.Name = "cbChromeBridgeEngine";
+            cbChromeBridgeEngine.Size = new System.Drawing.Size(433, 33);
+            cbChromeBridgeEngine.TabIndex = 10;
+            // 
+            // lbChromeBridgeEngine
+            // 
+            lbChromeBridgeEngine.AutoSize = true;
+            lbChromeBridgeEngine.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            lbChromeBridgeEngine.Location = new System.Drawing.Point(17, 53);
+            lbChromeBridgeEngine.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lbChromeBridgeEngine.Name = "lbChromeBridgeEngine";
+            lbChromeBridgeEngine.Size = new System.Drawing.Size(126, 25);
+            lbChromeBridgeEngine.TabIndex = 9;
+            lbChromeBridgeEngine.Text = "선호하는 엔진";
             // 
             // gbGemini
             // 
@@ -352,11 +392,11 @@ namespace MORT
             gbGemini.Controls.Add(gbGeminiCommand);
             gbGemini.Controls.Add(tbGeminiModelName);
             gbGemini.Controls.Add(lbGeminiCustomModel);
-            gbGemini.Location = new System.Drawing.Point(29, 1892);
+            gbGemini.Location = new System.Drawing.Point(29, 1679);
             gbGemini.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbGemini.Name = "gbGemini";
             gbGemini.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            gbGemini.Size = new System.Drawing.Size(1016, 1302);
+            gbGemini.Size = new System.Drawing.Size(1016, 1091);
             gbGemini.TabIndex = 72;
             gbGemini.TabStop = false;
             gbGemini.Text = "Gemini API";
@@ -621,7 +661,7 @@ namespace MORT
             gbCustomApi.Controls.Add(gbCustomPreset);
             gbCustomApi.Controls.Add(gbCustomApiCode);
             gbCustomApi.Controls.Add(cbCustomApiLanguageCode);
-            gbCustomApi.Location = new System.Drawing.Point(29, 855);
+            gbCustomApi.Location = new System.Drawing.Point(29, 642);
             gbCustomApi.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbCustomApi.Name = "gbCustomApi";
             gbCustomApi.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -852,11 +892,11 @@ namespace MORT
             // gbDeepL
             // 
             gbDeepL.Controls.Add(cbDeeplAltOption);
-            gbDeepL.Location = new System.Drawing.Point(29, 590);
+            gbDeepL.Location = new System.Drawing.Point(29, 489);
             gbDeepL.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbDeepL.Name = "gbDeepL";
             gbDeepL.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            gbDeepL.Size = new System.Drawing.Size(1016, 255);
+            gbDeepL.Size = new System.Drawing.Size(1016, 143);
             gbDeepL.TabIndex = 70;
             gbDeepL.TabStop = false;
             gbDeepL.Text = "DeepL 번역";
@@ -878,7 +918,7 @@ namespace MORT
             gbClipboard.Controls.Add(cbShowProcessClipboard);
             gbClipboard.Controls.Add(cbIsShowClipboardOriginal);
             gbClipboard.Controls.Add(cbIsUseClipboardTrans);
-            gbClipboard.Location = new System.Drawing.Point(29, 315);
+            gbClipboard.Location = new System.Drawing.Point(29, 214);
             gbClipboard.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbClipboard.Name = "gbClipboard";
             gbClipboard.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -930,7 +970,7 @@ namespace MORT
             gbGoogleTrans.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbGoogleTrans.Name = "gbGoogleTrans";
             gbGoogleTrans.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            gbGoogleTrans.Size = new System.Drawing.Size(1016, 255);
+            gbGoogleTrans.Size = new System.Drawing.Size(1016, 154);
             gbGoogleTrans.TabIndex = 68;
             gbGoogleTrans.TabStop = false;
             gbGoogleTrans.Text = "구글 번역 (기본 번역기, 구글 시트 번역기)";
@@ -951,11 +991,11 @@ namespace MORT
             // 
             TransZipTab.AutoScroll = true;
             TransZipTab.Controls.Add(gbTranslationZip);
-            TransZipTab.Location = new System.Drawing.Point(4, 64);
+            TransZipTab.Location = new System.Drawing.Point(4, 34);
             TransZipTab.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             TransZipTab.Name = "TransZipTab";
             TransZipTab.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            TransZipTab.Size = new System.Drawing.Size(1099, 812);
+            TransZipTab.Size = new System.Drawing.Size(1099, 842);
             TransZipTab.TabIndex = 17;
             TransZipTab.Text = "번역집";
             TransZipTab.UseVisualStyleBackColor = true;
@@ -1370,42 +1410,42 @@ namespace MORT
             cbOverlayAutoColor.Text = "배경, 폰트 자동색 사용";
             cbOverlayAutoColor.UseVisualStyleBackColor = true;
             cbOverlayAutoColor.CheckedChanged += cbOverlayAutoColor_CheckedChanged;
-            //
+            // 
             // cbOverlayUseBackgroundAlpha
-            //
+            // 
             cbOverlayUseBackgroundAlpha.AutoSize = true;
             cbOverlayUseBackgroundAlpha.Font = new System.Drawing.Font("맑은 고딕", 9F);
             cbOverlayUseBackgroundAlpha.Location = new System.Drawing.Point(500, 377);
             cbOverlayUseBackgroundAlpha.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             cbOverlayUseBackgroundAlpha.Name = "cbOverlayUseBackgroundAlpha";
-            cbOverlayUseBackgroundAlpha.Size = new System.Drawing.Size(242, 29);
+            cbOverlayUseBackgroundAlpha.Size = new System.Drawing.Size(230, 29);
             cbOverlayUseBackgroundAlpha.TabIndex = 14;
             cbOverlayUseBackgroundAlpha.Text = "백그라운드 알파값 사용";
             cbOverlayUseBackgroundAlpha.UseVisualStyleBackColor = true;
-            //
-            // cbOverlayKeepSourceDirection
-            //
-            cbOverlayKeepSourceDirection.AutoSize = true;
-            cbOverlayKeepSourceDirection.Font = new System.Drawing.Font("\ub9d1\uc740 \uace0\ub515", 9F);
-            cbOverlayKeepSourceDirection.Location = new System.Drawing.Point(19, 336);
-            cbOverlayKeepSourceDirection.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            cbOverlayKeepSourceDirection.Name = "cbOverlayKeepSourceDirection";
-            cbOverlayKeepSourceDirection.Size = new System.Drawing.Size(452, 29);
-            cbOverlayKeepSourceDirection.TabIndex = 12;
-            cbOverlayKeepSourceDirection.Text = "\uc6d0\ubb38 \ubc29\ud5a5 \uc720\uc9c0 (\uae30\ubcf8: \ubc88\uc5ed\ubb38 \uac00\ub85c\uc4f0\uae30)";
-            cbOverlayKeepSourceDirection.UseVisualStyleBackColor = true;
-            //
+            // 
             // cbOverlayUseFontOutline
-            //
+            // 
             cbOverlayUseFontOutline.AutoSize = true;
             cbOverlayUseFontOutline.Font = new System.Drawing.Font("맑은 고딕", 9F);
             cbOverlayUseFontOutline.Location = new System.Drawing.Point(500, 336);
             cbOverlayUseFontOutline.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             cbOverlayUseFontOutline.Name = "cbOverlayUseFontOutline";
-            cbOverlayUseFontOutline.Size = new System.Drawing.Size(198, 29);
+            cbOverlayUseFontOutline.Size = new System.Drawing.Size(176, 29);
             cbOverlayUseFontOutline.TabIndex = 13;
             cbOverlayUseFontOutline.Text = "폰트 외곽선 사용";
             cbOverlayUseFontOutline.UseVisualStyleBackColor = true;
+            // 
+            // cbOverlayKeepSourceDirection
+            // 
+            cbOverlayKeepSourceDirection.AutoSize = true;
+            cbOverlayKeepSourceDirection.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            cbOverlayKeepSourceDirection.Location = new System.Drawing.Point(19, 336);
+            cbOverlayKeepSourceDirection.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            cbOverlayKeepSourceDirection.Name = "cbOverlayKeepSourceDirection";
+            cbOverlayKeepSourceDirection.Size = new System.Drawing.Size(352, 29);
+            cbOverlayKeepSourceDirection.TabIndex = 12;
+            cbOverlayKeepSourceDirection.Text = "원문 방향 유지 (기본: 번역문 가로쓰기)";
+            cbOverlayKeepSourceDirection.UseVisualStyleBackColor = true;
             // 
             // cbOverlayAutoMerge
             // 
@@ -1874,11 +1914,11 @@ namespace MORT
             HotKeyTab.Controls.Add(gbHotKeyTrans);
             HotKeyTab.Controls.Add(gbHotKeyTransform);
             HotKeyTab.Controls.Add(gbHotKeySetting);
-            HotKeyTab.Location = new System.Drawing.Point(4, 64);
+            HotKeyTab.Location = new System.Drawing.Point(4, 34);
             HotKeyTab.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             HotKeyTab.Name = "HotKeyTab";
             HotKeyTab.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            HotKeyTab.Size = new System.Drawing.Size(1099, 812);
+            HotKeyTab.Size = new System.Drawing.Size(1099, 842);
             HotKeyTab.TabIndex = 22;
             HotKeyTab.Text = "고급 단축키";
             HotKeyTab.UseVisualStyleBackColor = true;
@@ -2029,11 +2069,11 @@ namespace MORT
             OcrTab.AutoScroll = true;
             OcrTab.Controls.Add(gbClipboardSave);
             OcrTab.Controls.Add(gbGoogleOcr);
-            OcrTab.Location = new System.Drawing.Point(4, 64);
+            OcrTab.Location = new System.Drawing.Point(4, 34);
             OcrTab.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             OcrTab.Name = "OcrTab";
             OcrTab.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            OcrTab.Size = new System.Drawing.Size(1099, 812);
+            OcrTab.Size = new System.Drawing.Size(1099, 842);
             OcrTab.TabIndex = 21;
             OcrTab.Text = "OCR 설정";
             OcrTab.UseVisualStyleBackColor = true;
@@ -2182,6 +2222,8 @@ namespace MORT
             gbDic.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)udReProcessDicCount).EndInit();
             TransTab.ResumeLayout(false);
+            gbChromeBridge.ResumeLayout(false);
+            gbChromeBridge.PerformLayout();
             gbGemini.ResumeLayout(false);
             gbGemini.PerformLayout();
             _gbGeminiThinking.ResumeLayout(false);
@@ -2311,6 +2353,9 @@ namespace MORT
         private System.Windows.Forms.CheckBox cbEnableBorder;
         private System.Windows.Forms.GroupBox gbDeepL;
         private System.Windows.Forms.CheckBox cbDeeplAltOption;
+        private System.Windows.Forms.GroupBox gbChromeBridge;
+        private System.Windows.Forms.ComboBox cbChromeBridgeEngine;
+        private System.Windows.Forms.Label lbChromeBridgeEngine;
         private System.Windows.Forms.GroupBox gbCustomApi;
         private System.Windows.Forms.CheckBox cbCustomApiLanguageCode;
         private System.Windows.Forms.GroupBox gbCustomApiCode;

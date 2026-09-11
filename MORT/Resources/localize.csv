@@ -91,6 +91,7 @@ Guaaaahhhhhh",Test
 ,TRANSLATE CUSTOM API,커스텀 API,Custom API,カスタムAPI,自定义API,API Kustom,Пользовательский API,API personalizada,Користувацьке API,Özel API
 ,TRANSLATE DEEPLAPI,DeepL API,DeepL API,DeepL API,DeepL API,DeepL API,DeepL API,DeepL API,DeepL API,DeepL API
 ,TRANSLATE GEMINI API,Gemini API,Gemini API,Gemini API,Gemini API,Gemini API,Gemini API,Gemini API,Gemini API,Gemini API
+,TRANSLATE CHROME BRIDGE,크롬 로컬 번역기,Chrome local translator,Chromeローカル翻訳機,Chrome 本地翻译器,Penerjemah lokal Chrome,Локальный переводчик Chrome,Tradutor local do Chrome,Локальний перекладач Chrome,Chrome Yerel Çevirmeni
 ,Basic Translate Info,"구글 기본 번역기의 고품질 번역은 시간당 100회까지만 적용되며
 초과시 낮은 품질로 번역됩니다.",High quality translations of Google's default translators are only applied up to 100 times per hour and translated into low quality when exceeded.,"Googleのデフォルト翻訳者の高品質の翻訳は、1時間あたり最大100回のみ適用されます。
 超えた場合、低品質に翻訳されます。",Google的默认翻译器的高质量翻译每小时只能使用100次，在超出时将转换为低质量翻译。,"Terjemahan berkualitas tinggi dari penerjemah default Google hanya diterapkan hingga 100 kali per jam.
@@ -1164,3 +1165,27 @@ Você gostaria de ir para a página de download?","Не вдалося онов�
 ,TOOLTIP_HSV,색 영역을 이용해 추출한 문장의 폰트색을 지정합니다.,Specify the font color of the extracted text using the color area.,色の領域を使用して、抽出された文のフォント色を指定します。,使用颜色区域指定提取句子的字体颜色。,Tentukan warna font dari kalimat yang diekstraksi menggunakan area warna.,"Укажите цвет шрифта извлеченного предложения, используя область цвета.",Especifique a cor da fonte da frase extraída usando a área de cores.,Вкажіть колір шрифту витягнутого речення за допомогою кольорової області.,Çıkarılan metnin yazı tipi rengini renk alanını kullanarak belirtin.
 ,ShowColorPickResultNullTarget,최소 하나 이상의 OCR 영역이 필요합니다,At least one OCR area is required.,少なくとも1つのOCRエリアが必要です,至少需要一个OCR区域,Setidaknya satu area OCR diperlukan,Требуется как минимум одна зона OCR,Pelo menos uma área de OCR é necessária,Принаймні одна область OCR потрібна,En az bir OCR alanı gereklidir.
 ,Updater HashMismatch,해쉬 검사중,Checking Hash,ハッシュ確認中,正在 проверять хэш (正在校验哈希),Memeriksa Hash,Проверка хэша,Verificando hash,Перевірка хешу,Hash Kontrol Ediliyor
+,Chrome Bridge Information,사용하기 위해서 크롬이 설치되어 있어야 합니다.,Chrome must be installed to use this.,使用するにはChromeがインストールされている必要があります。,使用前需要安装 Chrome。,Chrome harus terpasang untuk menggunakan fitur ini.,Для использования должен быть установлен Chrome.,O Chrome precisa estar instalado para usar isto.,Для використання потрібно встановити Chrome.,Kullanmak için Chrome yüklü olmalıdır.
+,Chrome Bridge Run,설정 열기,Open settings,設定を開く,打开设置,Buka pengaturan,Открыть настройки,Abrir configurações,Відкрити налаштування,Ayarları aç
+,Chrome Bridge Status Down,상태 : 번역을 시작하면 연결합니다,Status: Connects when translation starts,状態 : 翻訳を開始すると接続します,状态：开始翻译后连接,Status: Terhubung saat terjemahan dimulai,Состояние: подключится при запуске перевода,Estado: conecta ao iniciar a tradução,Стан: підключиться після початку перекладу,Durum: Çeviri başlayınca bağlanır
+,Chrome Bridge Status Wait Page,상태 : 초기화 대기중,Status: Waiting for initialization,状態 : 初期化待ち,状态：等待初始化,Status: Menunggu inisialisasi,Состояние: ожидание инициализации,Estado: aguardando inicialização,Стан: очікування ініціалізації,Durum: Başlatma bekleniyor
+,Chrome Bridge Status Need Model,상태 : 모델이 없습니다 - 크롬 창에서 받기를 눌러 주세요,Status: No model - press download in the Chrome window,状態 : モデルがありません - Chromeのウィンドウでダウンロードを押してください,状态：没有模型 - 请在 Chrome 窗口中点击下载,Status: Model tidak ada - tekan unduh di jendela Chrome,Состояние: модели нет - нажмите загрузку в окне Chrome,Estado: sem modelo - clique em baixar na janela do Chrome,Стан: моделі немає - натисніть завантаження у вікні Chrome,Durum: Model yok - Chrome penceresinde indirmeye basın
+,Chrome Bridge Status Ready,상태 : 브릿지 활성화 됨,Status: Bridge active,状態 : ブリッジ有効,状态：桥接已激活,Status: Bridge aktif,Состояние: мост активен,Estado: ponte ativa,Стан: міст активний,Durum: Köprü etkin
+,Chrome Bridge Model Missing Title,크롬 로컬 번역기 - 모델 없음,Chrome local translator - No model,Chromeローカル翻訳機 - モデルなし,Chrome 本地翻译器 - 没有模型,Penerjemah lokal Chrome - Tidak ada model,Локальный переводчик Chrome - нет модели,Tradutor local do Chrome - sem modelo,Локальний перекладач Chrome - немає моделі,Chrome Yerel Çevirmeni - Model yok
+,Trans Language Setting,번역 언어,Translation language,翻訳言語,翻译语言,Bahasa terjemahan,Язык перевода,Idioma da tradução,Мова перекладу,Çeviri dili
+,Trans Language Not Support,지금 번역기는 {0} 를 지원하지 않습니다. 다른 언어나 다른 번역기를 골라 주세요,The current translator does not support {0}. Choose another language or another translator.,今の翻訳機は {0} に対応していません。別の言語か別の翻訳機を選んでください。,当前翻译器不支持 {0}。请选择其他语言或其他翻译器。,Penerjemah saat ini tidak mendukung {0}. Pilih bahasa lain atau penerjemah lain.,Текущий переводчик не поддерживает {0}. Выберите другой язык или другой переводчик.,O tradutor atual não suporta {0}. Escolha outro idioma ou outro tradutor.,Поточний перекладач не підтримує {0}. Виберіть іншу мову або інший перекладач.,Şu anki çevirmen {0} dilini desteklemiyor. Başka bir dil veya başka bir çevirmen seçin.
+,Chrome Bridge Model Missing Message,"해당 번역 모델 다운로드가 필요합니다.
+브릿지에서 받아주시기 바랍니다.","The translation model needs to be downloaded.
+Please download it in the bridge window.","該当の翻訳モデルのダウンロードが必要です。
+ブリッジのウィンドウでダウンロードしてください。","需要下载相应的翻译模型。
+请在桥接窗口中下载。","Model terjemahan yang sesuai perlu diunduh.
+Silakan unduh di jendela bridge.","Нужно загрузить соответствующую модель перевода.
+Загрузите её в окне моста.","É necessário baixar o modelo de tradução correspondente.
+Baixe-o na janela da ponte.","Потрібно завантажити відповідну модель перекладу.
+Завантажте її у вікні моста.","İlgili çeviri modelinin indirilmesi gerekiyor.
+Köprü penceresinden indirin."
+,Adv Chrome Bridge,크롬 로컬 번역기,Chrome local translator,Chromeローカル翻訳機,Chrome 本地翻译器,Penerjemah lokal Chrome,Локальный переводчик Chrome,Tradutor local do Chrome,Локальний перекладач Chrome,Chrome Yerel Çevirmeni
+,Adv Chrome Bridge Engine,선호하는 엔진,Preferred engine,優先するエンジン,首选引擎,Mesin pilihan,Предпочитаемый движок,Motor preferido,Бажаний рушій,Tercih edilen motor
+,Adv Chrome Bridge Engine Auto,자동,Auto,自動,自动,Otomatis,Авто,Automático,Авто,Otomatik
+,Adv Chrome Bridge Engine Llm,LLM,LLM,LLM,LLM,LLM,LLM,LLM,LLM,LLM
+,Adv Chrome Bridge Engine Translator,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API

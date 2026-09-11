@@ -51,8 +51,15 @@ namespace MORT.TransAPI
         /// 그래서 이어 붙인 채로 넘기지 않고 여기서 토큰으로 쪼개 한 덩이씩 번역한 뒤 같은 모양으로 다시 잇는다.
         /// 덩이마다 왕복이 생기지만 영역이 정확히 나뉘고, 덩이별로 번역해서 결과도 서로 안 섞인다.
         /// </summary>
+        /// <summary>창이 닫혀 있어도 번역이 되도록 다시 띄우고 기다린다. 크롬 실행과 연결에 몇 초가 걸린다.</summary>
+        private const int EnsurePageSeconds = 12;
+
         public async Task<string> GetResultAsync(string original, CancellationToken token)
         {
+            //사용자가 브릿지 창을 닫았어도 번역기를 크롬으로 골라 둔 이상 번역은 되어야 한다.
+            //창은 뜨자마자 최소화되므로 게임 위로 올라오지 않는다.
+            await _service.EnsurePageAsync(EnsurePageSeconds, token);
+
             string splitToken = Util.GetSpliteToken(SettingManager.TransType.chromeBridge);
 
             if (string.IsNullOrEmpty(original) || !original.Contains(splitToken))

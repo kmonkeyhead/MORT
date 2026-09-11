@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -66,6 +67,10 @@ namespace MORT.Service.ChromeBridge
         private long _nextId;
         private string _pageStatus = "";
 
+        //창이 닫힌 채로 번역이 돌면 OCR 회차마다 같은 실패가 난다. 그걸 전부 적으면 로그가 그 말로만 찬다.
+        //끊긴 뒤 첫 번째 요청에만 남기고, 다시 붙으면 이 표시를 푼다.
+        private int _loggedDisconnected;
+
         //MORT에 설정된 번역 언어. 페이지가 붙을 때와 설정이 바뀔 때 알려 준다.
         //이걸 안 보내면 페이지는 첫 번역이 올 때까지 어떤 언어 쌍을 쓸지 몰라서
         //모델 준비도 상태 표시도 엉뚱한 쌍(시험 칸 기본값)을 기준으로 하게 된다.
@@ -107,6 +112,53 @@ namespace MORT.Service.ChromeBridge
             _configMode = mode ?? "";
 
             _ = SendConfigAsync();
+        }
+
+        /// <summary>
+        /// 크롬이 받아 둔 모델 목록을 페이지에 보낸다. 페이지는 파일을 볼 수 없어서 MORT가 대신 읽어 준다.
+        /// 디스크를 훑으므로 붙을 때와 사용자가 새로 고칠 때만 보낸다.
+        /// </summary>
+        public async Task SendModelsAsync()
+        {
+            WebSocket? socket = _socket;
+
+            if (socket == null || socket.State != WebSocketState.Open)
+            {
+                return;
+            }
+
+            try
+            {
+                ChromeModelSnapshot snapshot = await Task.Run(() => ChromeModelInfo.Read()).ConfigureAwait(false);
+
+                string payload = JsonSerializer.Serialize(new
+                {
+                    type = "models",
+                    llm = snapshot.Llm == null ? null : new
+                    {
+                        name = snapshot.Llm.Name,
+                        version = snapshot.Llm.Version,
+                        size = ChromeModelInfo.ToSizeText(snapshot.Llm.Bytes),
+                        //LLM 모델이 실제로 어디 있는지. 페이지는 웹페이지라 경로를 알 길이 없고,
+                        //지우려면 폴더를 찾아가야 하는데 크롬 설정에는 그 위치가 안 적혀 있다.
+                        path = snapshot.Llm.Path,
+                    },
+                    packs = snapshot.Packs.Select(p => new
+                    {
+                        name = p.Name,
+                        version = p.Version,
+                        size = ChromeModelInfo.ToSizeText(p.Bytes),
+                        path = p.Path,
+                    }).ToList(),
+                    packRoot = snapshot.PackRoot,
+                }, _jsonOptions);
+
+                await SendAsync(socket, payload, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Util.ShowLog($"[ChromeBridge] 모델 목록을 보내지 못했습니다 : {ex.Message}");
+            }
         }
 
         private async Task SendConfigAsync()
@@ -171,11 +223,13 @@ namespace MORT.Service.ChromeBridge
             }
 
             _pageStatus = "connected";
+            Interlocked.Exchange(ref _loggedDisconnected, 0);
             Util.ShowLog("[ChromeBridge] 브릿지 페이지가 연결되었습니다.");
             RaiseConnectionChanged();
 
             //붙자마자 지금 설정을 알려 준다. 첫 번역을 기다리지 않고 바로 맞는 언어 쌍을 쓰게 한다.
             await SendConfigAsync().ConfigureAwait(false);
+            await SendModelsAsync().ConfigureAwait(false);
 
             try
             {
@@ -216,6 +270,12 @@ namespace MORT.Service.ChromeBridge
 
             if (socket == null || socket.State != WebSocketState.Open)
             {
+                if (Interlocked.Exchange(ref _loggedDisconnected, 1) == 0)
+                {
+                    Util.ShowLog("[ChromeBridge] 창이 연결되어 있지 않아 번역 요청을 처리하지 못했습니다."
+                        + " 번역 설정의 [설정 열기]로 창을 여세요.");
+                }
+
                 return ChromeBridgeResult.Failure("크롬 브릿지 창이 연결되어 있지 않습니다. 번역 설정의 [설정 열기]로 창을 여세요.");
             }
 
@@ -248,6 +308,10 @@ namespace MORT.Service.ChromeBridge
 
                     if (finished != completion.Task)
                     {
+                        //제한 시간을 넘긴 건 화면에만 뜨고 로그에는 안 남았다. 나중에 왜 끊겼는지 볼 수가 없다.
+                        Util.ShowLog($"[ChromeBridge] 번역 응답 없음 : {source} → {target} / {mode} / {text.Length}자 "
+                            + $"/ {timeoutSeconds.ToString(CultureInfo.InvariantCulture)}초 초과");
+
                         return ChromeBridgeResult.Failure(
                             $"크롬 브릿지가 {timeoutSeconds.ToString(CultureInfo.InvariantCulture)}초 안에 응답하지 않았습니다. 모델을 내려받는 중이거나 창이 절전 상태일 수 있습니다.");
                     }
@@ -336,6 +400,13 @@ namespace MORT.Service.ChromeBridge
                             break;
                         }
 
+                        case "refresh-models":
+                        {
+                            //모델을 받고 나면 목록이 달라진다. 페이지가 요청할 때 다시 읽어 보낸다.
+                            _ = SendModelsAsync();
+                            break;
+                        }
+
                         case "result":
                         {
                             Complete(GetInt64(root, "id"),
@@ -350,6 +421,7 @@ namespace MORT.Service.ChromeBridge
 
                             if (id > 0)
                             {
+                                //로그는 페이지가 언어 쌍까지 붙여 log 메시지로 따로 보낸다. 여기서 또 적으면 두 줄이 된다.
                                 Complete(id, ChromeBridgeResult.Failure(message));
                             }
                             else

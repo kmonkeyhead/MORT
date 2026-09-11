@@ -240,6 +240,7 @@ namespace MORT
             services.AddSingleton<GeminiTranslatorAPI>();
             services.AddSingleton<CustomAPI>();
             services.AddSingleton<TranslateTypListService>();
+            services.AddSingleton<MORT.Service.TranslateLanguage.TranslateLanguageService>();
             services.AddSingleton<CustomApiPresetService>();
             services.AddSingleton<MORT.Service.ChromeBridge.ChromeBridgeService>();
             services.AddSingleton<ChromeBridgeTranslateAPI>();

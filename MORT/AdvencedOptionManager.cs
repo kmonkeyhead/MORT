@@ -543,6 +543,11 @@ namespace MORT
             data.GeminiPreset.Value = preset;
         }
 
+        public static void SetChromeBridgeMode(string mode)
+        {
+            data.ChromeBridgeMode.Value = Service.ChromeBridge.ChromeBridgeEngineMode.Normalize(mode);
+        }
+
 
         public static int DicReProcessCount => data.DicReProcessCount.Value;
 

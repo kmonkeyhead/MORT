@@ -9,6 +9,7 @@ using MORT.Service.Gemini;
 using MORT.Service.MouseFollowOcrArea;
 using MORT.Service.ProcessTranslateService;
 using MORT.Service.PythonService;
+using MORT.Service.TranslateLanguage;
 using MORT.VersionCheck;
 using System;
 using System.Collections.Generic;
@@ -40,6 +41,7 @@ namespace MORT
     public partial class Form1 : Form, IMainFormContract
     {
         private readonly TranslateTypListService _translateTypListService;
+        private readonly TranslateLanguageService _translateLanguageService;
         public static bool IsLockHotKey = false;
 
         public class ImgData
@@ -692,29 +694,110 @@ namespace MORT
             }
         }
 
+        /// <summary>
+        /// 번역 언어 칸을 채운다. 번역기별로 나뉘어 있던 언어 칸을 하나로 합쳤기 때문에
+        /// 목록도 한 벌만 만들고, 번역기가 지원하지 않는 언어는 지우는 대신 고른 뒤에 알린다.
+        /// 예전처럼 번역기마다 목록을 걸러 두면 번역기를 바꿀 때 골라 둔 언어가 말없이 바뀐다.
+        /// </summary>
         private void InitTransCode()
         {
-            naverTransComboBox.SelectedIndex = 0;
+            cbTransLanguageFrom.Items.Clear();
+            cbTransLanguageTo.Items.Clear();
+            cbGoogleOcrLanguge.Items.Clear();
+            cbGoogleOcrLanguge.Items.Add(LocalizeManager.LocalizeManager.GetLocalizeString("AUTO", "자동"));
 
-            googleTransComboBox.SelectedIndex = 0;
-            googleResultCodeComboBox.SelectedIndex = 0;
-            cbDeepLLanguage.SelectedIndex = 0;
-            cbDeepLLanguageTo.SelectedIndex = 0;
+            foreach (TranslateLanguageModel language in _translateLanguageService.Languages)
+            {
+                ComboboxItem from = new ComboboxItem();
+                from.Text = language.Title;
+                from.Value = language;
+                cbTransLanguageFrom.Items.Add(from);
 
+                ComboboxItem to = new ComboboxItem();
+                to.Text = language.Title;
+                to.Value = language;
+
+                //번역 결과는 한국어를 가장 위에 둔다. 예전 목록도 그랬다.
+                if (language.Key == "ko")
+                {
+                    cbTransLanguageTo.Items.Insert(0, to);
+                }
+                else
+                {
+                    cbTransLanguageTo.Items.Add(to);
+                }
+
+                if (!string.IsNullOrEmpty(language.OcrCode))
+                {
+                    ComboboxItem ocr = new ComboboxItem();
+                    ocr.Text = language.Title;
+                    ocr.Value = language;
+                    cbGoogleOcrLanguge.Items.Add(ocr);
+                }
+            }
+
+            cbTransLanguageFrom.SelectedIndex = 0;
+            cbTransLanguageTo.SelectedIndex = 0;
             cbGoogleOcrLanguge.SelectedIndex = 0;
+        }
 
+        /// <summary>
+        /// 지금 고른 번역기가 지금 고른 언어를 지원하는지 알린다.
+        /// 목록에서 빼 버리면 번역기를 바꿀 때마다 골라 둔 언어가 말없이 바뀌므로, 고르는 것은 막지 않고 알리기만 한다.
+        /// 지원하면 아무것도 띄우지 않는다. 늘 떠 있는 안내 문구는 읽히지 않고, 정작 경고가 떴을 때도 눈에 덜 띈다.
+        /// </summary>
+        private void RefreshTransLanguageSupport()
+        {
+            if (_translateLanguageService == null || lbTransLanguageInformation == null)
+            {
+                return;
+            }
 
-            TransManager.Instace.InitTransCode(naverTransComboBox, cbNaverResultCode, googleTransComboBox, googleResultCodeComboBox,
-                cbDeepLLanguage, cbDeepLLanguageTo, cbGoogleOcrLanguge);
+            List<string> notSupported = new List<string>();
+
+            //번역기 목록이 아직 안 채워진 시점(로컬라이즈 초기화)에도 불린다. 그때는 경고를 숨긴 채로 둔다.
+            if (_cbTranslateType.SelectedIndex >= 0 && _cbTranslateType.SelectedIndex < _cbTranslateType.Items.Count)
+            {
+                SettingManager.TransType transType = _translateTypListService.GetTransType(_cbTranslateType.SelectedIndex);
+                TranslateEngineFamily family = TranslateLanguageService.GetFamily(transType);
+
+                foreach (ComboBox combo in new ComboBox[] { cbTransLanguageFrom, cbTransLanguageTo })
+                {
+                    if (combo.SelectedItem is ComboboxItem item && item.Value is TranslateLanguageModel language)
+                    {
+                        if (!_translateLanguageService.IsSupported(language.Key, family) && !notSupported.Contains(language.Title))
+                        {
+                            notSupported.Add(language.Title);
+                        }
+                    }
+                }
+            }
+
+            if (notSupported.Count == 0)
+            {
+                lbTransLanguageInformation.Text = "";
+                lbTransLanguageInformation.Visible = false;
+                return;
+            }
+
+            lbTransLanguageInformation.ForeColor = System.Drawing.Color.Salmon;
+            lbTransLanguageInformation.Text = string.Format(LocalizeManager.LocalizeManager.GetLocalizeString(
+                "Trans Language Not Support", "지금 번역기는 {0} 를 지원하지 않습니다. 다른 언어나 다른 번역기를 골라 주세요"),
+                string.Join(", ", notSupported));
+            lbTransLanguageInformation.Visible = true;
         }
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         internal static extern bool SetProcessDPIAware();
 
         //폼 생성
-        public Form1(GeminiConfigMaker geminiConfigMaker, TranslateTypListService translateTypListService, MouseFollowOcrAreaService mouseFollowOcrAreaService)
+        public Form1(GeminiConfigMaker geminiConfigMaker, TranslateTypListService translateTypListService, MouseFollowOcrAreaService mouseFollowOcrAreaService,
+            TranslateLanguageService translateLanguageService)
         {
             _translateTypListService = translateTypListService;
+            //설정 파일을 읽기 전에 언어 표가 있어야 예전 설정을 통합 값으로 옮길 수 있다.
+            //그래서 생성자 인자로 받는다. 나중에 꺼내 쓰면 SettingManager가 먼저 읽어 버린다.
+            _translateLanguageService = translateLanguageService;
             _mouseFollowOcrAreaService = mouseFollowOcrAreaService;
             _versionCheckLogic = new VersionCheckLogic(this);
             //var logger = new LoggerForm();
@@ -2489,18 +2572,14 @@ namespace MORT
             if (index == (int)GlobalDefine.TesseractLanguageType.English)
             {
                 tessDataTextBox.Text = "eng";
-                naverTransComboBox.SelectedIndex = 0;
-                googleTransComboBox.SelectedIndex = 0;
-                cbDeepLLanguage.SelectedIndex = 0;
+                SelectTransLanguage(cbTransLanguageFrom, "en");
                 removeSpaceCheckBox.Checked = false;
                 cbPerWordDic.Checked = true;
             }
             else if (index == (int)GlobalDefine.TesseractLanguageType.Japen)
             {
                 tessDataTextBox.Text = "jpn";
-                naverTransComboBox.SelectedIndex = 1;
-                googleTransComboBox.SelectedIndex = 1;
-                cbDeepLLanguage.SelectedIndex = 1;
+                SelectTransLanguage(cbTransLanguageFrom, "ja");
                 removeSpaceCheckBox.Checked = true;
                 cbPerWordDic.Checked = false;
             }
@@ -3255,6 +3334,9 @@ namespace MORT
                     pnGemini.Visible = true;
                     break;
             }
+
+            //번역기를 바꾸면 지원 언어도 달라진다. 고른 언어를 못 쓰게 됐는지 여기서 다시 본다.
+            RefreshTransLanguageSupport();
         }
 
         private void RbDeepLAPIEndpoint_CheckedChanged(object sender, System.EventArgs e)
@@ -3355,51 +3437,35 @@ namespace MORT
         private void SetTransLangugage(string ocrCode)
         {
             Util.ShowLog("OCR Code : " + ocrCode);
-            TransManager.TransCodeData codeData = TransManager.Instace.GetTransCodeData(ocrCode);
+            TranslateLanguageModel language = _translateLanguageService.FindByOcrCode(ocrCode);
 
-            if (codeData != null)
+            if (language == null)
             {
-                if (codeData.naverCode != "")
-                {
-                    foreach (var obj in naverTransComboBox.Items)
-                    {
-                        TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                        if (codeData.naverCode == data.naverCode)
-                        {
-                            naverTransComboBox.SelectedItem = obj;
-                            break;
-                        }
-                    }
-                }
+                return;
+            }
 
-                if (codeData.googleCode != "")
-                {
-                    foreach (var obj in googleTransComboBox.Items)
-                    {
-                        TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                        if (codeData.googleCode == data.googleCode)
-                        {
-                            googleTransComboBox.SelectedItem = obj;
-                            break;
-                        }
-                    }
-                }
+            //번역기별로 세 번 맞출 필요가 없어졌다. 원문 언어 하나만 OCR 언어를 따라가면 된다.
+            SelectTransLanguage(cbTransLanguageFrom, language.Key);
+        }
 
-                if (codeData.DeepLCode != "")
+        private void cbTransLanguage_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            RefreshTransLanguageSupport();
+        }
+
+        /// <summary>언어 키로 콤보박스 항목을 고른다. 목록에 없으면 그대로 둔다.</summary>
+        private bool SelectTransLanguage(ComboBox combo, string key)
+        {
+            foreach (var obj in combo.Items)
+            {
+                if (obj is ComboboxItem item && item.Value is TranslateLanguageModel language && language.Key == key)
                 {
-                    foreach (var obj in cbDeepLLanguage.Items)
-                    {
-                        TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                        if (codeData.DeepLCode == data.DeepLCode)
-                        {
-                            cbDeepLLanguage.SelectedItem = obj;
-                            break;
-                        }
-                    }
+                    combo.SelectedItem = obj;
+                    return true;
                 }
             }
 
-            return;
+            return false;
         }
 
         private void ChangeWinOcrLanguage(int index)
@@ -3483,10 +3549,10 @@ namespace MORT
                 if (item is MORT.ComboboxItem)
                 {
                     MORT.ComboboxItem cbItem = (MORT.ComboboxItem)item;
-                    TransCodeData transCodeData = (TransCodeData)cbItem.Value;
+                    TranslateLanguageModel language = (TranslateLanguageModel)cbItem.Value;
 
-                    Console.WriteLine(transCodeData.Title + "/ " + transCodeData.languageCode);
-                    string resultCode = transCodeData.languageCode;
+                    Console.WriteLine(language.Title + "/ " + language.OcrCode);
+                    string resultCode = language.OcrCode;
 
                     if (resultCode == "ko")
                     {

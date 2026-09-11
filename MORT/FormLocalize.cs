@@ -244,21 +244,12 @@ namespace MORT
             skinLayerRadioButton.LocalizeLabel("Transform Type Layer");
             skinOverRadioButton.LocalizeLabel("Transform Type Overlay");
 
-            //네이버 번역
-            lbPaPago.LocalizeLabel("Papago Setting");
-            lbPaPagoFrom.LocalizeLabel("Common From");
-            lbPaPagoTo.LocalizeLabel("Common To");
-            lbPapagoLanguageCodeInformation.LocalizeLabel("Papago Language Code Information");
-
-            //구글 번역
-            lbGoogle.LocalizeLabel("Google Setting");
-            lbGoogleFrom.LocalizeLabel("Common From");
-            lbGoogleTo.LocalizeLabel("Common To");
-
-            //딥플 번역
-            lbDeepL.LocalizeLabel("DeepL Setting");
-            lbDeepLFrom.LocalizeLabel("Common From");
-            lbDeepLTo.LocalizeLabel("Common To");
+            //번역 언어. 번역기별로 나뉘어 있던 언어 칸을 하나로 합쳤다.
+            lbTransLanguage.LocalizeLabel("Trans Language Setting");
+            lbTransLanguageFrom.LocalizeLabel("Common From");
+            lbTransLanguageTo.LocalizeLabel("Common To");
+            //안내 문구는 고른 언어에 따라 바뀌므로 RefreshTransLanguageSupport 에서 채운다.
+            RefreshTransLanguageSupport();
 
             //TTS
             cbUseTTS.LocalizeLabel("Use TTS");

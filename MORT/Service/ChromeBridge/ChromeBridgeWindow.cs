@@ -16,8 +16,11 @@ namespace MORT.Service.ChromeBridge
     /// </summary>
     internal static class ChromeBridgeWindow
     {
-        /// <summary>bridge.html 의 title 과 같아야 한다.</summary>
-        public const string Title = "MORT 크롬 브릿지";
+        /// <summary>
+        /// bridge.html 이 다는 제목. 페이지가 MORT의 UI 언어에 맞춰 제목을 바꾸므로 두 벌을 다 본다.
+        /// 창을 찾는 유일한 실마리가 제목이라, 페이지의 STRINGS.*.appTitle 을 고치면 여기도 같이 고쳐야 한다.
+        /// </summary>
+        private static readonly string[] Titles = { "MORT 크롬 브릿지", "MORT Chrome Bridge" };
 
         private const int SW_RESTORE = 9;
         private const int SW_MINIMIZE = 6;
@@ -62,15 +65,34 @@ namespace MORT.Service.ChromeBridge
         /// 완전히 숨기지(SW_HIDE) 않는 이유는 되찾을 방법을 남겨 두기 위해서다. 숨긴 창은 작업
         /// 표시줄에도 없어서, MORT가 비정상 종료하면 사용자가 그 창을 닫을 길이 없다.
         /// </summary>
+        /// <summary>
+        /// 최소화를 취소한다. 창이 뜨자마자 "모델을 받으시겠습니까?"를 물어야 하는 경우가 있는데,
+        /// 그때 예약된 최소화가 그대로 걸리면 사용자가 눌러야 할 대화상자를 작업 표시줄로 내려 버린다.
+        /// 물어볼 일이 생기는 것은 창이 뜬 직후라 이 경합이 실제로 난다.
+        /// </summary>
+        private static int _cancelMinimize;
+
+        public static void KeepVisible()
+        {
+            Interlocked.Exchange(ref _cancelMinimize, 1);
+            TryFocus();
+        }
+
         public static void MinimizeAfterLaunch()
         {
             try
             {
+                Interlocked.Exchange(ref _cancelMinimize, 0);
                 IntPtr handle = IntPtr.Zero;
 
                 //창이 실제로 뜰 때까지 기다린다. 뜨기 전에 최소화를 걸면 아무 일도 일어나지 않는다.
                 for (int i = 0; i < 40; i++)
                 {
+                    if (Interlocked.CompareExchange(ref _cancelMinimize, 0, 0) == 1)
+                    {
+                        return;
+                    }
+
                     handle = Find();
 
                     if (handle != IntPtr.Zero)
@@ -88,6 +110,12 @@ namespace MORT.Service.ChromeBridge
 
                 //창이 자리를 잡을 짬을 준다. 곧바로 최소화하면 크롬이 다시 펼치는 경우가 있다.
                 Thread.Sleep(400);
+
+                if (Interlocked.CompareExchange(ref _cancelMinimize, 0, 0) == 1)
+                {
+                    Util.ShowLog("[ChromeBridge] 브릿지 창에서 확인할 것이 있어 최소화하지 않습니다.");
+                    return;
+                }
 
                 ShowWindow(handle, SW_MINIMIZE);
                 Util.ShowLog("[ChromeBridge] 브릿지 창을 최소화했습니다. 볼 일이 있으면 [설정 열기]로 꺼냅니다.");
@@ -160,6 +188,20 @@ namespace MORT.Service.ChromeBridge
             return true;
         }
 
+        /// <summary>크롬은 제목 뒤에 " - Chrome" 을 붙이기도 해서 앞부분만 본다.</summary>
+        private static bool IsBridgeTitle(string text)
+        {
+            foreach (string title in Titles)
+            {
+                if (text.StartsWith(title, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static IntPtr Find()
         {
             HashSet<uint> chromeProcessIds = GetChromeProcessIds();
@@ -191,8 +233,7 @@ namespace MORT.Service.ChromeBridge
                     StringBuilder text = new StringBuilder(512);
                     GetWindowText(handle, text, text.Capacity);
 
-                    //크롬은 제목 뒤에 " - Chrome" 을 붙이기도 해서 앞부분만 본다.
-                    if (!text.ToString().StartsWith(Title, StringComparison.Ordinal))
+                    if (!IsBridgeTitle(text.ToString()))
                     {
                         return true;
                     }

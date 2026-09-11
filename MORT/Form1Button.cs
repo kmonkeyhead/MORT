@@ -402,19 +402,12 @@ namespace MORT
 
                     StopTrans();
                     RefreshChromeBridgeStatus();
+                    Util.ShowLog($"[ChromeBridge] 모델이 없어 번역을 멈췄습니다 : {detail}");
 
-                    string message = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Model Missing Message");
-
-                    if(!string.IsNullOrEmpty(detail))
-                    {
-                        message = detail + System.Environment.NewLine + System.Environment.NewLine + message;
-                    }
-
-                    MessageBox.Show(this, message,
-                        LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Model Missing Title"),
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                    //확인을 누르면 곧장 할 일이 있는 창으로 보낸다. 받기 버튼이 거기에만 있다.
+                    //MORT 쪽 팝업은 두지 않는다. 물어보는 창은 브릿지 하나뿐이어야 한다.
+                    //MORT에서 한 번, 브릿지에서 또 한 번 확인을 누르게 되고, 정작 받기 버튼은
+                    //브릿지에만 있어서 MORT 팝업은 지나가는 관문 노릇밖에 못 했다.
+                    //대신 그 창을 앞으로 꺼낸다. 최소화 예약이 걸려 있으면 같이 취소된다.
                     GetChromeBridgeService()?.FocusPage();
                 }));
             }

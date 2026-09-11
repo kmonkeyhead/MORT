@@ -26,9 +26,6 @@ namespace MORT.Service.ChromeBridge
 
         private DateTime _lastLaunchUtc = DateTime.MinValue;
 
-        /// <summary>이 서버가 도는 동안 크롬 창이 한 번이라도 붙은 적이 있는지.</summary>
-        private bool _pageConnectedBefore;
-
         public ChromeBridgeService()
         {
             _server = new ChromeBridgeServer(_hub);
@@ -37,9 +34,16 @@ namespace MORT.Service.ChromeBridge
 
         private void OnConnectionChanged()
         {
-            if (_hub.IsPageConnected)
+            if (!_hub.IsPageConnected)
             {
-                _pageConnectedBefore = true;
+                return;
+            }
+
+            //창이 붙었으면 그 실행은 끝난 것이다. 대기 시간을 풀어 두지 않으면, 사용자가 창을 닫고
+            //바로 번역했을 때 "여는 중입니다"만 12초 동안 나오고 다시 열리지 않는다.
+            lock (_openGate)
+            {
+                _lastLaunchUtc = DateTime.MinValue;
             }
         }
 
@@ -121,12 +125,6 @@ namespace MORT.Service.ChromeBridge
 
                     Util.ShowLog("[ChromeBridge] 연결된 브릿지 창을 찾지 못해 새로 띄웁니다.");
                 }
-                else if (!requestedByUser && _pageConnectedBefore)
-                {
-                    //붙었다가 끊긴 것이니 사용자가 창을 닫은 것이다. 번역할 때마다 다시 띄우면
-                    //게임 위로 창이 계속 올라온다. 다시 쓰려면 [설정 열기]를 누르게 둔다.
-                    return;
-                }
                 else if (DateTime.UtcNow - _lastLaunchUtc < LaunchCooldown)
                 {
                     Util.ShowLog("[ChromeBridge] 브릿지 창을 여는 중입니다. 잠시 기다려 주세요.");
@@ -164,7 +162,46 @@ namespace MORT.Service.ChromeBridge
         /// <summary>브릿지 창을 앞으로 꺼낸다. 사용자가 그쪽에서 뭔가 해야 할 때 부른다.</summary>
         public void FocusPage()
         {
-            ChromeBridgeWindow.TryFocus();
+            //최소화 예약이 걸려 있으면 같이 취소한다. 안 그러면 꺼낸 창이 곧바로 다시 내려간다.
+            ChromeBridgeWindow.KeepVisible();
+        }
+
+        /// <summary>
+        /// 번역하기 전에 브릿지 창이 살아 있는지 보장한다. 닫혀 있으면 다시 띄우고 붙을 때까지 기다린다.
+        ///
+        /// 예전에는 한 번 붙었다가 끊기면 "사용자가 닫은 것"으로 보고 다시 띄우지 않았다. 그러면
+        /// 창을 닫은 뒤로는 번역할 때마다 "[설정 열기]로 창을 여세요"만 나온다. 번역기를 고른 이상
+        /// 번역이 되게 하는 것이 맞다. 창이 계속 앞으로 올라오는 문제는 최소화로 따로 막는다.
+        /// </summary>
+        public async Task<bool> EnsurePageAsync(int waitSeconds, CancellationToken token)
+        {
+            if (_hub.IsPageConnected)
+            {
+                return true;
+            }
+
+            OpenPage(false);
+
+            DateTime limit = DateTime.UtcNow.AddSeconds(waitSeconds);
+
+            while (DateTime.UtcNow < limit)
+            {
+                if (_hub.IsPageConnected)
+                {
+                    return true;
+                }
+
+                try
+                {
+                    await Task.Delay(200, token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return false;
+                }
+            }
+
+            return _hub.IsPageConnected;
         }
 
         public void Stop()
@@ -176,7 +213,6 @@ namespace MORT.Service.ChromeBridge
 
             lock (_openGate)
             {
-                _pageConnectedBefore = false;
                 _lastLaunchUtc = DateTime.MinValue;
             }
         }

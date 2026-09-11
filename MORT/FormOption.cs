@@ -1,4 +1,5 @@
 ﻿using MORT.Manager;
+using MORT.Service.TranslateLanguage;
 using MORT.SettingData;
 using System;
 using System.Collections.Generic;
@@ -275,106 +276,30 @@ namespace MORT
 
             var translateTypeModel = _translateTypListService.GetModel(MySettingManager.NowTransType, MySettingManager.TranslateTypeSubKey);
             _cbTranslateType.SelectedIndex = translateTypeModel.Index;
-            //네이버.
-            bool naverFound = false;
-            foreach(var obj in naverTransComboBox.Items)
+
+            //번역 언어는 이제 한 쌍뿐이다. 번역기별 코드는 저장하지도, 고르지도 않는다.
+            if(!SelectTransLanguage(cbTransLanguageFrom, MySettingManager.TransLanguageFrom))
             {
-                TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                if(MySettingManager.NaverTransCode == data.naverCode)
-                {
-                    naverFound = true;
-                    naverTransComboBox.SelectedItem = obj;
-                    break;
-                }
+                cbTransLanguageFrom.SelectedIndex = 0;
             }
 
-            if(!naverFound)
+            if(!SelectTransLanguage(cbTransLanguageTo, MySettingManager.TransLanguageTo))
             {
-                naverTransComboBox.SelectedItem = naverTransComboBox.Items[0];
-                var data = (TransManager.TransCodeData)((ComboboxItem)naverTransComboBox.SelectedItem).Value;
-                MySettingManager.NaverTransCode = data.naverCode;
+                cbTransLanguageTo.SelectedIndex = 0;
             }
 
-            naverFound = false;
-            //네이버 번역기
-            foreach(var obj in cbNaverResultCode.Items)
+            RefreshTransLanguageSupport();
+        }
+
+        /// <summary>번역 언어 칸에서 지금 고른 언어 키를 읽는다. 못 읽으면 저장된 값을 그대로 둔다.</summary>
+        private string GetSelectedTransLanguageKey(ComboBox combo, string defaultKey)
+        {
+            if(combo.SelectedItem is ComboboxItem item && item.Value is TranslateLanguageModel language)
             {
-                TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                if(MySettingManager.NaverResultCode == data.naverCode)
-                {
-                    naverFound = true;
-                    cbNaverResultCode.SelectedItem = obj;
-                    break;
-                }
+                return language.Key;
             }
 
-            if(!naverFound)
-            {
-                cbNaverResultCode.SelectedItem = cbNaverResultCode.Items[0];
-                var data = (TransManager.TransCodeData)((ComboboxItem)cbNaverResultCode.SelectedItem).Value;
-                MySettingManager.NaverTransCode = data.naverCode;
-            }
-
-            bool foundCode = false;
-
-            //구글.
-            foreach(var obj in googleTransComboBox.Items)
-            {
-                TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                if(MySettingManager.GoogleTransCode == data.googleCode)
-                {
-                    googleTransComboBox.SelectedItem = obj;
-                    foundCode = true;
-                    break;
-                }
-            }
-
-            //디플
-            foreach(var obj in cbDeepLLanguage.Items)
-            {
-                TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                if(MySettingManager.DeepLTransCode == data.DeepLCode)
-                {
-                    cbDeepLLanguage.SelectedItem = obj;
-                    foundCode = true;
-                    break;
-                }
-            }
-
-            if(!foundCode)
-            {
-                googleTransComboBox.SelectedIndex = 0;
-            }
-            foundCode = false;
-
-            //구글 번역기.
-            foreach(var obj in googleResultCodeComboBox.Items)
-            {
-                TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                if(MySettingManager.GoogleResultCode == data.googleCode)
-                {
-                    foundCode = true;
-                    googleResultCodeComboBox.SelectedItem = obj;
-                    break;
-                }
-            }
-
-            //디플 번역기.
-            foreach(var obj in cbDeepLLanguageTo.Items)
-            {
-                TransManager.TransCodeData data = (TransManager.TransCodeData)((ComboboxItem)obj).Value;
-                if(MySettingManager.DeepLResultCode == data.DeepLCode)
-                {
-                    foundCode = true;
-                    cbDeepLLanguageTo.SelectedItem = obj;
-                    break;
-                }
-            }
-
-            if(!foundCode)
-            {
-                googleResultCodeComboBox.SelectedIndex = 0;
-            }
+            return defaultKey;
         }
 
 
@@ -515,24 +440,10 @@ namespace MORT
                 //OCR 설정.
                 MySettingManager.OCRType = SettingManager.GetOcrType(OCR_Type_comboBox.SelectedIndex);
 
-                //번역 코드 설정.
-                TransManager.TransCodeData codeData = (TransManager.TransCodeData)((ComboboxItem)naverTransComboBox.SelectedItem).Value;
-                MySettingManager.NaverTransCode = codeData.naverCode;
-
-                codeData = (TransManager.TransCodeData)((ComboboxItem)cbNaverResultCode.SelectedItem).Value;
-                MySettingManager.NaverResultCode = codeData.naverCode;
-
-                codeData = (TransManager.TransCodeData)((ComboboxItem)googleTransComboBox.SelectedItem).Value;
-                MySettingManager.GoogleTransCode = codeData.googleCode;
-
-                codeData = (TransManager.TransCodeData)((ComboboxItem)googleResultCodeComboBox.SelectedItem).Value;
-                MySettingManager.GoogleResultCode = codeData.googleCode;
-
-                codeData = (TransManager.TransCodeData)((ComboboxItem)cbDeepLLanguage.SelectedItem).Value;
-                MySettingManager.DeepLTransCode = codeData.DeepLCode;
-
-                codeData = (TransManager.TransCodeData)((ComboboxItem)cbDeepLLanguageTo.SelectedItem).Value;
-                MySettingManager.DeepLResultCode = codeData.DeepLCode;
+                //번역 언어 설정. 저장하는 것은 이 한 쌍뿐이고, 번역기별 코드는 여기서 만들어 쓴다.
+                MySettingManager.SetTransLanguage(
+                    GetSelectedTransLanguageKey(cbTransLanguageFrom, MySettingManager.TransLanguageFrom),
+                    GetSelectedTransLanguageKey(cbTransLanguageTo, MySettingManager.TransLanguageTo));
 
 
                 NaverTranslateAPI.instance.SetTransCode(MySettingManager.NaverTransCode, MySettingManager.NaverResultCode);
@@ -1012,23 +923,10 @@ namespace MORT
 
             //번역기 타입
             MySettingManager.NowTransType = data.transType;
-            if(data.languageType == OcrLanguageType.Japen)
-            {
-                MySettingManager.GoogleTransCode = "ja";
-                MySettingManager.NaverTransCode = "ja";
-                MySettingManager.DeepLTransCode = "ja";
-            }
-            else
-            {
-                MySettingManager.GoogleTransCode = "en";
-                MySettingManager.NaverTransCode = "en";
-                MySettingManager.DeepLTransCode = "en";
-            }
 
-            string resultCode = MySettingManager.GetDefaultResultCode();
-            MySettingManager.GoogleResultCode = resultCode;
-            MySettingManager.NaverResultCode = resultCode;
-            MySettingManager.DeepLResultCode = resultCode;
+            //번역 언어는 한 쌍뿐이라 번역기별로 세 번 맞출 필요가 없다.
+            string fromCode = data.languageType == OcrLanguageType.Japen ? "ja" : "en";
+            MySettingManager.SetTransLanguage(fromCode, MySettingManager.GetDefaultResultCode());
 
             //색 보정
             MySettingManager.NowIsUseRGBFlag = false;
@@ -1166,6 +1064,14 @@ namespace MORT
                 //번역집을 불러온다.
                 TransManager.Instace.LoadUserTranslation(AdvencedOptionManager.TranslationFileList);
                 TransManager.Instace.InitGeminiCustom(AdvencedOptionManager.GeminiModel, AdvencedOptionManager.GeminiCommand, AdvencedOptionManager.GeminiDisableDefaultCommand);
+
+                //크롬 로컬 번역기의 선호 엔진은 고급 설정에 있다. 번역 설정을 다시 적용하지 않아도
+                //열려 있는 크롬 창에 바로 알리도록 여기서도 넘긴다.
+                if(MySettingManager.NowTransType == SettingManager.TransType.chromeBridge)
+                {
+                    TransManager.Instace.InitChromeBridge(MySettingManager.GoogleTransCode, MySettingManager.GoogleResultCode,
+                        AdvencedOptionManager.ChromeBridgeMode);
+                }
 
                 FormManager.Instace.MyRemoteController?.ApplyTopMost(AdvencedOptionManager.EnableRttTopMost);
 

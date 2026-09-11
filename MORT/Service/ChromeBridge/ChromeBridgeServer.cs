@@ -44,7 +44,18 @@ namespace MORT.Service.ChromeBridge
         public int Port { get; private set; }
         public bool IsRunning => _listener != null;
 
-        public string PageUrl => $"http://127.0.0.1:{Port.ToString(CultureInfo.InvariantCulture)}/";
+        /// <summary>
+        /// 브릿지 페이지 주소. MORT의 UI 언어를 lang 으로 실어 보낸다.
+        ///
+        /// 페이지가 자기 문구를 스스로 고르는 데 쓴다. 붙고 나서 WebSocket으로 알려 주면 창이 뜬 뒤에
+        /// 문구가 한 번 갈아 끼워지므로, 처음 그려질 때부터 맞도록 주소에 실는다.
+        /// 브릿지 문구는 페이지 안에 ko/en 두 벌로 들고 있어서 localize.csv 에는 키를 두지 않는다.
+        /// </summary>
+        public string PageUrl => $"http://127.0.0.1:{Port.ToString(CultureInfo.InvariantCulture)}/?lang={PageLanguage}";
+
+        /// <summary>페이지가 아는 언어는 ko 와 en 뿐이다. 나머지 UI 언어는 en 으로 보낸다.</summary>
+        private static string PageLanguage =>
+            MORT.LocalizeManager.LocalizeManager.Language == MORT.LocalizeManager.AppLanguage.Korea ? "ko" : "en";
 
         public ChromeBridgeServer(ChromeBridgeHub hub)
         {
