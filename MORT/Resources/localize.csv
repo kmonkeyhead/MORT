@@ -270,8 +270,8 @@ Se possível, use Tessract ou Winocr","В деяких ситуаціях роз
 Будь ласка, за можливості використовуйте Tesseract або WinOCR",Sadece belirli durumlarda Tesseract OCR'dan daha iyidir. Mümkünse lütfen Tesseract veya WINOCR kullanın.
 ,Fast Tesseract,"고속 모드 (빠르나 정확도가 떨어짐, Tesseract 전용)","High -speed mode (fast or accuracy is reduced, tesseract dedicated)",高速モード（高速または精度が低下し、テッセラクト専用）,快速模式（速度快但准确率较低，仅限于Tesseract）,"Mode berkecepatan tinggi (cepat atau akurasi dikurangi, berdedikasi Tesseract)","Режим высокой скорости (быстрый или точность снижается, выделен тел)","Modo de alta velocidade (Fast ou precisão é reduzida, TESSERACT dedicada)","Швидкий режим (швидший, але менш точний, тільки для Tesseract)","Yüksek hız modu (hızlıdır ancak doğruluk düşüktür, sadece Tesseract için)"
 ,Tesseract Language,추출 언어,Language,抽出言語,提取语言,Bahasa ekstraksi,Язык извлечения,Linguagem de extração,Мова,Dil
-,OCR Tesseract,Tesseract - 기본,Tesseract -Basic,Tesseract -Basic,Tesseract - 默认,Tesseract -basic,Tesseract -Basic,TESSERACT -BASIC,Tesseract - Базовий,Tesseract - Temel
-,OCR Win OCR,Win OCR - 추천,WIN OCR -Recommended,OCRを獲得 - 推奨,Win OCR - 推荐,Menangkan OCR -Monisasi,Выиграть OCR -Recommed,Ganhe OCR -Recomped,WIN OCR - Рекомендований,WIN OCR - Önerilen
+,OCR Tesseract,Tesseract,Tesseract,Tesseract,Tesseract,Tesseract,Tesseract,Tesseract,Tesseract,Tesseract
+,OCR Win OCR,Win OCR - 기본,Win OCR - Basic,Win OCR - 基本,Win OCR - 默认,Win OCR - Dasar,Win OCR - Базовый,Win OCR - Básico,Win OCR - Базовий,Win OCR - Temel
 ,OCR NHocr,NHocr - 일본어 전용,NHOCR -Japanese only,nhocr-日本のみ,NHocr - 仅限日语,NHOCR -Jepang saja,Только нхок -японский,Somente Nhocr -Japanese,NHocr - Тільки японська,NHOCR - Sadece Japonca
 ,OCR Google,Google - 스냅샷 전용,Google -Snapshot only,Google -Snapshotのみ,Google - 仅限截屏,Google -snapshot saja,Google -SnapShot только,Google -Snapshot Somente,Google - Тільки знімки,Google - Sadece Anlık Görüntü
 ,OCR Easy OCR,Easy OCR,Easy OCR,Easy OCR,Easy OCR,Easy OCR,Easy OCR,Easy OCR,Easy OCR,Easy OCR
