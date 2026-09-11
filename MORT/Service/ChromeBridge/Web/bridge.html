@@ -1,0 +1,2547 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MORT 크롬 브릿지</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #16181d;
+    --panel: #1f232b;
+    --line: #2f3541;
+    --text: #e6e9ef;
+    --dim: #9aa3b2;
+    --ok: #5fd08a;
+    --warn: #e8c46a;
+    --bad: #e8776a;
+    --accent: #6ea8fe;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 18px;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.6 "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  .sub { color: var(--dim); font-size: 12px; margin-bottom: 14px; }
+  .head { display: flex; gap: 12px; align-items: flex-start; }
+  .head-text { flex: 1; min-width: 0; }
+  .lang-switch {
+    display: inline-flex; flex-shrink: 0;
+    border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+  }
+  .lang-switch button {
+    background: transparent; color: var(--dim);
+    padding: 3px 11px; border-radius: 0; font-size: 12px;
+  }
+  .lang-switch button.active { background: var(--accent); color: #10131a; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 12px; border-radius: 999px;
+    background: #2a2f3a; font-size: 13px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dim); }
+  .dot.ok { background: var(--ok); }
+  .dot.warn { background: var(--warn); }
+  .dot.bad { background: var(--bad); }
+  button {
+    background: var(--accent); color: #10131a; border: 0;
+    padding: 9px 18px; border-radius: 6px; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  button.ghost { background: #2a2f3a; color: var(--text); font-weight: 500; }
+  button:disabled { opacity: .45; cursor: default; }
+  select, textarea {
+    background: #12151a; color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: 7px 9px; font-family: inherit; font-size: 13px;
+  }
+  textarea { width: 100%; resize: vertical; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--dim); font-weight: 500; width: 170px; }
+  .label { color: var(--dim); font-size: 12px; }
+  #progressWrap { display: none; margin-top: 10px; }
+  #modelAsk {
+    display: none;
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(0,0,0,.62);
+    align-items: center; justify-content: center;
+  }
+  #modelAsk.show { display: flex; }
+  #modelAskBox {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 22px 24px; max-width: 460px; box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+  #modelAskBox h2 { margin: 0 0 10px; font-size: 16px; }
+  #modelAskBox p { margin: 0 0 6px; color: var(--dim); font-size: 13px; }
+  #modelAskBox .buttons { margin-top: 18px; display: flex; gap: 8px; justify-content: flex-end; }
+  #modelAskUrl {
+    margin-top: 12px;
+    font: 13px/1.4 Consolas, "D2Coding", monospace;
+    color: var(--text); user-select: all; word-break: break-all;
+  }
+  .manager-section {
+    padding: 10px 12px; margin-bottom: 8px;
+    background: #12151a; border: 1px solid var(--line); border-radius: 6px;
+  }
+  .manager-section:last-child { margin-bottom: 0; }
+  .manager-title { color: var(--accent); font-weight: 700; margin-bottom: 6px; }
+  .manager-line { color: var(--dim); font-size: 12.5px; margin-bottom: 4px; }
+  .manager-path {
+    color: var(--text); background: #0d1014; border: 1px solid var(--line); border-radius: 4px;
+    padding: 5px 7px; margin-bottom: 4px;
+  }
+  #progressBar { height: 6px; background: #2a2f3a; border-radius: 3px; overflow: hidden; }
+  #progressFill { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  #log {
+    height: 190px; overflow-y: auto; background: #12151a;
+    border: 1px solid var(--line); border-radius: 6px; padding: 9px;
+    font: 12px/1.5 Consolas, "D2Coding", monospace;
+  }
+  .log-line { white-space: pre-wrap; word-break: break-word; }
+  .log-line.trace { color: var(--dim); }
+  .log-line.warn { color: var(--warn); }
+  .log-line.error { color: var(--bad); }
+  #transLog {
+    height: 230px; overflow-y: auto; background: #12151a;
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 0;
+  }
+  .trans-row { padding: 7px 10px; border-bottom: 1px solid #232833; }
+  .trans-row:last-child { border-bottom: 0; }
+  .trans-head { display: flex; gap: 8px; align-items: center; margin-bottom: 3px; }
+  .trans-time { color: var(--dim); font: 11px Consolas, monospace; }
+  .trans-engine {
+    font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+    background: #2a2f3a; color: var(--dim);
+  }
+  .trans-engine.translator { background: #1d3a2a; color: var(--ok); }
+  .trans-engine.llm { background: #3a3320; color: var(--warn); }
+  .trans-engine.fail { background: #3a2222; color: var(--bad); }
+  .trans-engine.retry { background: #2a2440; color: #b3a4ff; }
+  .trans-lang { color: var(--dim); font: 11px Consolas, monospace; }
+  .trans-reason { color: var(--dim); font: 11px/1.5 Consolas, monospace; margin-bottom: 3px; }
+  .trans-source { color: var(--dim); font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+  .trans-result { color: var(--text); font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+  .trans-result.fail { color: var(--bad); }
+  .note { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  .bad-text { color: var(--bad); }
+  code { background: #12151a; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="head-text">
+    <h1 id="pageTitle"></h1>
+    <div class="sub" data-i18n="sub"></div>
+  </div>
+  <div class="lang-switch">
+    <button data-lang="ko">KR</button>
+    <button data-lang="en">EN</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="row">
+    <span class="pill"><span class="dot" id="dotSocket"></span><span id="socketText"></span></span>
+    <span class="pill"><span id="countText"></span></span>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <span class="pill"><span class="dot" id="dotTranslatorModel"></span><span id="translatorModelText"></span></span>
+    <span class="pill"><span class="dot" id="dotLlmModel"></span><span id="llmModelText"></span></span>
+  </div>
+  <div id="progressWrap">
+    <div class="label" id="progressLabel"></div>
+    <div id="progressBar"><div id="progressFill"></div></div>
+  </div>
+  <div class="note" data-i18n="noteAuto"></div>
+</div>
+
+<div class="panel">
+  <div class="row" style="margin-bottom:10px">
+    <span class="label" data-i18n="labelEngine"></span>
+    <select id="modeSelect">
+      <option value="auto" data-i18n="engineAuto"></option>
+      <option value="translator" data-i18n="engineTranslatorOnly"></option>
+      <option value="llm" data-i18n="engineLlmOnly"></option>
+    </select>
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <span class="label" data-i18n="labelModel"></span>
+    <button id="prepareBtn" class="ghost" data-i18n="btnPrepare"></button>
+    <button id="prepareLlmBtn" class="ghost" data-i18n="btnPrepareLlm"></button>
+    <button id="manageBtn" class="ghost" data-i18n="btnManage"></button>
+    <button id="refreshModelsBtn" class="ghost" data-i18n="btnRefresh"></button>
+  </div>
+  <table>
+    <tr><th>LanguageModel (Prompt API)</th><td id="capLlm" data-i18n="notChecked"></td></tr>
+    <tr><th>Translator API</th><td id="capTranslator" data-i18n="notChecked"></td></tr>
+    <tr><th>LanguageDetector API</th><td id="capDetector" data-i18n="notChecked"></td></tr>
+    <tr><th data-i18n="thInstalled"></th><td id="installedModels" data-i18n="notChecked"></td></tr>
+  </table>
+  <div class="note" data-i18n="noteLlmLang"></div>
+</div>
+
+<div class="panel">
+  <div class="label" style="margin-bottom:6px" data-i18n="labelTest"></div>
+  <textarea id="testInput" rows="3" data-i18n-ph="phTestInput"></textarea>
+  <div class="row" style="margin-top:8px">
+    <select id="testSource">
+      <option value="auto" data-i18n="optAutoDetect"></option>
+      <option value="ja" data-i18n="langJa"></option>
+      <option value="en" data-i18n="langEn"></option>
+      <option value="zh" data-i18n="langZh"></option>
+      <option value="ko" data-i18n="langKo"></option>
+    </select>
+    <select id="testTarget">
+      <option value="ko" data-i18n="langKo"></option>
+      <option value="en" data-i18n="langEn"></option>
+      <option value="ja" data-i18n="langJa"></option>
+    </select>
+    <button id="testBtn" class="ghost" data-i18n="btnTranslate"></button>
+  </div>
+  <textarea id="testOutput" rows="3" readonly style="margin-top:8px" data-i18n-ph="phTestOutput"></textarea>
+</div>
+
+<div class="panel">
+  <div class="row" style="margin-bottom:8px">
+    <span class="label" data-i18n="labelHistory"></span>
+    <span class="label" id="transLogHint"></span>
+    <button id="clearTransLogBtn" class="ghost" style="margin-left:auto" data-i18n="btnClear"></button>
+  </div>
+  <div id="transLog"></div>
+</div>
+
+<div class="panel">
+  <div class="row" style="margin-bottom:6px">
+    <span class="label" data-i18n="labelLog"></span>
+    <label class="label" style="display:flex; gap:5px; align-items:center; cursor:pointer">
+      <input type="checkbox" id="verboseChk"> <span data-i18n="labelVerbose"></span>
+    </label>
+    <button id="copyLogBtn" class="ghost" style="margin-left:auto" data-i18n="btnCopy"></button>
+    <button id="clearLogBtn" class="ghost" data-i18n="btnClear"></button>
+  </div>
+  <div id="log"></div>
+</div>
+
+<div id="modelAsk">
+  <div id="modelAskBox">
+    <h2 id="modelAskTitle"></h2>
+    <p id="modelAskBody"></p>
+    <p id="modelAskNote"></p>
+    <div id="modelAskUrl" hidden></div>
+    <div class="buttons">
+      <button id="modelAskLater" class="ghost" data-i18n="btnLater"></button>
+      <button id="modelAskNow" data-i18n="btnDownload"></button>
+      <button id="modelAskClose" hidden data-i18n="btnOk"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/// 이 창의 표시 언어. 창 위쪽 KR / EN 버튼으로 고른 값이 가장 우선이고,
+/// 고른 적이 없으면 MORT가 주소의 lang 으로 넘겨 준 자기 UI 언어를 따른다.
+/// 로컬라이즈 키를 MORT 쪽에 만들지 않고 이 파일 안에서 끝낸다. 브릿지 문구는 이 창에서만 쓰이고
+/// MORT 설정 화면에는 하나도 나오지 않아서, 공용 CSV에 올려 둘 이유가 없다.
+/// 주소에 값이 없으면(사용자가 주소만 다시 열었을 때) 브라우저 언어로 갈음한다.
+const LANG_STORAGE_KEY = "mort-bridge-lang";
+
+let LANG = (function() {
+  const saved = readSavedLanguage();
+
+  if(saved) {
+    return saved;
+  }
+
+  const wanted = new URLSearchParams(location.search).get("lang");
+
+  if(wanted === "ko" || wanted === "en") {
+    return wanted;
+  }
+
+  return (navigator.language || "").toLowerCase().indexOf("ko") === 0 ? "ko" : "en";
+})();
+
+/// 고른 언어는 localStorage 에 둔다. 크롬 기본 프로필로 띄우므로 창을 닫았다 다시 열어도 남는다.
+/// 포트를 바꾸면 주소(origin)가 달라져서 고른 값도 처음으로 돌아간다.
+function readSavedLanguage() {
+  try {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY);
+
+    if(saved === "ko" || saved === "en") {
+      return saved;
+    }
+  } catch(error) {
+    // 저장소가 막힌 환경이면 고른 값 없이 간다.
+  }
+
+  return "";
+}
+
+const STRINGS = {
+  ko: {
+    appTitle: "MORT 크롬 브릿지",
+    sub: "크롬에 내장된 AI로 번역합니다. 이 창을 닫으면 번역이 멈춥니다.",
+    noteAuto: "필요한 모델이 없을 때만 물어봅니다. LLM(4GB)은 자동으로 받지 않습니다.",
+    noteLlmLang: "LLM이 공식 지원하는 언어는 en · ja · es · de · fr 입니다. 그 밖의 언어는 번역 모델 쪽이 낫습니다.",
+    labelEngine: "엔진",
+    engineAuto: "자동 (번역 모델 우선)",
+    engineTranslatorOnly: "Translator API 고정",
+    engineLlmOnly: "LLM (Prompt API) 고정",
+    labelModel: "모델",
+    btnPrepare: "번역 언어 쌍 받기",
+    btnPrepareLlm: "LLM 모델 받기 (4GB)",
+    btnManage: "모델 관리",
+    btnRefresh: "새로 고침",
+    thInstalled: "받아 둔 모델",
+    labelTest: "시험 번역",
+    phTestInput: "번역할 문장",
+    phTestOutput: "결과",
+    optAutoDetect: "자동 감지",
+    langJa: "일본어 ja",
+    langEn: "영어 en",
+    langZh: "중국어 zh",
+    langKo: "한국어 ko",
+    btnTranslate: "번역",
+    labelHistory: "번역 기록",
+    historyEmpty: "아직 없음",
+    historyCount: "최근 {n}건",
+    labelLog: "로그",
+    labelVerbose: "자세히",
+    btnCopy: "복사",
+    btnClear: "지우기",
+    btnLater: "나중에",
+    btnDownload: "받기",
+    btnOk: "확인",
+
+    notChecked: "확인 전",
+    unknownEngine: "알 수 없음",
+    modelTranslator: "번역 모델",
+    modelLlm: "LLM 모델",
+    stateOk: "있음",
+    stateNone: "없음",
+    stateUnsupported: "이 브라우저에 없음",
+    stateUnknown: "확인 못 함",
+    stateChecking: "확인 중…",
+    stateBusy: "받는 중…",
+    stateFail: "준비 실패",
+    detailNoPack: "이 언어 쌍은 언어팩이 없습니다",
+    detailLlmExtra: "부가 기능 · 4GB",
+    detailNoAnswer: "응답 없음",
+    checking: "확인 중…",
+    notInBrowser: "이 브라우저에 없음",
+    availAvailable: "사용 가능",
+    availDownloadable: "사용 가능 (첫 사용 시 내려받기)",
+    availDownloading: "내려받는 중",
+    availUnavailable: "사용 불가",
+    checkFailed: "확인 실패 : {error}",
+    noBuiltInAi: "이 브라우저에는 내장 AI API가 없습니다. 데스크톱용 크롬 최신 버전인지 확인하세요.",
+
+    socketIdle: "MORT 연결 안 됨",
+    socketOk: "MORT 연결됨",
+    socketLost: "MORT 연결 끊김",
+    socketReplaced: "다른 창이 연결됨",
+    socketError: "연결 오류",
+    countZero: "번역 0건",
+    countText: "번역 {n}건 · {engine}",
+
+    engineTranslator: "번역 모델",
+    engineLlm: "LLM",
+    engineSameLanguage: "같은 언어",
+    engineEmpty: "빈 입력",
+    badgeFailed: "실패",
+    badgeRetryFixed: "재시도 성공",
+    badgeRetryKept: "번역 안 됨",
+    detectedPrefix: "감지 {code}",
+    charCount: "{n}자",
+
+    downloading: "{label} 내려받는 중 {percent}%",
+    prepareLlm: "LLM 모델 준비 중…",
+    prepareTranslator: "번역 모델({pair}) 준비 중…",
+    timeout: "{label} 가 {sec}초 안에 응답하지 않았습니다.",
+    labelWait: "대기",
+    labelLlmTranslate: "LLM 번역",
+    labelLlmRetry: "LLM 번역 재시도",
+    labelTranslatorTranslate: "Translator 번역",
+    labelDetect: "언어 감지",
+    labelDetectModel: "언어 감지 모델",
+
+    logWarnTag: "[경고] ",
+    logErrorTag: "[오류] ",
+    probeSkipped: "{label} 확인을 건너뜁니다 : {error}",
+    noLlmApi: "이 크롬에는 LanguageModel(Prompt API)이 없습니다.",
+    noTranslatorApi: "이 크롬에는 Translator API가 없습니다.",
+    llmSessionReset: "번역 언어가 {pair} 로 바뀌어 LLM 세션을 다시 만듭니다.",
+    llmPrepareFailed: "LLM 모델 준비가 실패한 상태입니다 : {error} — [LLM 모델 받기]로 다시 시도하세요.",
+    llmUnavailable: "이 환경에서는 LanguageModel을 쓸 수 없습니다.",
+    llmSessionReady: "LLM 세션을 만들었습니다.",
+    llmNoClone: " (clone 미지원이라 요청마다 새로 만듭니다)",
+    llmHintRejected: "출력 언어 힌트({target})가 거부되어 힌트 없이 만듭니다 : {error}",
+    llmNotTargetRetry: "LLM이 {target} 로 답하지 않아 다시 시킵니다 : {result}",
+    retryFixed: " · 다시 시켜서 고쳤습니다",
+    retryKept: " · 두 번 다 {target} 가 아니라 원문을 그대로 넘겼습니다",
+    retryResult: "재시도 결과 : {result}",
+    retryKeptWarn: "다시 시켜도 {target} 가 아닙니다({pair}). 원문 그대로 넘깁니다 — 이 언어 쌍은 언어팩을 받는 편이 낫습니다.",
+    translatorNoPair: "Translator가 {pair} 를 지원하지 않습니다.",
+    translatorReady: "Translator 준비 완료 : {pair}",
+    translatorNotDownloaded: "번역 모델({pair})을 아직 내려받지 않았습니다.",
+    translatorUseInstalled: "이미 받아 둔 번역 모델을 씁니다 : {pair}",
+    translatorPrepareFailed: "번역 모델({pair}) 준비가 실패한 상태입니다 : {error}",
+    translatorPreparing: "번역 모델({pair})을 아직 준비하는 중입니다.",
+    detectFailed: "언어 감지에 실패했습니다 : {error}",
+
+    reasonWindowEngine: "이 창에서 고른 엔진 : {engine}",
+    reasonMortEngine: "MORT 요청 : {engine}",
+    reasonSameLanguage: " · 원문이 이미 {target} 라 그대로 넘겼습니다",
+    reasonAutoRemembered: " · auto가 {pair} 를 앞서 LLM으로 정했습니다",
+    reasonTranslated: " · {pair} 언어팩으로 번역했습니다",
+    reasonFellBackToLlm: " · Translator 실패로 LLM에 넘겼습니다 : {error}",
+    reasonNoSource: " · 원문 언어를 정하지 못해 LLM에 맡깁니다",
+    reasonTest: "시험 칸",
+    traceRequest: "요청 도착 : {pair} · {chars}자 · {mode}",
+    traceDetected: "원문 언어 감지 : {detected}",
+    traceDetectNone: "원문 언어를 감지하지 못했습니다.",
+    traceSameLowConfidence: "원문과 목표 언어가 같지만 확신이 낮아 그대로 번역합니다.",
+    traceRememberedLlm: "{pair} 는 기억해 둔 대로 LLM으로 보냅니다.",
+    traceModelProbe: "모델 확인 : Translator({pair})={translator} / LanguageModel={llm}",
+    traceAlreadyAsked: "이미 물어본 건이라 다시 묻지 않습니다 : {key}",
+    traceDone: "번역 완료 : {engine} · {ms}ms",
+    warnTranslatorFallback: "Translator 경로 실패 → LLM으로 넘깁니다 ({pair}) : {error}",
+    needSourceLanguage: "원문 언어를 정하지 못했습니다. MORT에서 원문 언어를 지정하거나 자동 모드를 쓰세요.",
+    needGesture: "{message} — 이 창에서 [번역 언어 쌍 받기] 또는 [LLM 모델 받기]를 눌러 주세요.",
+    autoChoice: "자동 모드가 {pair} 를 {engine} 로 정했습니다.",
+
+    connected: "브릿지 서버에 연결했습니다.",
+    badMessage: "서버 메시지를 해석하지 못했습니다.",
+    translateFailed: "번역 실패 ({pair}) : {error}",
+    testFailed: "시험 번역 실패 : {error}",
+    testFailedResult: "실패 : {error}",
+    testRunning: "번역 중…",
+    replaced: "다른 브릿지 창이 연결되어 이 창은 물러났습니다.",
+    closeFailed: "이 창을 닫지 못했습니다. 직접 닫아 주세요.",
+    reconnect: "연결이 끊겨 3초 뒤에 다시 시도합니다.",
+    notConnected: "MORT와 연결되어 있지 않아 확인할 수 없습니다.",
+    modelsNotFound: "찾지 못했습니다. 크롬을 기본 경로가 아닌 곳에 설치했을 수 있습니다.",
+    modelsLlm: "LLM : {name} ({version}, {size})",
+    modelsLlmNone: "LLM : 없음",
+    modelsPacksNone: "번역 언어팩 : 없음",
+    modelsPacks: "번역 언어팩 : {list}",
+    configReceived: "MORT 설정을 받았습니다 : {pair} / 엔진 {mode}",
+
+    askTitleMissing: "받아야 할 모델이 있습니다",
+    askTitleNothing: "받을 모델이 없습니다",
+    askLlm: "LLM 모델을 받으시겠습니까?",
+    askLlmNote: "4GB라 몇 분 걸립니다. 언어와 상관없이 한 번만 받으면 됩니다.",
+    askTranslator: "{pair} 번역 모델을 받으시겠습니까?",
+    askTranslatorNoteFixed: "Translator 고정이라 받기 전까지는 번역되지 않습니다.",
+    askTranslatorNoteLlmMissing: "LLM 모델도 없어 지금은 번역되지 않습니다.",
+    askTranslatorNoteLlmReady: "받지 않으면 LLM으로 번역합니다.",
+    askNoPack: "{pair} 는 번역 언어팩이 없는 언어 쌍입니다.",
+    askNoPackNoteLlmMissing: "LLM으로만 번역할 수 있습니다. [LLM 모델 받기]를 눌러 주세요.",
+    askNoPackNoteLlmReady: "받아 둔 LLM 모델로 번역합니다.",
+    askLlmMissingOnly: "LLM 모델이 없습니다.",
+    askLlmMissingOnlyNote: "번역은 번역 모델로 처리됩니다. LLM은 필요할 때 받으세요.",
+    askNothing: "받아야 할 모델이 없습니다.",
+    askNothingNote: "둘 다 준비되어 있습니다. 로그에서 실패 사유를 확인하세요.",
+
+    manageTitle: "모델 관리",
+    manageBody: "두 모델은 지우는 곳이 다릅니다.",
+    managePack: "① 번역 언어팩",
+    manageLlmSection: "② LLM 모델",
+    manageNone: " — 없음",
+    manageCopied: "아래 주소를 복사했습니다. 새 탭 주소창에 붙여 넣으면 설치·삭제할 수 있습니다.",
+    manageCopyBlocked: "복사가 막혔습니다. 아래 주소를 주소창에 직접 입력하세요.",
+    managePackFolder: "폴더 : {path}",
+    manageLlmHow: "크롬 설정 > 시스템 > 기기 내 AI 를 끄면 파일이 지워집니다.",
+    manageLlmFolderNote: "크롬을 켜 둔 채로는 잠겨 있어 지워지지 않습니다.",
+    manageUrlLogged: "모델 관리 주소 : {url}",
+
+    downloadLlmDone: "LLM 모델을 준비했습니다.",
+    downloadTranslatorDone: "번역 모델을 준비했습니다.",
+    downloadFailed: "모델을 준비하지 못했습니다 : {error}",
+    preparePairDone: "언어 쌍 모델을 준비했습니다 : {pair}",
+    preparePairFailed: "언어 쌍 모델 준비 실패 ({pair}) : {error}",
+    prepareLlmFailed: "LLM 모델 준비 실패 : {error}",
+    startAsk: "모델을 아직 내려받지 않았습니다. 받을지 물어봅니다.",
+    startPrepareFailed: "모델을 미리 준비하지 못했습니다. 번역 요청 때 다시 시도합니다 : {error}",
+    askLater: "모델 받기를 미뤘습니다. 필요하면 [번역 언어 쌍 받기] 또는 [LLM 모델 받기]를 누르세요.",
+    askLaterDetail: "사용자가 내려받기를 미뤘습니다.",
+    logCleared: "로그를 지웠습니다.",
+    verboseOn: "자세히 기록합니다.",
+    verboseOff: "평소 기록으로 돌아갑니다.",
+    logCopied: "로그를 클립보드에 복사했습니다.",
+    logCopyFailed: "로그를 복사하지 못했습니다. 로그 상자를 끌어서 선택해 복사하세요.",
+    clipboardBlocked: "클립보드 API가 막혀 다른 방법으로 복사합니다 : {error}",
+    copyFailed: "복사하지 못했습니다 : {error}",
+    engineFixed: "엔진을 이 창의 선택({mode})으로 고정합니다. MORT 설정보다 우선합니다.",
+    pageOpened: "페이지를 열었습니다. 자동으로 연결합니다.",
+
+    basisMortPair: "MORT가 쓰는 쌍",
+    basisMortConfig: "MORT 설정",
+    basisTestBox: "시험 칸 선택",
+    capPairSuffix: " — {pair} 기준 ({basis})"
+  },
+  en: {
+    appTitle: "MORT Chrome Bridge",
+    sub: "Translates with Chrome's built-in AI. Closing this window stops translation.",
+    noteAuto: "You are asked only when a required model is missing. The LLM (4GB) is never downloaded automatically.",
+    noteLlmLang: "The LLM officially supports en · ja · es · de · fr. Other languages are better served by the translation model.",
+    labelEngine: "Engine",
+    engineAuto: "Auto (translation model first)",
+    engineTranslatorOnly: "Translator API only",
+    engineLlmOnly: "LLM (Prompt API) only",
+    labelModel: "Models",
+    btnPrepare: "Get language pack",
+    btnPrepareLlm: "Get LLM model (4GB)",
+    btnManage: "Manage models",
+    btnRefresh: "Refresh",
+    thInstalled: "Installed models",
+    labelTest: "Test translation",
+    phTestInput: "Text to translate",
+    phTestOutput: "Result",
+    optAutoDetect: "Auto-detect",
+    langJa: "Japanese ja",
+    langEn: "English en",
+    langZh: "Chinese zh",
+    langKo: "Korean ko",
+    btnTranslate: "Translate",
+    labelHistory: "History",
+    historyEmpty: "Nothing yet",
+    historyCount: "last {n}",
+    labelLog: "Log",
+    labelVerbose: "Verbose",
+    btnCopy: "Copy",
+    btnClear: "Clear",
+    btnLater: "Later",
+    btnDownload: "Download",
+    btnOk: "OK",
+
+    notChecked: "not checked",
+    unknownEngine: "unknown",
+    modelTranslator: "Translation model",
+    modelLlm: "LLM model",
+    stateOk: "ready",
+    stateNone: "missing",
+    stateUnsupported: "not in this browser",
+    stateUnknown: "unknown",
+    stateChecking: "checking…",
+    stateBusy: "downloading…",
+    stateFail: "failed",
+    detailNoPack: "no language pack for this pair",
+    detailLlmExtra: "optional · 4GB",
+    detailNoAnswer: "no answer",
+    checking: "checking…",
+    notInBrowser: "not in this browser",
+    availAvailable: "available",
+    availDownloadable: "available (downloads on first use)",
+    availDownloading: "downloading",
+    availUnavailable: "unavailable",
+    checkFailed: "check failed : {error}",
+    noBuiltInAi: "This browser has no built-in AI API. Use the latest desktop Chrome.",
+
+    socketIdle: "MORT not connected",
+    socketOk: "MORT connected",
+    socketLost: "MORT disconnected",
+    socketReplaced: "another window connected",
+    socketError: "connection error",
+    countZero: "0 translations",
+    countText: "{n} translations · {engine}",
+
+    engineTranslator: "translation model",
+    engineLlm: "LLM",
+    engineSameLanguage: "same language",
+    engineEmpty: "empty input",
+    badgeFailed: "failed",
+    badgeRetryFixed: "retry fixed it",
+    badgeRetryKept: "not translated",
+    detectedPrefix: "detected {code}",
+    charCount: "{n} chars",
+
+    downloading: "Downloading {label} {percent}%",
+    prepareLlm: "Preparing the LLM model…",
+    prepareTranslator: "Preparing the translation model ({pair})…",
+    timeout: "{label} did not answer within {sec}s.",
+    labelWait: "wait",
+    labelLlmTranslate: "LLM translation",
+    labelLlmRetry: "LLM retry",
+    labelTranslatorTranslate: "Translator translation",
+    labelDetect: "language detection",
+    labelDetectModel: "language detector model",
+
+    logWarnTag: "[warn] ",
+    logErrorTag: "[error] ",
+    probeSkipped: "Skipping the {label} check : {error}",
+    noLlmApi: "This Chrome has no LanguageModel (Prompt API).",
+    noTranslatorApi: "This Chrome has no Translator API.",
+    llmSessionReset: "Language pair changed to {pair}; rebuilding the LLM session.",
+    llmPrepareFailed: "The LLM model failed to prepare : {error} — try [Get LLM model] again.",
+    llmUnavailable: "LanguageModel cannot be used in this environment.",
+    llmSessionReady: "LLM session created.",
+    llmNoClone: " (no clone support, so a new session is made per request)",
+    llmHintRejected: "Output language hint ({target}) was rejected; creating without it : {error}",
+    llmNotTargetRetry: "The LLM did not answer in {target}; retrying : {result}",
+    retryFixed: " · fixed on retry",
+    retryKept: " · both tries were not {target}, so the source was passed through",
+    retryResult: "Retry result : {result}",
+    retryKeptWarn: "Still not {target} after a retry ({pair}). Passing the source through — get the language pack for this pair.",
+    translatorNoPair: "Translator does not support {pair}.",
+    translatorReady: "Translator ready : {pair}",
+    translatorNotDownloaded: "The translation model ({pair}) has not been downloaded yet.",
+    translatorUseInstalled: "Using an already installed translation model : {pair}",
+    translatorPrepareFailed: "The translation model ({pair}) failed to prepare : {error}",
+    translatorPreparing: "The translation model ({pair}) is still being prepared.",
+    detectFailed: "Language detection failed : {error}",
+
+    reasonWindowEngine: "Engine chosen in this window : {engine}",
+    reasonMortEngine: "MORT requested : {engine}",
+    reasonSameLanguage: " · the source is already {target}, so it was passed through",
+    reasonAutoRemembered: " · auto already routed {pair} to the LLM",
+    reasonTranslated: " · translated with the {pair} language pack",
+    reasonFellBackToLlm: " · Translator failed, handed to the LLM : {error}",
+    reasonNoSource: " · source language unknown, left to the LLM",
+    reasonTest: "test box",
+    traceRequest: "Request : {pair} · {chars} chars · {mode}",
+    traceDetected: "Source language detected : {detected}",
+    traceDetectNone: "Could not detect the source language.",
+    traceSameLowConfidence: "Source and target look the same but confidence is low; translating anyway.",
+    traceRememberedLlm: "{pair} goes to the LLM as remembered.",
+    traceModelProbe: "Model check : Translator({pair})={translator} / LanguageModel={llm}",
+    traceAlreadyAsked: "Already asked, not asking again : {key}",
+    traceDone: "Translated : {engine} · {ms}ms",
+    warnTranslatorFallback: "Translator path failed → handing to the LLM ({pair}) : {error}",
+    needSourceLanguage: "Could not determine the source language. Set it in MORT or use auto mode.",
+    needGesture: "{message} — press [Get language pack] or [Get LLM model] in this window.",
+    autoChoice: "Auto mode routed {pair} to the {engine}.",
+
+    connected: "Connected to the bridge server.",
+    badMessage: "Could not parse the server message.",
+    translateFailed: "Translation failed ({pair}) : {error}",
+    testFailed: "Test translation failed : {error}",
+    testFailedResult: "Failed : {error}",
+    testRunning: "Translating…",
+    replaced: "Another bridge window connected; this one stepped aside.",
+    closeFailed: "Could not close this window. Please close it yourself.",
+    reconnect: "Connection lost; retrying in 3 seconds.",
+    notConnected: "Not connected to MORT, so this cannot be checked.",
+    modelsNotFound: "Not found. Chrome may be installed outside the default path.",
+    modelsLlm: "LLM : {name} ({version}, {size})",
+    modelsLlmNone: "LLM : none",
+    modelsPacksNone: "Language packs : none",
+    modelsPacks: "Language packs : {list}",
+    configReceived: "MORT settings received : {pair} / engine {mode}",
+
+    askTitleMissing: "A model needs downloading",
+    askTitleNothing: "Nothing to download",
+    askLlm: "Download the LLM model?",
+    askLlmNote: "It is 4GB and takes a few minutes. One download covers every language.",
+    askTranslator: "Download the {pair} translation model?",
+    askTranslatorNoteFixed: "Translator is fixed, so nothing is translated until it is downloaded.",
+    askTranslatorNoteLlmMissing: "The LLM model is missing too, so nothing can be translated right now.",
+    askTranslatorNoteLlmReady: "Without it, translation falls back to the LLM.",
+    askNoPack: "{pair} has no translation language pack.",
+    askNoPackNoteLlmMissing: "Only the LLM can translate this pair. Press [Get LLM model].",
+    askNoPackNoteLlmReady: "The installed LLM model handles this pair.",
+    askLlmMissingOnly: "The LLM model is missing.",
+    askLlmMissingOnlyNote: "Translation uses the translation model. Get the LLM only if you need it.",
+    askNothing: "There is nothing to download.",
+    askNothingNote: "Both models are ready. Check the log for the failure reason.",
+
+    manageTitle: "Manage models",
+    manageBody: "The two models are removed in different places.",
+    managePack: "① Translation language packs",
+    manageLlmSection: "② LLM model",
+    manageNone: " — none",
+    manageCopied: "The address below was copied. Paste it into a new tab to install or remove packs.",
+    manageCopyBlocked: "Copying was blocked. Type the address below into the address bar.",
+    managePackFolder: "Folder : {path}",
+    manageLlmHow: "Turn off Chrome Settings > System > On-device AI and Chrome deletes the files.",
+    manageLlmFolderNote: "The folder is locked while Chrome is running, so it cannot be deleted then.",
+    manageUrlLogged: "Model manager address : {url}",
+
+    downloadLlmDone: "The LLM model is ready.",
+    downloadTranslatorDone: "The translation model is ready.",
+    downloadFailed: "Could not prepare the model : {error}",
+    preparePairDone: "Language pair model ready : {pair}",
+    preparePairFailed: "Language pair model failed ({pair}) : {error}",
+    prepareLlmFailed: "LLM model failed : {error}",
+    startAsk: "The model has not been downloaded yet; asking whether to get it.",
+    startPrepareFailed: "Could not prepare the model up front; will retry on the next request : {error}",
+    askLater: "Download postponed. Press [Get language pack] or [Get LLM model] when you need it.",
+    askLaterDetail: "The user postponed the download.",
+    logCleared: "Log cleared.",
+    verboseOn: "Verbose logging on.",
+    verboseOff: "Verbose logging off.",
+    logCopied: "Log copied to the clipboard.",
+    logCopyFailed: "Could not copy the log. Select the log box and copy it manually.",
+    clipboardBlocked: "The clipboard API is blocked; falling back : {error}",
+    copyFailed: "Could not copy : {error}",
+    engineFixed: "Engine fixed to this window's choice ({mode}); it wins over the MORT setting.",
+    pageOpened: "Page opened. Connecting automatically.",
+
+    basisMortPair: "pair MORT uses",
+    basisMortConfig: "MORT setting",
+    basisTestBox: "test box",
+    capPairSuffix: " — based on {pair} ({basis})"
+  }
+};
+
+/// 문구 하나를 꺼낸다. {이름} 자리는 vars 로 채운다.
+/// 한국어 표에 없는 키는 영어로 갈음한다. 문구가 통째로 사라지는 것보다 낫다.
+function t(key, vars) {
+  const table = STRINGS[LANG] || STRINGS.en;
+  let text = table[key];
+
+  if(text === undefined) {
+    text = STRINGS.en[key];
+  }
+
+  if(text === undefined) {
+    return key;
+  }
+
+  if(vars) {
+    for(const name in vars) {
+      text = text.split("{" + name + "}").join(vars[name]);
+    }
+  }
+
+  return text;
+}
+
+/// 화면에 박혀 있는 문구를 한 번에 채운다. HTML 쪽에는 문구를 두지 않아서 이 함수가 돌기 전까지는
+/// 그 자리가 비어 있다. 스크립트가 문서 끝에서 바로 도므로 사람 눈에는 걸리지 않는다.
+/// 언어를 바꿀 때도 다시 부른다. 지금 상태를 담은 문구는 applyStateStrings 가 따로 맡는다.
+function applyStaticStrings() {
+  document.documentElement.lang = LANG;
+  document.title = t("appTitle");
+  el("pageTitle").textContent = t("appTitle");
+
+  for(const node of document.querySelectorAll("[data-i18n]")) {
+    node.textContent = t(node.getAttribute("data-i18n"));
+  }
+
+  for(const node of document.querySelectorAll("[data-i18n-ph]")) {
+    node.placeholder = t(node.getAttribute("data-i18n-ph"));
+  }
+
+  for(const button of document.querySelectorAll("[data-lang]")) {
+    button.classList.toggle("active", button.getAttribute("data-lang") === LANG);
+  }
+}
+
+/// 연결 상태, 번역 건수, 기록 건수처럼 지금 상태를 담은 문구를 다시 적는다.
+/// 이미 쌓인 로그와 번역 기록 줄은 그대로 둔다. 적을 때 문구로 굳어서 다시 만들 재료가 남아 있지 않다.
+function applyStateStrings() {
+  const historyCount = el("transLog").childElementCount;
+
+  el("socketText").textContent = t(state.socketKey);
+  el("countText").textContent = state.count === 0
+    ? t("countZero")
+    : t("countText", { n: state.count, engine: engineLabel(state.lastEngine) });
+  el("transLogHint").textContent = historyCount === 0
+    ? t("historyEmpty")
+    : t("historyCount", { n: historyCount });
+}
+
+/// KR / EN 버튼. 새로 고치지 않고 그 자리에서 문구만 갈아 끼운다.
+/// 새로 고치면 WebSocket이 끊겨 그 사이 MORT의 번역 요청이 실패하고, 진행 중인 모델 준비와
+/// 번역 기록도 함께 사라진다.
+/// 창 제목도 바뀌지만 ChromeBridgeWindow 가 두 언어의 제목을 모두 보므로 창 찾기에는 지장이 없다.
+function setLanguage(lang) {
+  if(lang === LANG) {
+    return;
+  }
+
+  LANG = lang;
+
+  try {
+    localStorage.setItem(LANG_STORAGE_KEY, lang);
+  } catch(error) {
+    // 저장이 막혀도 이번 창에는 적용된다.
+  }
+
+  applyStaticStrings();
+  applyStateStrings();
+
+  //모델 칸과 기능 표는 확인 결과를 문구로만 들고 있다. 다시 확인해서 새 언어로 적는다.
+  probeCapabilities();
+
+  if(state.modelInfo) {
+    showInstalledModels(state.modelInfo);
+  }
+}
+
+/// 목표 언어를 시스템 프롬프트에 박아 세션마다 고정한다.
+/// 언어 쌍을 사용자 메시지에만 적어 두면 기기 내장 모델(Gemini Nano급)이 그걸 지시가 아닌
+/// 자료로 읽고 원문을 그대로 되돌려 주는 일이 실제로 있다(일본어 → 한국어인데 일본어가 그대로 나옴).
+/// 그래서 여기서 한 번, 사용자 메시지 끝에서 다시 한 번 못박는다.
+function buildSystemPrompt(source, target) {
+  const targetName = plainLanguageName(target);
+  const sourceName = source && source !== "auto" ? plainLanguageName(source) : "";
+
+  return [
+    "You are a translation engine inside a screen-translation tool.",
+    "You always translate into " + targetName + ". Every reply you write must be in " + targetName + ".",
+    "Every user message contains OCR text captured from a game or application screen,",
+    "placed between the markers <<<SRC>>> and <<<END>>>.",
+    "Rules:",
+    "- Output the " + targetName + " translation only. No notes, no romanization, no explanation, no markers.",
+    sourceName
+      ? "- The source is " + sourceName + ". Never answer in " + sourceName + " and never copy the source text back."
+      : "- Never copy the source text back as your answer.",
+    "- Keep the original line breaks.",
+    "- Keep proper nouns, numbers and symbols as they are when they have no translation.",
+    "- If a fragment carries no meaning to translate (numbers, symbols alone), output it unchanged.",
+    "- Never refuse. Never ask questions. Never add anything the source does not contain."
+  ].join(" ");
+}
+
+const LANGUAGE_NAMES = {
+  en: "English", ja: "Japanese", ko: "Korean", zh: "Chinese (Simplified)",
+  "zh-Hant": "Chinese (Traditional)", es: "Spanish", fr: "French", de: "German",
+  ru: "Russian", pt: "Portuguese", it: "Italian", vi: "Vietnamese", th: "Thai",
+  id: "Indonesian", tr: "Turkish", pl: "Polish", ar: "Arabic", uk: "Ukrainian", hu: "Hungarian"
+};
+
+/// 목표 언어가 무엇으로 쓰이는 글자인지. LLM이 목표 언어를 무시했는지 판정하는 데 쓴다.
+/// 여기 없는 언어는 판정하지 않는다 — 틀린 판정으로 멀쩡한 번역을 다시 돌리는 쪽이 더 나쁘다.
+const LANGUAGE_SCRIPTS = {
+  ko: "hangul", ja: "kana", zh: "han", "zh-Hant": "han", en: "latin",
+  es: "latin", fr: "latin", de: "latin", pt: "latin", it: "latin",
+  vi: "latin", id: "latin", tr: "latin", pl: "latin", hu: "latin",
+  ru: "cyrillic", uk: "cyrillic", th: "thai", ar: "arabic"
+};
+
+const SCRIPT_PATTERNS = {
+  hangul: /[가-힣]/,
+  kana: /[぀-ヿ]/,
+  han: /[一-鿿]/,
+  latin: /[A-Za-z]/,
+  cyrillic: /[Ѐ-ӿ]/,
+  thai: /[฀-๿]/,
+  arabic: /[؀-ۿ]/
+};
+
+// availability() 가 영영 응답하지 않는 크롬 빌드가 실제로 있다. 그대로 await 하면 순번 큐가 멈춰
+// 그 뒤 번역이 전부 죽으므로, 모델을 건드리는 호출에는 전부 제한 시간을 건다.
+// 서버가 이 사유로 닫으면 다른 창에 자리를 내준 것이다. BridgeHub 쪽 문자열과 같아야 한다.
+const CLOSE_REASON_REPLACED = "another tab connected";
+
+// 번역 언어팩을 설치하고 지우는 크롬 내부 페이지.
+const MODEL_MANAGER_URL = "chrome://on-device-translation-internals/";
+
+const TIMEOUT = {
+  probe: 8000,
+  create: 10 * 60 * 1000,
+  pending: 10 * 1000,
+  run: 90 * 1000
+};
+
+const state = {
+  started: false,
+  socket: null,
+  reconnectTimer: null,
+  llmSession: null,
+  llmSessionPair: "",
+  llmCanClone: false,
+  llmFailed: false,
+  llmError: "",
+  translators: new Map(),
+  autoChoice: new Map(),
+  detector: null,
+  detectorTried: false,
+  askOpen: false,
+  askTarget: "translator",
+  askedKeys: new Set(),
+  modelInfo: null,
+  lastEngine: "",
+  wantedSource: "",
+  wantedTarget: "",
+  modeOverridden: false,
+  configSource: "",
+  configTarget: "",
+  count: 0,
+  verbose: false,
+  socketKey: "socketIdle",
+  chain: Promise.resolve()
+};
+
+const el = (id) => document.getElementById(id);
+
+/// 로그 줄 수를 묶어 둔다. 창을 며칠 켜 두는 사용자가 있어서 그냥 두면 계속 쌓인다.
+const LOG_MAX = 400;
+
+/// 자세히 모드에서만 남기는 줄. 평소에는 요청 하나가 로그 대여섯 줄을 차지해서
+/// 정작 봐야 할 경고가 묻힌다. 이상할 때만 켜서 본다.
+function trace(message) {
+  if(state.verbose) {
+    write("trace", message);
+  }
+}
+
+function log(message) {
+  write("info", message);
+}
+
+/// 이 창을 보고 있지 않아도 알아야 하는 일은 MORT 로그에도 남긴다.
+/// 번역이 왜 이상했는지는 브릿지 창이 최소화된 채로는 알 길이 없다.
+function notify(message) {
+  write("info", message);
+  send({ type: "log", message: message });
+}
+
+/// 경고와 오류는 언제나 MORT 로그로 넘긴다. 창이 최소화된 채로 번역이 이상해지는 경우가
+/// 정확히 이 두 종류라, 창을 열어 봐야만 알 수 있게 두면 로그를 남기는 뜻이 없다.
+function warn(message) {
+  write("warn", message);
+  send({ type: "log", message: t("logWarnTag") + message });
+}
+
+function fail(message) {
+  write("error", message);
+  send({ type: "log", message: t("logErrorTag") + message });
+}
+
+function write(level, message) {
+  const box = el("log");
+  const line = document.createElement("div");
+
+  line.className = "log-line " + level;
+  line.textContent = new Date().toTimeString().slice(0, 8) + "  " + message;
+  box.appendChild(line);
+
+  while(box.childElementCount > LOG_MAX) {
+    box.removeChild(box.firstChild);
+  }
+
+  box.scrollTop = box.scrollHeight;
+}
+
+/// 어느 경로로 번역했는지 사람이 읽는 이름으로 바꾼다. 이걸 봐야 지금 Translator를 쓰는지
+/// LLM으로 넘어갔는지 알 수 있고, 결과 품질이 왜 다른지도 설명된다.
+const ENGINE_KEYS = {
+  translator: "engineTranslator",
+  llm: "engineLlm",
+  "same-language": "engineSameLanguage",
+  empty: "engineEmpty"
+};
+
+const TRANS_LOG_MAX = 50;
+
+function engineLabel(engine) {
+  if(ENGINE_KEYS[engine]) {
+    return t(ENGINE_KEYS[engine]);
+  }
+
+  return engine || t("unknownEngine");
+}
+
+function engineClass(engine) {
+  if(engine === "translator" || engine === "llm") {
+    return engine;
+  }
+
+  return "";
+}
+
+function addBadge(head, className, text) {
+  const badge = document.createElement("span");
+  badge.className = className;
+  badge.textContent = text;
+  head.appendChild(badge);
+}
+
+/// 번역 한 건이 어떻게 처리됐는지 한 줄로 볼 수 있게 남긴다.
+/// 경로(배지)만으로는 '왜 이 문장만 이상한가'에 답하지 못한다. 어느 쌍이었는지, 왜 그 경로였는지,
+/// 얼마나 걸렸는지, 다시 시켰는지까지 같이 적어야 사용자가 스스로 원인을 짚을 수 있다.
+function addTransLog(entry) {
+  const box = el("transLog");
+  const row = document.createElement("div");
+  row.className = "trans-row";
+
+  const head = document.createElement("div");
+  head.className = "trans-head";
+
+  const time = document.createElement("span");
+  time.className = "trans-time";
+  time.textContent = new Date().toTimeString().slice(0, 8);
+  head.appendChild(time);
+
+  addBadge(head, "trans-engine " + (entry.failed ? "fail" : engineClass(entry.engine)),
+    entry.failed ? t("badgeFailed") : engineLabel(entry.engine));
+
+  if(entry.retry === "fixed") {
+    addBadge(head, "trans-engine retry", t("badgeRetryFixed"));
+  } else if(entry.retry === "kept") {
+    addBadge(head, "trans-engine fail", t("badgeRetryKept"));
+  }
+
+  const facts = [(entry.source || "auto") + " → " + (entry.target || "?")];
+
+  if(entry.detected) {
+    facts.push(t("detectedPrefix", { code: entry.detected }));
+  }
+
+  if(entry.ms >= 0) {
+    facts.push(entry.ms + "ms");
+  }
+
+  facts.push(t("charCount", { n: (entry.original || "").length }));
+
+  const lang = document.createElement("span");
+  lang.className = "trans-lang";
+  lang.textContent = facts.join(" · ");
+  head.appendChild(lang);
+
+  row.appendChild(head);
+
+  if(entry.reason) {
+    const reason = document.createElement("div");
+    reason.className = "trans-reason";
+    reason.textContent = entry.reason;
+    row.appendChild(reason);
+  }
+
+  const sourceLine = document.createElement("div");
+  sourceLine.className = "trans-source";
+  sourceLine.textContent = entry.original;
+  row.appendChild(sourceLine);
+
+  const resultLine = document.createElement("div");
+  resultLine.className = "trans-result" + (entry.failed ? " fail" : "");
+  resultLine.textContent = entry.result;
+  row.appendChild(resultLine);
+
+  box.insertBefore(row, box.firstChild);
+
+  while(box.childElementCount > TRANS_LOG_MAX) {
+    box.removeChild(box.lastChild);
+  }
+
+  el("transLogHint").textContent = t("historyCount", { n: box.childElementCount });
+}
+
+function setDot(id, level) {
+  const dot = el(id);
+  dot.className = "dot" + (level ? " " + level : "");
+}
+
+/// 두 모델 칸에 진행 상태를 적는다. 예전에는 "모델 준비됨 / 모델 필요" 칸이 따로 하나 더 있었는데,
+/// 모델이 둘인데 상태 칸이 하나라 어느 쪽 이야기인지 알 수 없었다. LLM은 있고 번역 모델만 없는 흔한
+/// 상태에서 "모델 필요"라고만 떠서, 번역이 되고 있는데도 무언가 잘못된 것처럼 보였다.
+function setModelBusy(target, level, text) {
+  if(target !== "llm") {
+    setModelPill("dotTranslatorModel", "translatorModelText", t("modelTranslator"), level, text);
+  }
+
+  if(target !== "translator") {
+    setModelPill("dotLlmModel", "llmModelText", t("modelLlm"), level, text);
+  }
+}
+
+/// 문구가 아니라 키를 받는다. 언어를 바꾸면 applyStateStrings 가 이 키로 다시 적는다.
+function setSocketState(level, key) {
+  state.socketKey = key;
+  setDot("dotSocket", level);
+  el("socketText").textContent = t(key);
+}
+
+function showProgress(label, ratio) {
+  el("progressWrap").style.display = "block";
+  el("progressLabel").textContent = label;
+  el("progressFill").style.width = Math.round(Math.max(0, Math.min(1, ratio)) * 100) + "%";
+}
+
+function hideProgress() {
+  el("progressWrap").style.display = "none";
+}
+
+function makeMonitor(label) {
+  return (monitor) => {
+    monitor.addEventListener("downloadprogress", (event) => {
+      const ratio = typeof event.loaded === "number" ? event.loaded : 0;
+      showProgress(t("downloading", { label: label, percent: Math.round(ratio * 100) }), ratio);
+
+      if(ratio >= 1) {
+        setTimeout(hideProgress, 800);
+      }
+    });
+  };
+}
+
+function withTimeout(promise, milliseconds, label) {
+  let timer = null;
+
+  const guard = new Promise((resolve, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(t("timeout", { label: label, sec: Math.round(milliseconds / 1000) })));
+    }, milliseconds);
+  });
+
+  return Promise.race([promise, guard]).finally(() => clearTimeout(timer));
+}
+
+function languageName(code) {
+  if(!code || code === "auto") {
+    return "auto-detect";
+  }
+
+  return LANGUAGE_NAMES[code] ? LANGUAGE_NAMES[code] + " (" + code + ")" : code;
+}
+
+/// 프롬프트 문장 안에 넣을 이름. 괄호 안의 코드까지 붙이면 그것도 번역해 달라는 말로 읽힐 수 있다.
+function plainLanguageName(code) {
+  if(!code || code === "auto") {
+    return "the requested target language";
+  }
+
+  return LANGUAGE_NAMES[code] || code;
+}
+
+function countScript(text, script) {
+  const found = text.match(new RegExp(SCRIPT_PATTERNS[script].source, "g"));
+
+  return found ? found.length : 0;
+}
+
+/// LLM이 목표 언어로 번역하지 않은 답을 돌려줬는지 본다. 두 가지를 잡는다.
+/// 하나는 원문을 통째로 되돌려 준 경우, 다른 하나는 "공격力が上がった!" 처럼 반만 바꾼 경우다.
+/// 원문 글자가 목표 언어 글자보다 많으면 번역이 덜 된 것으로 친다.
+/// 고유명사를 원문 그대로 남기는 건 정상이라, 목표 언어 글자가 더 많으면 건드리지 않는다.
+/// 판정할 수 없는 조합(같은 글자를 쓰는 언어끼리, 표에 없는 언어)은 통과시킨다.
+function looksUntranslated(result, source, target) {
+  const targetScript = LANGUAGE_SCRIPTS[target];
+  const sourceScript = LANGUAGE_SCRIPTS[source];
+
+  if(!targetScript || !sourceScript || targetScript === sourceScript) {
+    return false;
+  }
+
+  const text = result || "";
+  const sourceCount = countScript(text, sourceScript);
+
+  if(sourceCount === 0) {
+    return false;
+  }
+
+  //한자로만 이뤄진 일본어 문장은 중국어와 글자가 같다. 가릴 방법이 없으니 판정하지 않는다.
+  if(target === "ja" && sourceScript === "han") {
+    return false;
+  }
+
+  let targetCount = countScript(text, targetScript);
+
+  //일본어로 옮긴 글은 한자가 많아도 정상이다. 그건 원문이 남은 게 아니다.
+  if(target === "ja") {
+    targetCount += countScript(text, "han");
+  }
+
+  return targetCount < sourceCount;
+}
+
+// ---------------------------------------------------------------- 기능 확인
+
+/// 두 모델의 유무를 따로 보여 준다.
+/// 하나로 뭉뚱그리면 "모델 준비됨"이 번역 모델을 말하는지 LLM을 말하는지 알 수 없고,
+/// 번역이 왜 LLM으로 떨어졌는지도 설명되지 않는다.
+function setModelPill(dotId, textId, prefix, state, detail) {
+  const levels = { ok: "ok", none: "warn", unsupported: "", unknown: "warn", checking: "", busy: "warn", fail: "bad" };
+  const names = {
+    ok: "stateOk",
+    none: "stateNone",
+    unsupported: "stateUnsupported",
+    unknown: "stateUnknown",
+    checking: "stateChecking",
+    busy: "stateBusy",
+    fail: "stateFail"
+  };
+
+  setDot(dotId, levels[state] || "");
+  el(textId).textContent = prefix + " : " + (names[state] ? t(names[state]) : state)
+    + (detail ? " (" + detail + ")" : "");
+}
+
+/// availability 값이 "쓸 수 있다"인지 가린다. downloadable/downloading 은 아직 없는 것으로 본다.
+function toModelState(value) {
+  if(value === "available") {
+    return "ok";
+  }
+
+  if(value === "unavailable") {
+    return "unsupported";
+  }
+
+  //availability() 가 응답하지 않는 크롬 빌드가 있다. 그때 값은 null 인데, 이걸 "없음"이나
+  //"이 브라우저에 없음"으로 적으면 멀쩡히 있는 모델을 받으라고 하게 된다. 모르는 건 모른다고 적는다.
+  if(value === null || value === undefined) {
+    return "unknown";
+  }
+
+  return "none";
+}
+
+async function probeModelPills() {
+  const pair = pairToPrepare();
+  let translatorValue = null;
+  let llmValue = null;
+
+  if(!("Translator" in self)) {
+    setModelPill("dotTranslatorModel", "translatorModelText", t("modelTranslator"), "unsupported", "");
+  } else {
+    setModelPill("dotTranslatorModel", "translatorModelText", t("modelTranslator"), "checking",
+      pair.source + " → " + pair.target);
+
+    translatorValue = await probeOrNull(
+      () => Translator.availability({ sourceLanguage: pair.source, targetLanguage: pair.target }),
+      "Translator.availability");
+
+    const state = toModelState(translatorValue);
+
+    setModelPill("dotTranslatorModel", "translatorModelText", t("modelTranslator"), state,
+      state === "unsupported" ? t("detailNoPack") : pair.source + " → " + pair.target);
+  }
+
+  if(!("LanguageModel" in self)) {
+    setModelPill("dotLlmModel", "llmModelText", t("modelLlm"), "unsupported", "");
+  } else {
+    setModelPill("dotLlmModel", "llmModelText", t("modelLlm"), "checking", "");
+
+    llmValue = await probeOrNull(() => LanguageModel.availability(), "LanguageModel.availability");
+
+    const llmState = toModelState(llmValue);
+    const llmDetail = { none: t("detailLlmExtra"), unknown: t("detailNoAnswer") };
+
+    setModelPill("dotLlmModel", "llmModelText", t("modelLlm"), llmState, llmDetail[llmState] || "");
+  }
+
+  //"왜 없다고 나오나"는 이 원본 값을 봐야 답할 수 있다.
+  trace(t("traceModelProbe", {
+    pair: pair.source + "→" + pair.target,
+    translator: translatorValue,
+    llm: llmValue
+  }));
+}
+
+async function probeCapabilities() {
+  probeModelPills();
+
+  const hasLlm = "LanguageModel" in self;
+  const hasTranslator = "Translator" in self;
+  const hasDetector = "LanguageDetector" in self;
+
+  el("capLlm").textContent = hasLlm ? t("checking") : t("notInBrowser");
+  el("capTranslator").textContent = hasTranslator ? t("checking") : t("notInBrowser");
+  el("capDetector").textContent = hasDetector ? t("checking") : t("notInBrowser");
+
+  // 하나가 멈춰도 나머지 표시는 채워지도록 서로 기다리지 않게 한다.
+  if(hasLlm) {
+    showAvailability("capLlm", "LanguageModel.availability", () => LanguageModel.availability(), "");
+  }
+
+  if(hasTranslator) {
+    //Translator는 언어 쌍마다 모델이 따로라 "쓸 수 있다/없다"를 쌍 없이 말할 수 없다.
+    //MORT가 실제로 요청한 쌍을 기준으로 본다. 요청 전에는 시험 칸 선택으로 대신한다.
+    const pair = pairToPrepare();
+
+    showAvailability("capTranslator", "Translator.availability",
+      () => Translator.availability({ sourceLanguage: pair.source, targetLanguage: pair.target }),
+      t("capPairSuffix", { pair: pair.source + " → " + pair.target, basis: pair.basis }));
+  }
+
+  if(hasDetector) {
+    showAvailability("capDetector", "LanguageDetector.availability", () => LanguageDetector.availability(), "");
+  }
+
+  if(!hasLlm && !hasTranslator) {
+    const line = document.createElement("span");
+    line.className = "bad-text";
+    line.textContent = t("noBuiltInAi");
+    el("capLlm").textContent = "";
+    el("capLlm").appendChild(line);
+    return false;
+  }
+
+  return true;
+}
+
+function showAvailability(targetId, label, run, suffix) {
+  withTimeout(run(), TIMEOUT.probe, label).then(
+    (value) => { el(targetId).textContent = describeAvailability(value) + suffix; },
+    //실패해도 어느 언어 쌍을 본 것인지는 남긴다. 기준을 모르면 실패 자체를 해석할 수 없다.
+    (error) => { el(targetId).textContent = t("checkFailed", { error: error.message }) + suffix; }
+  );
+}
+
+function describeAvailability(value) {
+  switch(value) {
+    case "available": return t("availAvailable");
+    case "downloadable": return t("availDownloadable");
+    case "downloading": return t("availDownloading");
+    case "unavailable": return t("availUnavailable");
+    default: return String(value);
+  }
+}
+
+// ---------------------------------------------------------------- LLM 경로
+
+/// availability() 는 어디까지나 사전 확인이라, 응답이 없으면 결과 없이 넘어가고 create() 로 직접 부딪힌다.
+async function probeOrNull(run, label) {
+  try {
+    return await withTimeout(run(), TIMEOUT.probe, label);
+  } catch(error) {
+    warn(t("probeSkipped", { label: label, error: error.message }));
+    return null;
+  }
+}
+
+async function createLlmSession(source, target) {
+  const options = {
+    initialPrompts: [{ role: "system", content: buildSystemPrompt(source, target) }],
+    monitor: makeMonitor(t("modelLlm"))
+  };
+
+  //Prompt API에 쓰는 언어를 미리 알려 주는 자리가 있다. 프롬프트 문장보다 이쪽이 강하게 먹는다.
+  //다만 크롬 빌드나 언어에 따라 여기서 거부당할 수 있어서, 막히면 힌트 없이 다시 만든다.
+  let session = null;
+
+  if(target) {
+    try {
+      session = await LanguageModel.create(Object.assign({
+        expectedInputs: [{ type: "text", languages: [source && source !== "auto" ? source : target] }],
+        expectedOutputs: [{ type: "text", languages: [target] }]
+      }, options));
+    } catch(error) {
+      //한국어처럼 Prompt API의 공식 지원 언어(en/ja/es/de/fr)가 아니면 여기서 거부당한다.
+      //정상적인 경로라 경고로 올리지 않는다. 힌트 없이 만들어도 번역은 그대로 된다.
+      trace(t("llmHintRejected", { target: target, error: error.message }));
+      session = null;
+    }
+  }
+
+  if(!session) {
+    session = await LanguageModel.create(options);
+  }
+
+  state.llmCanClone = typeof session.clone === "function";
+  return session;
+}
+
+/// allowLongWait 은 버튼으로 들어온 준비 요청에만 쓴다. 번역 요청 경로는 짧게 기다리고 포기해서
+/// 서버 쪽 제한 시간을 통째로 잡아먹지 않게 한다.
+async function ensureLlmSession(allowLongWait, source, target) {
+  if(!("LanguageModel" in self)) {
+    throw new Error(t("noLlmApi"));
+  }
+
+  //시스템 프롬프트에 언어 쌍이 박혀 있으므로 쌍이 바뀌면 세션을 다시 만든다.
+  //세션은 붙였다 떼는 비용이 크지 않고, MORT는 한 번에 한 쌍만 쓴다.
+  const pairKey = (source || "auto") + ">" + (target || "");
+
+  if(state.llmSession && state.llmSessionPair !== pairKey) {
+    try {
+      state.llmSession.destroy();
+    } catch(error) {
+      // 정리 실패는 무시한다.
+    }
+
+    state.llmSession = null;
+    log(t("llmSessionReset", { pair: pairKey }));
+  }
+
+  if(state.llmSession) {
+    return state.llmSession;
+  }
+
+  if(state.llmFailed && !allowLongWait) {
+    throw new Error(t("llmPrepareFailed", { error: state.llmError }));
+  }
+
+  if(allowLongWait) {
+    const availability = await probeOrNull(() => LanguageModel.availability(), "LanguageModel.availability");
+
+    if(availability === "unavailable") {
+      state.llmFailed = true;
+      state.llmError = t("llmUnavailable");
+      throw new Error(state.llmError);
+    }
+  }
+
+  showProgress(t("prepareLlm"), 0);
+
+  try {
+    state.llmSession = await withTimeout(createLlmSession(source, target),
+      allowLongWait ? TIMEOUT.create : TIMEOUT.pending, "LanguageModel.create");
+    state.llmSessionPair = pairKey;
+    state.llmFailed = false;
+    state.llmError = "";
+    //받았으니 다시 물어볼 수 있게 기억도 지운다.
+    state.askedKeys.clear();
+  } catch(error) {
+    state.llmFailed = true;
+    state.llmError = error.message;
+    throw error;
+  } finally {
+    hideProgress();
+  }
+
+  log(t("llmSessionReady") + (state.llmCanClone ? "" : t("llmNoClone")));
+
+  return state.llmSession;
+}
+
+/// 지시를 원문 앞뒤로 나눠 적는다. 작은 모델은 마지막에 읽은 문장을 가장 강하게 따르므로
+/// 목표 언어를 원문 뒤에서 한 번 더 말해 줘야 원문을 그대로 되돌려 주는 일이 줄어든다.
+function buildUserPrompt(text, source, target, insist) {
+  const targetName = plainLanguageName(target);
+  const lines = [
+    "Target language: " + languageName(target),
+    "Source language: " + languageName(source),
+    "<<<SRC>>>",
+    text,
+    "<<<END>>>"
+  ];
+
+  if(insist) {
+    lines.push("Do not copy the text above. Even if it already reads fine, it is not " + targetName + " yet.");
+  }
+
+  lines.push("Write only the " + targetName + " translation of the text above, nothing else.");
+
+  return lines.join("\n");
+}
+
+function cleanLlmOutput(raw) {
+  let text = (raw || "").trim();
+
+  text = text.replace(/^```[a-zA-Z]*\s*/, "").replace(/```$/, "").trim();
+  text = text.replace(/<<<SRC>>>/g, "").replace(/<<<END>>>/g, "").trim();
+  text = text.replace(/^(번역|translation|translated text)\s*[:：]\s*/i, "").trim();
+
+  return text;
+}
+
+/// 원문을 되돌려 준 답을 다시 시킨다.
+/// 방금 그 답이 남아 있는 세션에 대고 다시 물으면 모델이 자기 답을 그대로 되풀이한다.
+/// 실제로 그렇게 두 번 다 실패하는 것을 봤다. 그래서 이력이 없는 새 복제본에 묻는다.
+async function retryTranslation(base, used, first, text, source, target, report) {
+  let session = used;
+  let disposable = false;
+
+  if(state.llmCanClone) {
+    try {
+      session = await base.clone();
+      disposable = true;
+    } catch(error) {
+      session = used;
+      disposable = false;
+    }
+  }
+
+  try {
+    const retried = cleanLlmOutput(await withTimeout(session.prompt(buildUserPrompt(text, source, target, true)),
+      TIMEOUT.run, t("labelLlmRetry")));
+
+    if(!looksUntranslated(retried, source, target)) {
+      report.retry = "fixed";
+      report.reason += t("retryFixed");
+      trace(t("retryResult", { result: retried }));
+
+      return retried;
+    }
+
+    report.retry = "kept";
+    report.reason += t("retryKept", { target: plainLanguageName(target) });
+    warn(t("retryKeptWarn", { target: plainLanguageName(target), pair: source + " → " + target }));
+
+    return first;
+  } finally {
+    if(disposable) {
+      try {
+        session.destroy();
+      } catch(error) {
+        // 정리 실패는 무시한다.
+      }
+    }
+  }
+}
+
+async function translateWithLlm(text, source, target, report) {
+  const notes = report || { reason: "", retry: null };
+  const base = await ensureLlmSession(false, source, target);
+  let session = base;
+  let disposable = false;
+
+  if(state.llmCanClone) {
+    try {
+      session = await base.clone();
+      disposable = true;
+    } catch(error) {
+      session = base;
+      disposable = false;
+    }
+  }
+
+  try {
+    const output = await withTimeout(session.prompt(buildUserPrompt(text, source, target, false)),
+      TIMEOUT.run, t("labelLlmTranslate"));
+    let result = cleanLlmOutput(output);
+
+    //목표 언어를 통째로 무시하고 원문을 되돌려 주는 일이 있다. 한 번은 다시 시켜 본다.
+    if(looksUntranslated(result, source, target)) {
+      warn(t("llmNotTargetRetry", { target: plainLanguageName(target), result: result }));
+      result = await retryTranslation(base, session, result, text, source, target, notes);
+    }
+
+    return result;
+  } finally {
+    if(disposable) {
+      try {
+        session.destroy();
+      } catch(error) {
+        // 정리 실패는 무시한다.
+      }
+    } else {
+      // 대화가 계속 쌓이면 문맥이 넘치므로 복제를 못 쓰는 환경에서는 매번 버린다.
+      try {
+        base.destroy();
+      } catch(error) {
+        // 정리 실패는 무시한다.
+      }
+
+      state.llmSession = null;
+      state.llmSessionPair = "";
+    }
+  }
+}
+
+// ---------------------------------------------------------------- Translator 경로
+
+/// 모델 준비는 사용자 조작 직후에만 시작할 수 있고 몇 분이 걸린다. 그래서 준비와 사용을 분리한다.
+/// 이쪽은 버튼을 눌러 들어오는 준비 경로라서 오래 기다려도 된다.
+async function prepareTranslator(source, target) {
+  if(!("Translator" in self)) {
+    throw new Error(t("noTranslatorApi"));
+  }
+
+  const key = source + ">" + target;
+  const cached = state.translators.get(key);
+
+  if(cached && cached.ready) {
+    return cached.translator;
+  }
+
+  if(cached && !cached.failed) {
+    return cached.promise;
+  }
+
+  const availability = await probeOrNull(
+    () => Translator.availability({ sourceLanguage: source, targetLanguage: target }),
+    "Translator.availability(" + key + ")");
+
+  if(availability === "unavailable") {
+    throw new Error(t("translatorNoPair", { pair: source + " → " + target }));
+  }
+
+  showProgress(t("prepareTranslator", { pair: key }), 0);
+
+  const entry = { ready: false, failed: false, error: "", translator: null, promise: null };
+
+  entry.promise = withTimeout(Translator.create({
+    sourceLanguage: source,
+    targetLanguage: target,
+    monitor: makeMonitor(t("modelTranslator") + " " + key)
+  }), TIMEOUT.create, "Translator.create(" + key + ")").then(
+    (translator) => {
+      entry.ready = true;
+      entry.translator = translator;
+
+      //모델이 생겼으니 "이 쌍은 LLM으로" 라는 앞선 판단은 버린다. 안 그러면 받아 놓고도 LLM을 쓴다.
+      state.autoChoice.delete(key);
+      //받았으니 다시 물어볼 수 있게 기억도 지운다.
+      state.askedKeys.clear();
+
+      return translator;
+    },
+    (error) => {
+      // 실패를 기억해 둔다. 지우고 나면 요청마다 같은 긴 시도를 되풀이하며 번역이 전부 시간 초과된다.
+      entry.failed = true;
+      entry.error = error.message;
+      throw error;
+    });
+
+  state.translators.set(key, entry);
+
+  try {
+    const translator = await entry.promise;
+    hideProgress();
+    log(t("translatorReady", { pair: key }));
+    return translator;
+  } catch(error) {
+    hideProgress();
+    throw error;
+  }
+}
+
+/// 이쪽은 번역 요청 경로다. 준비되지 않은 모델을 여기서 만들려 들면 요청이 통째로 묶이므로
+/// 준비된 것만 쓰고, 아니면 바로 사정을 알려 준다.
+/// "내려받기만 하면 되는" 실패에 표시를 달아 둔다.
+/// 예전에는 오류 문구를 정규식으로 되짚어 이 경우를 가렸는데, 문구가 언어마다 달라지면서
+/// 한국어 표현에만 맞는 판정이 되어 버렸다. 문구가 아니라 값으로 남긴다.
+function missingModelError(message) {
+  const error = new Error(message);
+  error.missingModel = true;
+
+  return error;
+}
+
+async function getReadyTranslator(source, target) {
+  if(!("Translator" in self)) {
+    throw new Error(t("noTranslatorApi"));
+  }
+
+  const key = source + ">" + target;
+  const entry = state.translators.get(key);
+
+  if(!entry) {
+    // 이 창에서 준비한 적이 없다고 모델까지 없는 건 아니다. 크롬이 이미 받아 둔 언어 쌍이면
+    // availability가 available을 주고, 그때는 사용자 조작 없이도 create()가 된다.
+    // 이걸 안 보고 바로 실패시키면 멀쩡히 있는 모델을 두고 매번 LLM으로 떨어진다.
+    const availability = await probeOrNull(
+      () => Translator.availability({ sourceLanguage: source, targetLanguage: target }),
+      "Translator.availability(" + key + ")");
+
+    if(availability === "unavailable") {
+      throw new Error(t("translatorNoPair", { pair: source + " → " + target }));
+    }
+
+    if(availability !== "available") {
+      //downloadable / downloading 이면 여기서 만들 수 없다. 내려받기는 사용자 조작이 있어야 시작된다.
+      throw missingModelError(t("translatorNotDownloaded", { pair: key }));
+    }
+
+    log(t("translatorUseInstalled", { pair: key }));
+    return await prepareTranslator(source, target);
+  }
+
+  if(entry.failed) {
+    throw new Error(t("translatorPrepareFailed", { pair: key, error: entry.error }));
+  }
+
+  if(entry.ready) {
+    return entry.translator;
+  }
+
+  try {
+    return await withTimeout(entry.promise, TIMEOUT.pending, t("labelWait"));
+  } catch(error) {
+    throw new Error(t("translatorPreparing", { pair: key }));
+  }
+}
+
+async function detectLanguage(text) {
+  if(!("LanguageDetector" in self)) {
+    return null;
+  }
+
+  try {
+    if(!state.detector && !state.detectorTried) {
+      state.detectorTried = true;
+      state.detector = await withTimeout(
+        LanguageDetector.create({ monitor: makeMonitor(t("labelDetectModel")) }), TIMEOUT.create, "LanguageDetector.create");
+    }
+
+    if(!state.detector) {
+      return null;
+    }
+
+    const results = await withTimeout(state.detector.detect(text), TIMEOUT.probe, t("labelDetect"));
+
+    if(!results || results.length === 0) {
+      return null;
+    }
+
+    return results[0];
+  } catch(error) {
+    warn(t("detectFailed", { error: error.message }));
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------- 번역 분기
+
+async function translate(text, source, target, mode) {
+  // MORT는 요청마다 mode를 실어 보낸다. 그게 항상 이기면 이 창의 엔진 선택이 아무 효과가 없어서
+  // 사용자가 바꿔 봐도 무엇이 달라졌는지 알 수 없다. 그래서 여기서 직접 고른 경우에만 그쪽을 따른다.
+  const wanted = state.modeOverridden ? el("modeSelect").value : (mode || el("modeSelect").value);
+
+  //왜 이 경로로 갔는지를 기록에 같이 남긴다. 경로만 보여 주면 '왜 이 문장만 이상한가'에 답할 수 없다.
+  const report = {
+    reason: state.modeOverridden ? t("reasonWindowEngine", { engine: engineLabel(wanted) })
+      : t("reasonMortEngine", { engine: engineLabel(wanted) }),
+    retry: null,
+    detected: ""
+  };
+
+  let resolvedSource = source;
+  let detection = null;
+
+  trace(t("traceRequest", {
+    pair: (source || "auto") + " → " + target,
+    chars: text.length,
+    mode: wanted
+  }));
+
+  if(wanted !== "llm") {
+    if(!resolvedSource || resolvedSource === "auto") {
+      detection = await detectLanguage(text);
+
+      if(detection) {
+        resolvedSource = detection.detectedLanguage;
+        report.detected = detection.detectedLanguage
+          + " " + Math.round((detection.confidence || 0) * 100) + "%";
+        trace(t("traceDetected", { detected: report.detected }));
+      } else {
+        trace(t("traceDetectNone"));
+      }
+    }
+
+    if(resolvedSource && resolvedSource !== "auto") {
+      if(resolvedSource === target) {
+        const confident = !detection || detection.confidence >= 0.6;
+
+        if(confident) {
+          report.reason += t("reasonSameLanguage", { target: plainLanguageName(target) });
+          return { text: text, engine: "same-language", report: report };
+        }
+
+        trace(t("traceSameLowConfidence"));
+      } else {
+        //번역이 실제로 필요로 한 언어 쌍을 기억한다. 모델 준비는 이 쌍을 받아야 한다.
+        if(state.wantedSource !== resolvedSource || state.wantedTarget !== target) {
+          state.wantedSource = resolvedSource;
+          state.wantedTarget = target;
+          //표에 적힌 기준도 바뀐 쌍으로 다시 본다. 안 그러면 옛 쌍 기준을 계속 보여 준다.
+          probeCapabilities();
+        }
+
+        const pairKey = resolvedSource + ">" + target;
+
+        //auto가 이 언어 쌍을 앞서 LLM으로 정했으면 같은 실패를 되풀이하지 않는다.
+        //번역마다 없는 모델을 다시 찾으면 그만큼 느려지고 로그도 같은 말로 채워진다.
+        if(wanted === "auto" && state.autoChoice.get(pairKey) === "llm") {
+          report.reason += t("reasonAutoRemembered", { pair: pairKey });
+          trace(t("traceRememberedLlm", { pair: pairKey }));
+
+          return { text: await translateWithLlm(text, resolvedSource, target, report), engine: "llm", report: report };
+        }
+
+        try {
+          const translator = await getReadyTranslator(resolvedSource, target);
+          const translated = await withTimeout(translator.translate(text), TIMEOUT.run, t("labelTranslatorTranslate"));
+
+          //auto가 스스로 고른 결과만 기억한다. 사용자가 엔진을 직접 고른 건 기억하지 않는다.
+          rememberAutoChoice(wanted, pairKey, "translator");
+
+          report.reason += t("reasonTranslated", { pair: pairKey });
+
+          return { text: translated, engine: "translator", report: report };
+        } catch(error) {
+          if(wanted === "translator") {
+            throw error;
+          }
+
+          warn(t("warnTranslatorFallback", { pair: pairKey, error: error.message }));
+          report.reason += t("reasonFellBackToLlm", { error: error.message });
+          rememberAutoChoice(wanted, pairKey, "llm");
+
+          //내려받기만 하면 되는 경우라면 조용히 LLM으로 넘어가지 않고 알린다.
+          //LLM이 성공해 버리면 품질이 나쁜 결과가 계속 쌓이는데 사용자는 이유를 알 수 없다.
+          //Translator가 아예 지원하지 않는 언어 쌍은 LLM이 정상 경로이므로 묻지 않는다.
+          if(isMissingModel(error)) {
+            askForModel(await describeMissingModel());
+          }
+        }
+      }
+    } else if(wanted === "translator") {
+      throw new Error(t("needSourceLanguage"));
+    } else {
+      report.reason += t("reasonNoSource");
+    }
+  }
+
+  return {
+    text: await translateWithLlm(text, resolvedSource || source, target, report),
+    engine: "llm",
+    report: report
+  };
+}
+
+/// 아직 내려받지 않은 모델을 사용자 조작 없이 만들려 하면 크롬이 막는다.
+/// 원인이 그것이면 브릿지 창에서 무엇을 눌러야 하는지까지 알려 준다.
+function describeError(error) {
+  const message = error && error.message ? error.message : String(error);
+
+  if(/activation|gesture|NotAllowedError/i.test(message)) {
+    return t("needGesture", { message: message });
+  }
+
+  return message;
+}
+
+function enqueue(task) {
+  const result = state.chain.then(task, task);
+  state.chain = result.then(() => {}, () => {});
+  return result;
+}
+
+// ---------------------------------------------------------------- MORT 연결
+
+function connect() {
+  if(!state.started) {
+    return;
+  }
+
+  const url = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+  const socket = new WebSocket(url);
+  state.socket = socket;
+
+  socket.onopen = () => {
+    setSocketState("ok", "socketOk");
+    log(t("connected"));
+    send({ type: "ready", status: "ready", detail: "engine=" + el("modeSelect").value });
+  };
+
+  socket.onmessage = (event) => {
+    let message = null;
+
+    try {
+      message = JSON.parse(event.data);
+    } catch(error) {
+      warn(t("badMessage"));
+      return;
+    }
+
+    if(message.type === "config") {
+      applyMortConfig(message);
+      return;
+    }
+
+    if(message.type === "models") {
+      showInstalledModels(message);
+      return;
+    }
+
+    if(message.type !== "translate") {
+      return;
+    }
+
+    enqueue(async () => {
+      const startedAt = Date.now();
+
+      try {
+        const outcome = await translate(message.text, message.source, message.target, message.mode);
+        const elapsed = Date.now() - startedAt;
+        state.count += 1;
+        state.lastEngine = outcome.engine;
+        el("countText").textContent = t("countText", { n: state.count, engine: engineLabel(outcome.engine) });
+        addTransLog({
+          source: message.source,
+          target: message.target,
+          engine: outcome.engine,
+          original: message.text,
+          result: outcome.text,
+          failed: false,
+          ms: elapsed,
+          reason: outcome.report ? outcome.report.reason : "",
+          detected: outcome.report ? outcome.report.detected : "",
+          retry: outcome.report ? outcome.report.retry : null
+        });
+        trace(t("traceDone", { engine: engineLabel(outcome.engine), ms: elapsed }));
+        send({ type: "result", id: message.id, text: outcome.text, engine: outcome.engine });
+      } catch(error) {
+        const detail = describeError(error);
+        fail(t("translateFailed", { pair: (message.source || "auto") + " → " + message.target, error: detail }));
+        addTransLog({
+          source: message.source,
+          target: message.target,
+          engine: null,
+          original: message.text,
+          result: detail,
+          failed: true,
+          ms: Date.now() - startedAt,
+          reason: "",
+          detected: "",
+          retry: null
+        });
+        send({ type: "error", id: message.id, message: detail });
+
+        //번역이 모델이 없어서 실패한 것이면 그때도 물어본다. 사용자가 창을 보고 있을 확률이 높다.
+        if(isMissingModel(error)) {
+          askForModel(await describeMissingModel());
+        }
+      }
+    });
+  };
+
+  socket.onclose = (event) => {
+    setSocketState("bad", "socketLost");
+    state.socket = null;
+
+    // 다른 창에 자리를 내준 경우에는 다시 붙으면 안 된다. 양쪽 다 재접속하면 서로 밀어내며
+    // 3초마다 번갈아 끊기고, 그 사이에 들어온 번역 요청이 계속 실패한다.
+    if(event.reason === CLOSE_REASON_REPLACED) {
+      state.started = false;
+      setSocketState("warn", "socketReplaced");
+      log(t("replaced"));
+
+      // 죽은 창이 화면에 남아 있으면 사용자가 어느 창이 살아 있는지 알 수 없다. 스스로 닫는다.
+      // 브라우저가 close()를 막으면 그냥 남는데, 그때도 위 상태 표시로 구분은 된다.
+      setTimeout(() => {
+        try {
+          window.close();
+        } catch(error) {
+          warn(t("closeFailed"));
+        }
+      }, 1200);
+
+      return;
+    }
+
+    if(state.started) {
+      warn(t("reconnect"));
+      state.reconnectTimer = setTimeout(connect, 3000);
+    }
+  };
+
+  socket.onerror = () => {
+    setSocketState("bad", "socketError");
+  };
+}
+
+/// 모델 목록을 다시 읽어 달라고 MORT에 부탁한다. 모델을 받고 나면 목록이 달라진다.
+function requestModelList() {
+  if(!state.socket || state.socket.readyState !== WebSocket.OPEN) {
+    el("installedModels").textContent = t("notConnected");
+    return;
+  }
+
+  send({ type: "refresh-models" });
+}
+
+/// MORT가 디스크에서 읽어 보낸 모델 목록을 보여 준다.
+///
+/// 이 페이지는 웹페이지라 파일을 볼 수 없고, JS API에도 모델 이름을 알려 주는 값이 없다.
+/// 그래서 "LLM"이 실제로 어떤 모델인지는 MORT가 알려 주지 않으면 알 길이 없다.
+function showInstalledModels(message) {
+  const box = el("installedModels");
+  box.textContent = "";
+
+  //모델을 지우려면 어디 있는지 알아야 한다. 경로는 MORT만 알 수 있어서 여기 받아 둔다.
+  state.modelInfo = message;
+
+  const llm = message.llm;
+  const packs = message.packs || [];
+
+  if(!llm && packs.length === 0) {
+    box.textContent = t("modelsNotFound");
+    return;
+  }
+
+  const llmLine = document.createElement("div");
+  llmLine.textContent = llm
+    ? t("modelsLlm", { name: llm.name, version: llm.version, size: llm.size })
+    : t("modelsLlmNone");
+  box.appendChild(llmLine);
+
+  const packLine = document.createElement("div");
+  packLine.textContent = packs.length === 0
+    ? t("modelsPacksNone")
+    : t("modelsPacks", { list: packs.map((p) => p.name + " " + p.size).join(", ") });
+  box.appendChild(packLine);
+}
+
+/// MORT가 알려 준 번역 언어와 엔진을 받는다. 붙을 때와 설정을 적용할 때 온다.
+/// 첫 번역을 기다리지 않고 맞는 언어 쌍으로 모델을 준비하고 상태도 그 기준으로 보여 주기 위한 것이다.
+function applyMortConfig(message) {
+  const changed = state.configSource !== message.source || state.configTarget !== message.target;
+
+  state.configSource = message.source || "";
+  state.configTarget = message.target || "";
+
+  if(!state.modeOverridden && message.mode) {
+    el("modeSelect").value = message.mode;
+  }
+
+  if(!changed) {
+    return;
+  }
+
+  log(t("configReceived", {
+    pair: (state.configSource || "auto") + " → " + state.configTarget,
+    mode: message.mode || "auto"
+  }));
+
+  //언어가 바뀌면 필요한 모델도 달라진다. 앞서 묻지 않기로 한 기억은 여기서 지운다.
+  state.askedKeys.clear();
+
+  //실제 번역에서 확정된 쌍이 이미 있으면 그쪽이 우선이므로 굳이 다시 보지 않는다.
+  if(!state.wantedSource || !state.wantedTarget) {
+    probeCapabilities();
+  }
+}
+
+function send(payload) {
+  if(state.socket && state.socket.readyState === WebSocket.OPEN) {
+    state.socket.send(JSON.stringify(payload));
+  }
+}
+
+// ---------------------------------------------------------------- 버튼
+
+/// MORT가 설정을 알려 줄 때까지 잠깐 기다린다. MORT 없이 이 창만 연 경우도 있으므로 오래 붙잡지 않는다.
+async function waitForMortConfig(milliseconds) {
+  const until = Date.now() + milliseconds;
+
+  while(!state.configTarget && Date.now() < until) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  return !!state.configTarget;
+}
+
+/// 지금 무엇이 없는지 사람이 읽을 수 있게 적는다. 대화상자와 MORT 패널이 같은 문구를 쓴다.
+/// 지금 무엇이 없는지 적는다.
+///
+/// auto 모드는 Translator를 먼저 쓰고 안 되면 LLM으로 간다. 그래서 번역 모델만 보고 알리면
+/// "LLM으로는 되는데 왜 멈추지" 또는 "둘 다 없는데 번역 모델만 없다고 하네"가 된다.
+/// 두 경로를 다 확인하고 실제로 없는 것만 적는다.
+/// 무엇을 받아야 하는지(text)와 받지 않으면 어떻게 되는지(note)를 나눠 돌려준다.
+/// 한 문장에 다 넣으면 길어져서 정작 눌러야 할 버튼이 눈에 안 들어온다.
+/// 어느 언어 쌍인지는 남긴다. "해당 번역 모델"이 무엇인지 모르면 받아도 맞는 것을 받았는지 알 수 없다.
+async function describeMissingModel() {
+  //MORT가 보낸 모드는 이미 modeSelect 에 반영되어 있다.
+  const mode = el("modeSelect").value;
+
+  //LLM은 부가 기능이다. 사용자가 LLM을 직접 고른 경우에만 받겠느냐고 묻는다.
+  //auto에서 4GB를 받으라고 들이밀면 번역 언어팩만 받으면 될 사람까지 큰 내려받기로 끌고 간다.
+  if(mode === "llm") {
+    return {
+      text: t("askLlm"),
+      note: t("askLlmNote"),
+      target: "llm"
+    };
+  }
+
+  const pair = pairToPrepare();
+  const pairText = pair.source + " → " + pair.target;
+  const translatorText = t("askTranslator", { pair: pairText });
+
+  if(mode === "translator") {
+    return {
+      text: translatorText,
+      note: t("askTranslatorNoteFixed"),
+      target: "translator"
+    };
+  }
+
+  //auto : 번역 모델과 LLM을 모두 확인한다.
+  const translatorState = await probeOrNull(
+    () => Translator.availability({ sourceLanguage: pair.source, targetLanguage: pair.target }),
+    "Translator.availability");
+
+  const llmState = "LanguageModel" in self
+    ? await probeOrNull(() => LanguageModel.availability(), "LanguageModel.availability")
+    : "unavailable";
+
+  //availability 가 응답하지 않으면(null) 없다고 단정하지 않는다. 멀쩡히 있는 모델을 받으라고 하게 된다.
+  const llmMissing = llmState !== "available" && llmState !== null;
+
+  //언어팩이 아예 없는 쌍이면 받을 것이 없다. 그런데도 받기 버튼을 두면 눌러도 아무 일이 없다.
+  if(translatorState === "unavailable") {
+    return {
+      text: t("askNoPack", { pair: pairText }),
+      note: llmMissing ? t("askNoPackNoteLlmMissing") : t("askNoPackNoteLlmReady"),
+      target: "none"
+    };
+  }
+
+  if(translatorState !== "available") {
+    return {
+      text: translatorText,
+      note: llmMissing ? t("askTranslatorNoteLlmMissing") : t("askTranslatorNoteLlmReady"),
+      target: "translator"
+    };
+  }
+
+  //번역 모델은 있는데 LLM만 없는 경우. auto에서는 번역 모델로 처리되므로 받을 필요가 없다.
+  if(llmMissing) {
+    return {
+      text: t("askLlmMissingOnly"),
+      note: t("askLlmMissingOnlyNote"),
+      target: "none"
+    };
+  }
+
+  //둘 다 있는데 여기까지 온 경우. 받을 것이 없으니 받으라고 하면 안 된다.
+  return {
+    text: t("askNothing"),
+    note: t("askNothingNote"),
+    target: "none"
+  };
+}
+
+/// 지금 고른 엔진에 필요한 모델을 준비한다.
+async function prepareForMode() {
+  if(el("modeSelect").value === "llm") {
+    const pair = pairToPrepare();
+    await ensureLlmSession(true, pair.source, pair.target);
+    return;
+  }
+
+  await prepareSelectedPair();
+}
+
+/// 크롬이 "사용자 조작 없이는 모델을 만들 수 없다"고 거부한 것인지 가린다.
+function isGestureRequired(error) {
+  const text = (error && (error.name + " " + error.message)) || "";
+  return /NotAllowedError|activation|gesture/i.test(text);
+}
+
+/// auto가 스스로 고른 경로를 언어 쌍별로 기억한다.
+///
+/// 사용자가 엔진을 직접 고른 경우는 기억하지 않는다. 그건 이미 고정된 선택이라 기억할 것이 없고,
+/// 나중에 auto로 되돌렸을 때 남의 선택을 auto의 판단으로 착각하게 된다.
+/// 기억은 이 창이 살아 있는 동안만 유지된다. 새로 고치면 처음부터 다시 판단한다.
+function rememberAutoChoice(wanted, pairKey, engine) {
+  if(wanted !== "auto") {
+    return;
+  }
+
+  if(state.autoChoice.get(pairKey) === engine) {
+    return;
+  }
+
+  state.autoChoice.set(pairKey, engine);
+  log(t("autoChoice", { pair: pairKey, engine: engineLabel(engine) }));
+}
+
+/// "내려받기만 하면 되는" 실패인지 가린다.
+/// Translator가 아예 지원하지 않는 언어 쌍은 여기 해당하지 않는다. 그건 받아도 안 되므로
+/// LLM으로 넘어가는 것이 정상 경로이고, 사용자에게 모델을 받으라고 하면 안 된다.
+function isMissingModel(error) {
+  return isGestureRequired(error) || !!(error && error.missingModel);
+}
+
+/// 모델이 없어서 조작이 필요할 때 물어본다. MORT 쪽에서 띄우면 그 클릭은 크롬의 사용자 조작으로
+/// 인정되지 않아 내려받기가 시작되지 않는다. 그래서 이 창 안에서 물어야 한다.
+function askForModel(info) {
+  if(state.askOpen) {
+    return;
+  }
+
+  //같은 것을 두 번 묻지 않는다. 창이 열릴 때 한 번 묻고, 첫 번역 요청에서 또 묻는 일이 실제로 있었다.
+  //[나중에]는 "지금은 됐다"는 뜻이므로 그 뒤로도 묻지 않는다. 모델이 준비되거나 언어 쌍이
+  //바뀌면 기억을 지워서 다시 물을 수 있게 한다.
+  const pair = pairToPrepare();
+  const askKey = (info.target || "none") + ":" + pair.source + ">" + pair.target;
+
+  if(state.askedKeys.has(askKey)) {
+    probeModelPills();
+    send({ type: "ready", status: "need-model", detail: info.text });
+    trace(t("traceAlreadyAsked", { key: askKey }));
+    return;
+  }
+
+  state.askedKeys.add(askKey);
+  state.askOpen = true;
+  //받기를 누르면 무엇을 받을지 여기서 정해 둔다. 대화상자 문구와 실제로 받는 것이 어긋나면
+  //사용자는 받았다고 생각하는데 아무것도 안 받힌 상태가 된다. 실제로 그런 적이 있다.
+  state.askTarget = info.target || "translator";
+
+  el("modelAskTitle").textContent = info.target === "none" ? t("askTitleNothing") : t("askTitleMissing");
+  el("modelAskBody").textContent = info.text;
+  el("modelAskNote").textContent = info.note;
+  el("modelAskUrl").hidden = true;
+  el("modelAskLater").hidden = info.target === "none";
+  el("modelAskNow").hidden = info.target === "none";
+  el("modelAskClose").hidden = info.target !== "none";
+  el("modelAsk").classList.add("show");
+  probeModelPills();
+
+  //MORT에는 무엇이 없는지만 넘긴다. MORT 쪽 문구는 MORT가 따로 들고 있다.
+  send({ type: "ready", status: "need-model", detail: info.text });
+}
+
+/// 크롬 모델 관리 페이지 주소를 알려 준다.
+/// chrome:// 주소는 웹페이지가 열 수도, 링크로 걸 수도 없다. 주소창에 직접 붙여 넣는 방법뿐이라
+/// 클립보드에 넣어 주고 화면에도 그대로 띄운다. 복사가 막힌 경우에도 눈으로 읽고 칠 수 있어야 한다.
+/// 두 모델은 지우는 방법이 아예 다르다. 한 덩어리로 적어 두면 어느 설명이 어느 모델 것인지
+/// 읽어 내야 해서, 지우러 왔다가 무엇을 눌러야 할지 모르고 닫게 된다. 그래서 나눠서 적는다.
+function addManagerSection(parent, title, lines) {
+  const section = document.createElement("div");
+  section.className = "manager-section";
+
+  const head = document.createElement("div");
+  head.className = "manager-title";
+  head.textContent = title;
+  section.appendChild(head);
+
+  for(const line of lines) {
+    const row = document.createElement("div");
+    row.className = line.path ? "manager-path" : "manager-line";
+    row.textContent = line.text;
+    section.appendChild(row);
+  }
+
+  parent.appendChild(section);
+}
+
+function showModelManagerGuide(copied) {
+  const info = state.modelInfo || {};
+  const packs = info.packs || [];
+
+  state.askOpen = true;
+  el("modelAskTitle").textContent = t("manageTitle");
+  el("modelAskBody").textContent = t("manageBody");
+  el("modelAskNote").textContent = "";
+
+  const box = el("modelAskUrl");
+  box.textContent = "";
+
+  addManagerSection(box, t("managePack") + (packs.length > 0
+    ? " — " + packs.map((p) => p.name + " " + p.size).join(", ")
+    : t("manageNone")), [
+    { text: copied ? t("manageCopied") : t("manageCopyBlocked") },
+    { text: MODEL_MANAGER_URL, path: true },
+    { text: info.packRoot ? t("managePackFolder", { path: info.packRoot }) : "" }
+  ].filter((line) => line.text));
+
+  addManagerSection(box, t("manageLlmSection") + (info.llm
+    ? " — " + info.llm.name + " " + info.llm.size
+    : t("manageNone")), [
+    { text: t("manageLlmHow") },
+    { text: info.llm && info.llm.path ? info.llm.path : "", path: true },
+    { text: info.llm ? t("manageLlmFolderNote") : "" }
+  ].filter((line) => line.text));
+
+  box.hidden = false;
+  el("modelAskLater").hidden = true;
+  el("modelAskNow").hidden = true;
+  el("modelAskClose").hidden = false;
+  el("modelAsk").classList.add("show");
+}
+
+function closeModelAsk() {
+  state.askOpen = false;
+  el("modelAsk").classList.remove("show");
+}
+
+async function downloadModelNow() {
+  const target = state.askTarget;
+  closeModelAsk();
+
+  if(target === "none") {
+    return;
+  }
+
+  setModelBusy(target, "busy", "");
+
+  try {
+    //대화상자가 말한 것만 받는다. 엔진 선택으로 다시 고르면 LLM을 받으라고 해 놓고
+    //번역 언어팩을 만지는 식으로 어긋난다.
+    if(target === "llm") {
+      const pair = pairToPrepare();
+      await ensureLlmSession(true, pair.source, pair.target);
+      log(t("downloadLlmDone"));
+    } else {
+      await prepareSelectedPair();
+      log(t("downloadTranslatorDone"));
+    }
+
+    requestModelList();
+    probeCapabilities();
+    send({ type: "ready", status: "ready", detail: "engine=" + el("modeSelect").value });
+  } catch(error) {
+    setModelBusy(target, "fail", "");
+    warn(t("downloadFailed", { error: describeError(error) }));
+  }
+}
+
+/// 페이지가 열리면 버튼을 기다리지 않고 최대한 진행한다.
+/// WebSocket 연결과 availability() 는 조작 없이도 되므로 MORT는 창이 열리자마자 브릿지를 본다.
+/// create() 만 크롬이 조작을 요구할 수 있는데, 일단 시도하고 거부당할 때만 물러난다.
+async function start() {
+  if(!("LanguageModel" in self) && !("Translator" in self)) {
+    probeCapabilities();
+    return;
+  }
+
+  // 모델 내려받기는 몇 분이 걸리고 멈추기도 한다. 그동안 MORT가 브릿지를 아예 못 보는 일이 없도록
+  // 연결부터 맺고 준비는 뒤에서 진행한다.
+  state.started = true;
+  connect();
+  probeCapabilities();
+
+  //MORT가 붙자마자 쓰는 언어 쌍을 알려 준다. 그걸 기다리지 않고 준비하면 시험 칸 기본값(ja→ko)
+  //으로 엉뚱한 모델을 받아 버린다. 잠깐만 기다리고, 안 오면 있는 값으로 진행한다.
+  await waitForMortConfig(3000);
+
+  try {
+    await prepareForMode();
+    probeCapabilities();
+  } catch(error) {
+    if(isGestureRequired(error)) {
+      log(t("startAsk"));
+      askForModel(await describeMissingModel());
+      return;
+    }
+
+    probeCapabilities();
+    warn(t("startPrepareFailed", { error: error.message }));
+  }
+}
+
+/// 지금 고른 언어 쌍의 모델을 미리 받아 둔다. 쓰지 않은 언어 쌍은 첫 요청 때 내려받기가 필요한데,
+/// 그 시점에는 사용자 조작이 없어서 실패할 수 있다.
+/// 모델을 받아야 할 언어 쌍을 정한다. 우선순위는 셋이다.
+///
+///  1) 실제 번역에서 쓰인 쌍   - 원문 자동 감지까지 끝난 확정된 값이다.
+///  2) MORT가 알려 준 설정      - 번역 전에도 알 수 있다. 붙을 때와 설정 적용 때 받는다.
+///  3) 시험 칸 선택             - 위 둘이 없을 때만. 사람이 손으로 시험할 때 쓰는 값이다.
+///
+/// 시험 칸을 기준으로 삼으면 정작 필요한 쌍은 계속 없는 채로 남아 매번 LLM으로 떨어지고,
+/// 상태 표시도 실제 번역과 무관한 쌍을 보여 준다.
+function pairToPrepare() {
+  if(state.wantedSource && state.wantedTarget) {
+    return { source: state.wantedSource, target: state.wantedTarget, basis: t("basisMortPair") };
+  }
+
+  if(state.configSource && state.configTarget && state.configSource !== "auto") {
+    return { source: state.configSource, target: state.configTarget, basis: t("basisMortConfig") };
+  }
+
+  return {
+    source: el("testSource").value === "auto" ? "ja" : el("testSource").value,
+    target: state.configTarget || el("testTarget").value,
+    basis: t("basisTestBox")
+  };
+}
+
+async function prepareSelectedPair() {
+  if("LanguageDetector" in self) {
+    await detectLanguage("preload");
+  }
+
+  if(!("Translator" in self)) {
+    return;
+  }
+
+  const pair = pairToPrepare();
+
+  if(pair.source === pair.target) {
+    return;
+  }
+
+  await prepareTranslator(pair.source, pair.target);
+}
+
+/// 비동기 Clipboard API는 권한이나 포커스 때문에 막히는 환경이 있다.
+/// 그때는 임시 textarea + execCommand 로 넘어간다. 이쪽은 사용자 조작만 있으면 된다.
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch(error) {
+    log(t("clipboardBlocked", { error: error.message }));
+  }
+
+  const holder = document.createElement("textarea");
+  holder.value = text;
+  holder.setAttribute("readonly", "");
+  holder.style.position = "fixed";
+  holder.style.top = "-1000px";
+  document.body.appendChild(holder);
+
+  try {
+    holder.select();
+    holder.setSelectionRange(0, holder.value.length);
+    return document.execCommand("copy");
+  } catch(error) {
+    log(t("copyFailed", { error: error.message }));
+    return false;
+  } finally {
+    document.body.removeChild(holder);
+  }
+}
+
+el("manageBtn").addEventListener("click", async () => {
+  const copied = await copyText(MODEL_MANAGER_URL);
+  showModelManagerGuide(copied);
+  log(t("manageUrlLogged", { url: MODEL_MANAGER_URL }));
+});
+
+el("modelAskClose").addEventListener("click", closeModelAsk);
+
+el("refreshModelsBtn").addEventListener("click", () => {
+  requestModelList();
+});
+
+el("clearTransLogBtn").addEventListener("click", () => {
+  el("transLog").textContent = "";
+  el("transLogHint").textContent = t("historyEmpty");
+});
+
+el("clearLogBtn").addEventListener("click", () => {
+  el("log").textContent = "";
+  log(t("logCleared"));
+});
+
+el("verboseChk").addEventListener("change", () => {
+  state.verbose = el("verboseChk").checked;
+  log(state.verbose ? t("verboseOn") : t("verboseOff"));
+});
+
+/// 로그를 물어보려면 옮겨 적을 수 있어야 한다. 이 창은 크롬 앱 창이라 저장 대화상자를 띄우기 어렵고,
+/// 브릿지 로그는 대개 게시판이나 채팅에 붙여 넣어 물어보게 되므로 클립보드로 충분하다.
+el("copyLogBtn").addEventListener("click", async () => {
+  if(await copyText(el("log").innerText)) {
+    log(t("logCopied"));
+  } else {
+    warn(t("logCopyFailed"));
+  }
+});
+
+el("modelAskNow").addEventListener("click", downloadModelNow);
+
+el("modelAskLater").addEventListener("click", () => {
+  closeModelAsk();
+  log(t("askLater"));
+  send({ type: "ready", status: "need-model", detail: t("askLaterDetail") });
+});
+
+el("prepareBtn").addEventListener("click", async () => {
+  el("prepareBtn").disabled = true;
+
+  const pair = pairToPrepare();
+
+  try {
+    await prepareSelectedPair();
+    log(t("preparePairDone", { pair: pair.source + " → " + pair.target }));
+    requestModelList();
+  } catch(error) {
+    fail(t("preparePairFailed", { pair: pair.source + " → " + pair.target, error: error.message }));
+  } finally {
+    el("prepareBtn").disabled = false;
+    probeCapabilities();
+  }
+});
+
+el("prepareLlmBtn").addEventListener("click", async () => {
+  el("prepareLlmBtn").disabled = true;
+
+  try {
+    const pair = pairToPrepare();
+    await ensureLlmSession(true, pair.source, pair.target);
+    log(t("downloadLlmDone"));
+    requestModelList();
+  } catch(error) {
+    fail(t("prepareLlmFailed", { error: error.message }));
+  } finally {
+    el("prepareLlmBtn").disabled = false;
+    probeCapabilities();
+  }
+});
+
+el("testBtn").addEventListener("click", () => {
+  const text = el("testInput").value;
+
+  if(!text.trim()) {
+    return;
+  }
+
+  el("testBtn").disabled = true;
+  el("testOutput").value = t("testRunning");
+
+  enqueue(async () => {
+    const startedAt = Date.now();
+
+    try {
+      const outcome = await translate(text, el("testSource").value, el("testTarget").value, null);
+      el("testOutput").value = outcome.text;
+      addTransLog({
+        source: el("testSource").value,
+        target: el("testTarget").value,
+        engine: outcome.engine,
+        original: text,
+        result: outcome.text,
+        failed: false,
+        ms: Date.now() - startedAt,
+        reason: t("reasonTest") + " · " + (outcome.report ? outcome.report.reason : ""),
+        detected: outcome.report ? outcome.report.detected : "",
+        retry: outcome.report ? outcome.report.retry : null
+      });
+    } catch(error) {
+      const detail = describeError(error);
+      el("testOutput").value = t("testFailedResult", { error: detail });
+      fail(t("testFailed", { error: detail }));
+      addTransLog({
+        source: el("testSource").value,
+        target: el("testTarget").value,
+        engine: null,
+        original: text,
+        result: detail,
+        failed: true,
+        ms: Date.now() - startedAt,
+        reason: t("reasonTest"),
+        detected: "",
+        retry: null
+      });
+    } finally {
+      el("testBtn").disabled = false;
+    }
+  });
+});
+
+for(const button of document.querySelectorAll("[data-lang]")) {
+  button.addEventListener("click", () => {
+    setLanguage(button.getAttribute("data-lang"));
+  });
+}
+
+el("modeSelect").addEventListener("change", () => {
+  //여기서 직접 고른 순간부터는 MORT가 보내는 mode 대신 이 선택을 쓴다.
+  state.modeOverridden = true;
+  log(t("engineFixed", { mode: el("modeSelect").value }));
+  send({ type: "ready", status: "ready", detail: "engine=" + el("modeSelect").value });
+});
+
+window.addEventListener("beforeunload", () => {
+  if(state.socket) {
+    state.socket.close();
+  }
+});
+
+applyStaticStrings();
+applyStateStrings();
+el("translatorModelText").textContent = t("modelTranslator") + " : " + t("notChecked");
+el("llmModelText").textContent = t("modelLlm") + " : " + t("notChecked");
+log(t("pageOpened"));
+start();
+</script>
+
+</body>
+</html>

@@ -319,6 +319,147 @@ namespace MORT
             SetEmptyFollowMouse();
         }
 
+        #region 크롬 번역기
+
+        private Service.ChromeBridge.ChromeBridgeService? GetChromeBridgeService()
+        {
+            return Program.ServiceContainer?.GetService(typeof(Service.ChromeBridge.ChromeBridgeService))
+                as Service.ChromeBridge.ChromeBridgeService;
+        }
+
+        private bool _chromeBridgeEventHooked;
+
+        /// <summary>
+        /// 로컬 서버를 닫고 브릿지 창도 정리한다. 서버가 사라진 창은 아무것도 못 하고 재접속만 되풀이한다.
+        /// 종료 경로가 둘(CloseApplication / Form1_FormClosed)이라 양쪽에서 부르고, 두 번 불려도 문제없다.
+        /// </summary>
+        private void StopChromeBridge()
+        {
+            GetChromeBridgeService()?.Stop();
+        }
+
+        /// <summary>
+        /// 브릿지 서버와 크롬 페이지는 따로 죽고 산다. 둘을 갈라서 보여 줘야 사용자가 무엇을 해야 하는지 안다.
+        /// </summary>
+        private void RefreshChromeBridgeStatus()
+        {
+            var service = GetChromeBridgeService();
+
+            if(service != null && !_chromeBridgeEventHooked)
+            {
+                //연결 변화는 서버 스레드에서 올라오므로 UI 스레드로 넘겨서 라벨을 갱신한다.
+                _chromeBridgeEventHooked = true;
+                service.ConnectionChanged += OnChromeBridgeConnectionChanged;
+                service.ModelMissing += OnChromeBridgeModelMissing;
+            }
+
+            if(service == null)
+            {
+                lbChromeBridgeStatus.Text = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Status Down");
+                return;
+            }
+
+            if(!service.IsServerRunning)
+            {
+                lbChromeBridgeStatus.Text = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Status Down");
+            }
+            else if(!service.IsPageConnected)
+            {
+                lbChromeBridgeStatus.Text = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Status Wait Page");
+            }
+            else if(service.NeedsModel)
+            {
+                //모델 내려받기는 크롬 창에서 직접 눌러야 시작된다. MORT가 대신 눌러 줄 수 없으니 그쪽을 보게 한다.
+                lbChromeBridgeStatus.Text = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Status Need Model");
+            }
+            else
+            {
+                lbChromeBridgeStatus.Text = LocalizeManager.LocalizeManager.GetLocalizeString("Chrome Bridge Status Ready");
+            }
+        }
+
+        /// <summary>
+        /// 쓸 모델이 없으면 번역을 멈추고 알린다.
+        ///
+        /// 그냥 두면 auto 모드가 조용히 LLM으로 떨어져 품질이 나쁜 결과가 계속 쌓인다.
+        /// 내려받기는 크롬 창에서 직접 눌러야 시작되므로 여기서는 그쪽을 보라고만 할 수 있다.
+        /// </summary>
+        private void OnChromeBridgeModelMissing(string detail)
+        {
+            if(IsDisposed || !IsHandleCreated)
+            {
+                return;
+            }
+
+            try
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    if(MySettingManager.NowTransType != SettingManager.TransType.chromeBridge)
+                    {
+                        return;
+                    }
+
+                    StopTrans();
+                    RefreshChromeBridgeStatus();
+                    Util.ShowLog($"[ChromeBridge] 모델이 없어 번역을 멈췄습니다 : {detail}");
+
+                    //MORT 쪽 팝업은 두지 않는다. 물어보는 창은 브릿지 하나뿐이어야 한다.
+                    //MORT에서 한 번, 브릿지에서 또 한 번 확인을 누르게 되고, 정작 받기 버튼은
+                    //브릿지에만 있어서 MORT 팝업은 지나가는 관문 노릇밖에 못 했다.
+                    //대신 그 창을 앞으로 꺼낸다. 최소화 예약이 걸려 있으면 같이 취소된다.
+                    GetChromeBridgeService()?.FocusPage();
+                }));
+            }
+            catch(Exception)
+            {
+                //창이 닫히는 중이면 무시한다.
+            }
+        }
+
+        private void OnChromeBridgeConnectionChanged()
+        {
+            if(IsDisposed || !IsHandleCreated)
+            {
+                return;
+            }
+
+            try
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    if(pnChromeBridge.Visible)
+                    {
+                        RefreshChromeBridgeStatus();
+                    }
+                }));
+            }
+            catch(Exception)
+            {
+                //창이 닫히는 중이면 무시한다.
+            }
+        }
+
+        /// <summary>
+        /// 크롬 번역기의 설정은 크롬 창 안의 브릿지 페이지에 있다. 엔진 선택과 모델 준비가 거기에서만 되기 때문이다.
+        /// 모델 내려받기는 사용자가 버튼을 누른 직후에만 시작할 수 있어서 MORT 쪽 창으로는 대신해 줄 수 없다.
+        /// </summary>
+        private void btChromeBridgeRun_Click(object sender, EventArgs e)
+        {
+            var service = GetChromeBridgeService();
+
+            if(service == null)
+            {
+                return;
+            }
+
+            service.OpenPage();
+            RefreshChromeBridgeStatus();
+        }
+
+        /// <summary>
+
+        #endregion
 
         #endregion
     }

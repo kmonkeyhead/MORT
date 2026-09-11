@@ -24,6 +24,14 @@ namespace MORT
         private int _beforeSelectedPresetIndex = -1;
         private const string FilePresetPrefix = "[F] ";
 
+        //크롬 로컬 번역기 선호 엔진. cbChromeBridgeEngine 항목 순서와 같아야 한다.
+        private static readonly string[] ChromeBridgeEngineModes =
+        {
+            Service.ChromeBridge.ChromeBridgeEngineMode.Auto,
+            Service.ChromeBridge.ChromeBridgeEngineMode.Llm,
+            Service.ChromeBridge.ChromeBridgeEngineMode.Translator
+        };
+
         public UIAdvencedOption()
         {
             InitializeComponent();
@@ -161,6 +169,10 @@ namespace MORT
 
             var preset = AdvencedOptionManager.GeminiPreset;
             RenderGeminiPreset(preset);
+
+            //크롬 로컬 번역기 설정
+            string chromeBridgeMode = Service.ChromeBridge.ChromeBridgeEngineMode.Normalize(AdvencedOptionManager.ChromeBridgeMode);
+            cbChromeBridgeEngine.SelectedIndex = Math.Max(0, Array.IndexOf(ChromeBridgeEngineModes, chromeBridgeMode));
 
 
             //구글 ocr 설정
@@ -351,6 +363,10 @@ namespace MORT
             }
             GeminiPresetValue preset = new GeminiPresetValue((int)_geminiTemperature.Value, (int)_geminiThinkingBudget.Value, (int)_geminiTokenLimit.Value, presetType);
             AdvencedOptionManager.SetGeminiPreset(preset);
+
+            int chromeBridgeIndex = Math.Max(0, cbChromeBridgeEngine.SelectedIndex);
+            AdvencedOptionManager.SetChromeBridgeMode(ChromeBridgeEngineModes[chromeBridgeIndex]);
+
             ApplyCustomApreset();
         }
 
@@ -904,6 +920,12 @@ namespace MORT
             _rbGeminiPresetDefault.LocalizeLabel("Adv Gemini Preset Default");
             _rbGeminiPresetLow.LocalizeLabel(_rbGeminiPresetDefault, "Adv Gemini Preset Low", 10);
             _rbGeminiPresetCustom.LocalizeLabel(_rbGeminiPresetLow, "Adv Gemini Preset Custom", 10);
+
+            //크롬 로컬 번역기
+            gbChromeBridge.LocalizeLabel("Adv Chrome Bridge");
+            lbChromeBridgeEngine.LocalizeLabel("Adv Chrome Bridge Engine");
+            cbChromeBridgeEngine.LocalizeItems();
+            cbChromeBridgeEngine.Anchor(lbChromeBridgeEngine, 10);
 
 
 

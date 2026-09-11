@@ -23,6 +23,9 @@
     <ApplicationIcon>mainIcon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- WinForms 디자이너를 DPI-Unaware(100%)로 연다. 폼 대부분이 96 DPI 기준으로 저장되어 있어서
+         150% 배율 PC에서 DPI 인식 모드로 열면 저장할 때 좌표가 배율만큼 다시 써진다. 실행 시 DPI 동작과는 무관하다. -->
+    <ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -37,6 +40,11 @@
 
   <ItemGroup>
     <Content Include="mainIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 크롬 번역기 브릿지 페이지. 로컬 서버가 이 리소스를 그대로 크롬에 내려준다. -->
+    <EmbeddedResource Include="Service\ChromeBridge\Web\bridge.html" />
   </ItemGroup>
 
   <ItemGroup>

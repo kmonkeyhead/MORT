@@ -151,6 +151,11 @@ namespace MORT
         public const string KeyCustomApiLanguageTarget = "@CUSTOM_API_LANGUAGE_TARGET ";
         public const string KeyCustomApiUrl = "@CUSTOM_API_URL ";
 
+        public const string KeyChromeBridgePort = "@CHROME_BRIDGE_PORT ";        //크롬 번역기 - 브릿지 포트
+        public const string KeyChromeBridgeMode = "@CHROME_BRIDGE_MODE ";        //크롬 번역기 - 엔진 (auto / translator / llm)
+        public const string KeyChromeBridgeAutoRun = "@CHROME_BRIDGE_AUTO_RUN "; //크롬 번역기 - 번역 시작할 때 크롬 창 자동 열기
+        public const string KeyChromeBridgeTimeout = "@CHROME_BRIDGE_TIMEOUT ";  //크롬 번역기 - 한 건 최대 대기 시간(초)
+
         public const string KeyGeminiCommand = @"GEMINI_COMMAND "; //Gemini API 명령어
         public const string KeyGeminiModel = @"GEMINI_MODEL "; //Gemini API 모델명
         public const string KeyGeminiIncludeDefaultCommand = @"GEMINI_INCLUDE_DEFAULT_COMMAND "; //Gemini API 기본 명령어 포함 여부
@@ -242,6 +247,12 @@ namespace MORT
             public ISettingData<string> CustomApiLanguageSource;
             public ISettingData<string> CustomApiLanguageTarget;
             public ISettingData<string> CustomApiUrl;
+
+            //크롬 번역기 설정
+            public ISettingData<int> ChromeBridgePort;
+            public ISettingData<string> ChromeBridgeMode;
+            public ISettingData<bool> ChromeBridgeAutoRun;
+            public ISettingData<int> ChromeBridgeTimeout;
 
             //Gemini API 설정
             public ISettingData<string> GeminiCommand;
@@ -439,6 +450,12 @@ namespace MORT
         public static string CustomApiLanguageTarget => data.CustomApiLanguageTarget.Value;
         public static string CustomApiUrl => data.CustomApiUrl.Value;
 
+        //크롬 번역기 설정
+        public static int ChromeBridgePort => data.ChromeBridgePort.Value;
+        public static string ChromeBridgeMode => data.ChromeBridgeMode.Value;
+        public static bool ChromeBridgeAutoRun => data.ChromeBridgeAutoRun.Value;
+        public static int ChromeBridgeTimeout => data.ChromeBridgeTimeout.Value;
+
         //Gemini API 설정
         public static string GeminiCommand => data.GeminiCommand.Value;
         public static string GeminiModel => data.GeminiModel.Value;
@@ -524,6 +541,11 @@ namespace MORT
         public static void SetGeminiPreset(GeminiPresetValue preset)
         {
             data.GeminiPreset.Value = preset;
+        }
+
+        public static void SetChromeBridgeMode(string mode)
+        {
+            data.ChromeBridgeMode.Value = Service.ChromeBridge.ChromeBridgeEngineMode.Normalize(mode);
         }
 
 
@@ -672,6 +694,11 @@ namespace MORT
             data.CustomApiLanguageSource = SettingDataFactory.Create<string>(KeyCustomApiLanguageSource, data.ParseList, "en");
             data.CustomApiLanguageTarget = SettingDataFactory.Create<string>(KeyCustomApiLanguageTarget, data.ParseList, "ko");
             data.CustomApiUrl = SettingDataFactory.Create<string>(KeyCustomApiUrl, data.ParseList, "http://localhost:8080/translator");
+
+            data.ChromeBridgePort = SettingDataFactory.Create<int>(KeyChromeBridgePort, data.ParseList, Service.ChromeBridge.ChromeBridgeService.DefaultPort);
+            data.ChromeBridgeMode = SettingDataFactory.Create<string>(KeyChromeBridgeMode, data.ParseList, Service.ChromeBridge.ChromeBridgeService.DefaultMode);
+            data.ChromeBridgeAutoRun = SettingDataFactory.Create<bool>(KeyChromeBridgeAutoRun, data.ParseList, true);
+            data.ChromeBridgeTimeout = SettingDataFactory.Create<int>(KeyChromeBridgeTimeout, data.ParseList, Service.ChromeBridge.ChromeBridgeService.DefaultTimeout);
 
             data.GeminiCommand = SettingDataFactory.Create<string>(KeyGeminiCommand, data.ParseList, "");
             data.GeminiModel = SettingDataFactory.Create<string>(KeyGeminiModel, data.ParseList, "gemini-2.0-flash");

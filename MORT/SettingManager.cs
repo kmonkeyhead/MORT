@@ -1,4 +1,5 @@
-﻿using R3;
+﻿using MORT.Service.TranslateLanguage;
+using R3;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -115,8 +116,9 @@ namespace MORT
             deeplApi,
             gemini,
             ezTrans,
-            customApi
-        }; //앞 소문자 바꾸며 안 됨! -> 기존 버전과 호환성
+            customApi,
+            chromeBridge
+        }; //앞 소문자 바꾸며 안 됨! -> 기존 버전과 호환성. 새 항목은 반드시 맨 뒤에만 추가한다.
 
         public enum OcrType
         {
@@ -159,15 +161,22 @@ namespace MORT
         Boolean isUseStringUpper = false; //대소문자 구분 사용 안 함.
 
 
-        string naverTransCode = "en";
-        string naverResultCode = "ko";
         string naverApiType = MORT.NaverTranslateAPI.API_NMT;
 
-        string googleTransCode = "en";
-        string googleResultCode = "ko";
+        //번역 언어는 번역기마다 따로 두지 않고 이 두 값만 저장한다.
+        //번역기별 코드는 TranslateLanguageService 가 이 값에서 만들어 낸다.
+        //예전에는 파파고용·구글용·DeepL용을 따로 저장해서, 셋 중 하나만 어긋나 있어도
+        //번역기를 바꾸는 순간 엉뚱한 언어로 번역됐다.
+        string transLanguageFrom = "en";
+        string transLanguageTo = "ko";
 
-        public string DeepLTransCode { get; set; } = "en";
-        public string DeepLResultCode { get; set; } = "en";
+        //예전 설정 파일에서 읽은 번역기별 코드. 통합 값이 없을 때 어느 언어였는지 되찾는 데만 쓴다.
+        string loadedNaverTransCode = "";
+        string loadedNaverResultCode = "";
+        string loadedGoogleTransCode = "";
+        string loadedGoogleResultCode = "";
+        string loadedDeepLTransCode = "";
+        string loadedDeepLResultCode = "";
 
         public DeepLAPIEndpointType nowDeepLAPIEndpointType = DeepLAPIEndpointType.Free;
 
@@ -371,17 +380,50 @@ namespace MORT
             set { isUseStringUpper = value; }
         }
 
-        public string NaverTransCode
+        /// <summary>
+        /// 통합 번역 언어. 원문 언어와 번역 결과 언어를 여기서만 정한다.
+        /// 값은 TranslateLanguageService 의 언어 키(en, ja, zh-CN …)다.
+        /// </summary>
+        public string TransLanguageFrom
         {
-            get { return naverTransCode; }
-            set { naverTransCode = value; }
+            get { return transLanguageFrom; }
         }
 
-        public string NaverResultCode
+        public string TransLanguageTo
         {
-            get { return naverResultCode; }
-            set { naverResultCode = value; }
+            get { return transLanguageTo; }
         }
+
+        public void SetTransLanguage(string fromKey, string toKey)
+        {
+            if (!string.IsNullOrEmpty(fromKey))
+            {
+                transLanguageFrom = fromKey;
+            }
+
+            if (!string.IsNullOrEmpty(toKey))
+            {
+                transLanguageTo = toKey;
+            }
+        }
+
+        private static string ToEngineCode(string key, TranslateEngineFamily family)
+        {
+            TranslateLanguageService service = TranslateLanguageService.Instance;
+
+            if (service == null)
+            {
+                //DI가 아직 안 만들어진 시점(설정 파일 먼저 읽는 경로)에서는 키를 그대로 쓴다.
+                return key;
+            }
+
+            return service.ToEngineCode(key, family);
+        }
+
+        //아래 코드들은 저장하지 않는다. 통합 언어에서 그때그때 만들어 낸다.
+        public string NaverTransCode => ToEngineCode(transLanguageFrom, TranslateEngineFamily.Naver);
+
+        public string NaverResultCode => ToEngineCode(transLanguageTo, TranslateEngineFamily.Naver);
 
         public string NaverApiType
         {
@@ -389,17 +431,13 @@ namespace MORT
             set { naverApiType = value; }
         }
 
-        public string GoogleTransCode
-        {
-            get { return googleTransCode; }
-            set { googleTransCode = value; }
-        }
+        public string GoogleTransCode => ToEngineCode(transLanguageFrom, TranslateEngineFamily.Google);
 
-        public string GoogleResultCode
-        {
-            get { return googleResultCode; }
-            set { googleResultCode = value; }
-        }
+        public string GoogleResultCode => ToEngineCode(transLanguageTo, TranslateEngineFamily.Google);
+
+        public string DeepLTransCode => ToEngineCode(transLanguageFrom, TranslateEngineFamily.DeepL);
+
+        public string DeepLResultCode => ToEngineCode(transLanguageTo, TranslateEngineFamily.DeepL);
 
 
         public string WindowLanguageCode
@@ -664,19 +702,28 @@ namespace MORT
                     string useOtherLangString = "#USE_OTHER_LANG = @" + this.nowIsUseOtherLangFlag.ToString();
                     newTask.WriteLine(useOtherLangString, StringComparison.InvariantCulture);
 
-                    string naverTransCodeString = "#NAVER_TRANS_CODE = @" + naverTransCode;
+                    //통합 번역 언어. 이제 실제로 읽는 값은 이 둘뿐이다.
+                    string transLanguageFromString = "#TRANS_LANGUAGE_FROM = @" + transLanguageFrom;
+                    newTask.WriteLine(transLanguageFromString, StringComparison.InvariantCulture);
+
+                    string transLanguageToString = "#TRANS_LANGUAGE_TO = @" + transLanguageTo;
+                    newTask.WriteLine(transLanguageToString, StringComparison.InvariantCulture);
+
+                    //아래 번역기별 코드는 예전 버전으로 되돌아갔을 때를 위해 같이 적어 둔다.
+                    //이 버전은 저장할 때만 쓰고 읽을 때는 통합 값이 없을 경우에만 본다.
+                    string naverTransCodeString = "#NAVER_TRANS_CODE = @" + NaverTransCode;
                     newTask.WriteLine(naverTransCodeString, StringComparison.InvariantCulture);
 
-                    string naverResultCodeString = "#NAVER_RESULT_CODE = @" + naverResultCode;
+                    string naverResultCodeString = "#NAVER_RESULT_CODE = @" + NaverResultCode;
                     newTask.WriteLine(naverResultCodeString, StringComparison.InvariantCulture);
 
                     string naverApiTypeString = "#NAVER_API_TYPE = @" + NaverApiType;
                     newTask.WriteLine(naverApiTypeString, StringComparison.InvariantCulture);
 
-                    string googleTransCodeString = "#GOOGLE_TRANS_CODE = @" + googleTransCode;
+                    string googleTransCodeString = "#GOOGLE_TRANS_CODE = @" + GoogleTransCode;
                     newTask.WriteLine(googleTransCodeString, StringComparison.InvariantCulture);
 
-                    string googleResultCodeString = "#GOOGLE_RESULT_CODE = @" + googleResultCode;
+                    string googleResultCodeString = "#GOOGLE_RESULT_CODE = @" + GoogleResultCode;
                     newTask.WriteLine(googleResultCodeString, StringComparison.InvariantCulture);
 
                     string deepLTransCodeString = "#DEEPL_TRANS_CODE = @" + DeepLTransCode;
@@ -916,9 +963,12 @@ namespace MORT
             }
         }
 
-        public string GetDefaultResultCode(bool isDeepl = false)
+        /// <summary>
+        /// 앱 언어에 맞춘 기본 번역 결과 언어. 돌려주는 값은 통합 언어 키다.
+        /// 예전에는 DeepL 코드를 따로 돌려줬지만, 이제 번역기 코드는 TranslateLanguageService 가 만든다.
+        /// </summary>
+        public string GetDefaultResultCode()
         {
-            //TODO : 번역 코드에서 가져와야 한다 ISDEEPL이 아닌 번역 타입을 던져서 가져와야 한다
             switch (LocalizeManager.LocalizeManager.Language)
             {
                 case LocalizeManager.AppLanguage.Auto:
@@ -935,8 +985,7 @@ namespace MORT
                     return "id";
 
                 case LocalizeManager.AppLanguage.SimplifiedChinese:
-
-                    return isDeepl ? "ZH-HANS" : "zh-CN";
+                    return "zh-CN";
 
                 case LocalizeManager.AppLanguage.Russian:
                     return "ru";
@@ -963,15 +1012,17 @@ namespace MORT
             nowIsUseJpnFlag = false;
             nowIsUseOtherLangFlag = false;
             nowIsUsePartialDB = false;
-            naverTransCode = "en";
-            naverResultCode = GetDefaultResultCode();
             naverApiType = MORT.NaverTranslateAPI.API_NMT;
 
-            googleTransCode = "en";
-            googleResultCode = GetDefaultResultCode();
+            transLanguageFrom = TranslateLanguageService.DefaultFromKey;
+            transLanguageTo = GetDefaultResultCode();
 
-            DeepLTransCode = "en";
-            DeepLResultCode = GetDefaultResultCode(true);
+            loadedNaverTransCode = "";
+            loadedNaverResultCode = "";
+            loadedGoogleTransCode = "";
+            loadedGoogleResultCode = "";
+            loadedDeepLTransCode = "";
+            loadedDeepLResultCode = "";
 
             EasyOcrCode = "en";
             OcrLanguageType = OcrLanguageType.English;
@@ -1047,6 +1098,8 @@ namespace MORT
         public void LoadSettingfile(string fileName)
         {
             bool isFoundMatchDic = false;
+            //통합 번역 언어가 파일에 없으면 예전 설정이다. 그때는 저장된 번역 타입이 쓰던 언어를 가져다 쓴다.
+            bool isFoundTransLanguage = false;
             SetDefault();
             try
             {
@@ -1208,13 +1261,31 @@ namespace MORT
                     }
 
 
+                    else if (line.StartsWith("#TRANS_LANGUAGE_FROM", StringComparison.InvariantCulture))
+                    {
+                        int index = line.IndexOf("@", StringComparison.InvariantCulture);
+                        if (index != -1)
+                        {
+                            transLanguageFrom = line.Substring(index + 1);
+                            isFoundTransLanguage = true;
+                        }
+                    }
+                    else if (line.StartsWith("#TRANS_LANGUAGE_TO", StringComparison.InvariantCulture))
+                    {
+                        int index = line.IndexOf("@", StringComparison.InvariantCulture);
+                        if (index != -1)
+                        {
+                            transLanguageTo = line.Substring(index + 1);
+                            isFoundTransLanguage = true;
+                        }
+                    }
                     else if (line.StartsWith("#NAVER_TRANS_CODE", StringComparison.InvariantCulture))
                     {
                         int index = line.IndexOf("@", StringComparison.InvariantCulture);
                         if (index != -1)
                         {
                             string resultString = line.Substring(index + 1);
-                            naverTransCode = resultString;
+                            loadedNaverTransCode = resultString;
                         }
                     }
                     else if (line.StartsWith("#NAVER_RESULT_CODE", StringComparison.InvariantCulture))
@@ -1223,7 +1294,7 @@ namespace MORT
                         if (index != -1)
                         {
                             string resultString = line.Substring(index + 1);
-                            naverResultCode = resultString;
+                            loadedNaverResultCode = resultString;
                         }
                     }
                     else if (line.StartsWith("#NAVER_API_TYPE", StringComparison.InvariantCulture))
@@ -1241,7 +1312,7 @@ namespace MORT
                         if (index != -1)
                         {
                             string resultString = line.Substring(index + 1);
-                            googleTransCode = resultString;
+                            loadedGoogleTransCode = resultString;
                         }
                     }
                     else if (line.StartsWith("#GOOGLE_RESULT_CODE", StringComparison.InvariantCulture))
@@ -1250,7 +1321,7 @@ namespace MORT
                         if (index != -1)
                         {
                             string resultString = line.Substring(index + 1);
-                            googleResultCode = resultString;
+                            loadedGoogleResultCode = resultString;
                         }
                     }
 
@@ -1260,7 +1331,7 @@ namespace MORT
                         if (index != -1)
                         {
                             string resultString = line.Substring(index + 1);
-                            DeepLTransCode = resultString;
+                            loadedDeepLTransCode = resultString;
                         }
                     }
                     else if (line.StartsWith("#DEEPL_RESULT_CODE", StringComparison.InvariantCulture))
@@ -1269,7 +1340,7 @@ namespace MORT
                         if (index != -1)
                         {
                             string resultString = line.Substring(index + 1);
-                            DeepLResultCode = resultString;
+                            loadedDeepLResultCode = resultString;
                         }
                     }
                     else if (line.StartsWith("#EASY_OCR", StringComparison.InvariantCulture))
@@ -1407,6 +1478,10 @@ namespace MORT
                             else if (resultString.CompareTo("gemini") == 0)
                             {
                                 nowTransType = TransType.gemini;
+                            }
+                            else if (resultString.CompareTo("chromeBridge") == 0)
+                            {
+                                nowTransType = TransType.chromeBridge;
                             }
                         }
                     }
@@ -1833,7 +1908,61 @@ namespace MORT
                 isUseMatchWordDic = false;
             }
 
+            if (!isFoundTransLanguage)
+            {
+                MigrateTransLanguage();
+            }
+
             Util.ShowLog("isUseMatchWordDic : " + isUseMatchWordDic);
+        }
+
+        /// <summary>
+        /// 번역기마다 언어를 따로 저장하던 시절의 설정을 통합 값으로 옮긴다.
+        ///
+        /// 세 벌 중 어느 것을 믿을지는 저장된 번역 타입이 정한다. 사용자가 실제로 쓰던 번역기의
+        /// 언어만이 맞는 값이고, 나머지 두 벌은 손대지 않아 기본값 그대로 남아 있는 경우가 대부분이다.
+        /// 그래서 셋을 섞거나 아무거나 고르면 쓰지도 않던 언어로 바뀌어 버린다.
+        /// </summary>
+        private void MigrateTransLanguage()
+        {
+            TranslateLanguageService service = TranslateLanguageService.Instance;
+
+            if (service == null)
+            {
+                return;
+            }
+
+            TranslateEngineFamily family = TranslateLanguageService.GetFamily(nowTransType);
+            string fromCode = loadedGoogleTransCode;
+            string toCode = loadedGoogleResultCode;
+
+            if (family == TranslateEngineFamily.Naver)
+            {
+                fromCode = loadedNaverTransCode;
+                toCode = loadedNaverResultCode;
+            }
+            else if (family == TranslateEngineFamily.DeepL)
+            {
+                fromCode = loadedDeepLTransCode;
+                toCode = loadedDeepLResultCode;
+            }
+
+            //DB나 EzTrans처럼 번역 언어를 쓰지 않는 타입이면 구글 쪽을 가져온다. 가장 많이 쓰던 값이다.
+            TranslateLanguageModel from = service.FindByEngineCode(fromCode, family);
+            TranslateLanguageModel to = service.FindByEngineCode(toCode, family);
+
+            if (from != null)
+            {
+                transLanguageFrom = from.Key;
+            }
+
+            if (to != null)
+            {
+                transLanguageTo = to.Key;
+            }
+
+            Util.ShowLog($"[번역 언어] 예전 설정을 옮겼습니다 : {nowTransType} / {fromCode} → {toCode}"
+                + $" = {transLanguageFrom} → {transLanguageTo}");
         }
 
         private void ParseBoolData(string line, ref bool boolValue)

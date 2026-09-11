@@ -161,6 +161,10 @@ namespace MORT
             lbBasicStatus = new System.Windows.Forms.Label();
             pnCustomApi = new System.Windows.Forms.Panel();
             lbCustomApiInformation = new System.Windows.Forms.Label();
+            pnChromeBridge = new System.Windows.Forms.Panel();
+            lbChromeBridgeInformation = new System.Windows.Forms.Label();
+            lbChromeBridgeStatus = new System.Windows.Forms.Label();
+            btChromeBridgeRun = new System.Windows.Forms.Button();
             pnDeepLAPI = new System.Windows.Forms.Panel();
             tbDeeplApi = new System.Windows.Forms.TextBox();
             lbDeeplApi = new System.Windows.Forms.Label();
@@ -238,37 +242,23 @@ namespace MORT
             lbImgCapture = new System.Windows.Forms.Label();
             tpTranslation = new System.Windows.Forms.TabPage();
             panel19 = new System.Windows.Forms.Panel();
-            panel4 = new System.Windows.Forms.Panel();
-            cbDeepLLanguageTo = new System.Windows.Forms.ComboBox();
-            lbDeepLTo = new System.Windows.Forms.Label();
-            label6 = new System.Windows.Forms.Label();
-            cbDeepLLanguage = new System.Windows.Forms.ComboBox();
-            lbDeepL = new System.Windows.Forms.Label();
-            lbDeepLFrom = new System.Windows.Forms.Label();
             panel27 = new System.Windows.Forms.Panel();
             cbTTSWaitEnd = new System.Windows.Forms.CheckBox();
             cbUseTTS = new System.Windows.Forms.CheckBox();
             label66 = new System.Windows.Forms.Label();
-            panel22 = new System.Windows.Forms.Panel();
-            googleResultCodeComboBox = new System.Windows.Forms.ComboBox();
-            lbGoogleTo = new System.Windows.Forms.Label();
-            label56 = new System.Windows.Forms.Label();
-            googleTransComboBox = new System.Windows.Forms.ComboBox();
-            lbGoogle = new System.Windows.Forms.Label();
-            lbGoogleFrom = new System.Windows.Forms.Label();
+            pnTransLanguage = new System.Windows.Forms.Panel();
+            lbTransLanguageInformation = new System.Windows.Forms.Label();
+            cbTransLanguageTo = new System.Windows.Forms.ComboBox();
+            lbTransLanguageTo = new System.Windows.Forms.Label();
+            lbTransLanguageArrow = new System.Windows.Forms.Label();
+            cbTransLanguageFrom = new System.Windows.Forms.ComboBox();
+            lbTransLanguage = new System.Windows.Forms.Label();
+            lbTransLanguageFrom = new System.Windows.Forms.Label();
             panel1 = new System.Windows.Forms.Panel();
             skinOverRadioButton = new System.Windows.Forms.RadioButton();
             skinLayerRadioButton = new System.Windows.Forms.RadioButton();
             lbTransformType = new System.Windows.Forms.Label();
             skinDarkRadioButton = new System.Windows.Forms.RadioButton();
-            panel15 = new System.Windows.Forms.Panel();
-            lbPapagoLanguageCodeInformation = new System.Windows.Forms.Label();
-            cbNaverResultCode = new System.Windows.Forms.ComboBox();
-            lbPaPagoTo = new System.Windows.Forms.Label();
-            label43 = new System.Windows.Forms.Label();
-            naverTransComboBox = new System.Windows.Forms.ComboBox();
-            lbPaPago = new System.Windows.Forms.Label();
-            lbPaPagoFrom = new System.Windows.Forms.Label();
             tpETC = new System.Windows.Forms.TabPage();
             panel18 = new System.Windows.Forms.Panel();
             panel16 = new System.Windows.Forms.Panel();
@@ -360,6 +350,7 @@ namespace MORT
             pnPapagoWeb.SuspendLayout();
             pnGoogleBasic.SuspendLayout();
             pnCustomApi.SuspendLayout();
+            pnChromeBridge.SuspendLayout();
             pnDeepLAPI.SuspendLayout();
             pnDeepl.SuspendLayout();
             DB_Panel.SuspendLayout();
@@ -385,11 +376,9 @@ namespace MORT
             ((System.ComponentModel.ISupportInitialize)imgZoomsizeUpDown).BeginInit();
             tpTranslation.SuspendLayout();
             panel19.SuspendLayout();
-            panel4.SuspendLayout();
             panel27.SuspendLayout();
-            panel22.SuspendLayout();
+            pnTransLanguage.SuspendLayout();
             panel1.SuspendLayout();
-            panel15.SuspendLayout();
             tpETC.SuspendLayout();
             panel18.SuspendLayout();
             panel16.SuspendLayout();
@@ -1380,6 +1369,7 @@ namespace MORT
             pnTranslate.Controls.Add(pnPapagoWeb);
             pnTranslate.Controls.Add(pnGoogleBasic);
             pnTranslate.Controls.Add(pnCustomApi);
+            pnTranslate.Controls.Add(pnChromeBridge);
             pnTranslate.Controls.Add(pnDeepLAPI);
             pnTranslate.Controls.Add(pnDeepl);
             pnTranslate.Controls.Add(DB_Panel);
@@ -1779,6 +1769,51 @@ namespace MORT
             lbCustomApiInformation.TabIndex = 17;
             lbCustomApiInformation.Text = "커스텀 API는 고급 설정에서 설정하시면 됩니다";
             lbCustomApiInformation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // pnChromeBridge
+            // 
+            pnChromeBridge.Controls.Add(lbChromeBridgeInformation);
+            pnChromeBridge.Controls.Add(lbChromeBridgeStatus);
+            pnChromeBridge.Controls.Add(btChromeBridgeRun);
+            pnChromeBridge.Location = new System.Drawing.Point(7, 61);
+            pnChromeBridge.Name = "pnChromeBridge";
+            pnChromeBridge.Size = new System.Drawing.Size(483, 94);
+            pnChromeBridge.TabIndex = 56;
+            // 
+            // lbChromeBridgeInformation
+            // 
+            lbChromeBridgeInformation.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbChromeBridgeInformation.ForeColor = System.Drawing.Color.White;
+            lbChromeBridgeInformation.Location = new System.Drawing.Point(3, 4);
+            lbChromeBridgeInformation.Name = "lbChromeBridgeInformation";
+            lbChromeBridgeInformation.Size = new System.Drawing.Size(469, 34);
+            lbChromeBridgeInformation.TabIndex = 17;
+            lbChromeBridgeInformation.Text = "사용하기 위해서 크롬이 설치되어 있어야 합니다.";
+            lbChromeBridgeInformation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lbChromeBridgeStatus
+            // 
+            lbChromeBridgeStatus.ForeColor = System.Drawing.Color.White;
+            lbChromeBridgeStatus.Location = new System.Drawing.Point(3, 44);
+            lbChromeBridgeStatus.Name = "lbChromeBridgeStatus";
+            lbChromeBridgeStatus.Size = new System.Drawing.Size(340, 24);
+            lbChromeBridgeStatus.TabIndex = 18;
+            lbChromeBridgeStatus.Text = "상태 : 확인 전";
+            lbChromeBridgeStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // btChromeBridgeRun
+            // 
+            btChromeBridgeRun.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            btChromeBridgeRun.FlatAppearance.BorderColor = System.Drawing.Color.Gray;
+            btChromeBridgeRun.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btChromeBridgeRun.ForeColor = System.Drawing.Color.White;
+            btChromeBridgeRun.Location = new System.Drawing.Point(349, 44);
+            btChromeBridgeRun.Name = "btChromeBridgeRun";
+            btChromeBridgeRun.Size = new System.Drawing.Size(123, 25);
+            btChromeBridgeRun.TabIndex = 19;
+            btChromeBridgeRun.Text = "설정 열기";
+            btChromeBridgeRun.UseVisualStyleBackColor = false;
+            btChromeBridgeRun.Click += btChromeBridgeRun_Click;
             // 
             // pnDeepLAPI
             // 
@@ -2713,11 +2748,9 @@ namespace MORT
             // panel19
             // 
             panel19.BackColor = System.Drawing.Color.FromArgb(35, 36, 38);
-            panel19.Controls.Add(panel4);
             panel19.Controls.Add(panel27);
-            panel19.Controls.Add(panel22);
+            panel19.Controls.Add(pnTransLanguage);
             panel19.Controls.Add(panel1);
-            panel19.Controls.Add(panel15);
             panel19.Dock = System.Windows.Forms.DockStyle.Fill;
             panel19.Location = new System.Drawing.Point(0, 0);
             panel19.Margin = new System.Windows.Forms.Padding(0);
@@ -2725,94 +2758,12 @@ namespace MORT
             panel19.Size = new System.Drawing.Size(540, 585);
             panel19.TabIndex = 2;
             // 
-            // panel4
-            // 
-            panel4.Controls.Add(cbDeepLLanguageTo);
-            panel4.Controls.Add(lbDeepLTo);
-            panel4.Controls.Add(label6);
-            panel4.Controls.Add(cbDeepLLanguage);
-            panel4.Controls.Add(lbDeepL);
-            panel4.Controls.Add(lbDeepLFrom);
-            panel4.Location = new System.Drawing.Point(3, 265);
-            panel4.Name = "panel4";
-            panel4.Size = new System.Drawing.Size(531, 76);
-            panel4.TabIndex = 57;
-            panel4.Paint += panealBorder_Paint;
-            // 
-            // cbDeepLLanguageTo
-            // 
-            cbDeepLLanguageTo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cbDeepLLanguageTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            cbDeepLLanguageTo.FormattingEnabled = true;
-            cbDeepLLanguageTo.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cbDeepLLanguageTo.Items.AddRange(new object[] { "한국어", "영어", "일본어", "중국어 - 간체", "중국어 - 번체", "러시아어", "독일어", "브라질어", "포르투갈어", "스페인어", "프랑스어", "베트남어", "태국어" });
-            cbDeepLLanguageTo.Location = new System.Drawing.Point(304, 35);
-            cbDeepLLanguageTo.Name = "cbDeepLLanguageTo";
-            cbDeepLLanguageTo.Size = new System.Drawing.Size(100, 25);
-            cbDeepLLanguageTo.TabIndex = 53;
-            // 
-            // lbDeepLTo
-            // 
-            lbDeepLTo.AutoSize = true;
-            lbDeepLTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbDeepLTo.ForeColor = System.Drawing.Color.White;
-            lbDeepLTo.Location = new System.Drawing.Point(417, 38);
-            lbDeepLTo.Name = "lbDeepLTo";
-            lbDeepLTo.Size = new System.Drawing.Size(52, 17);
-            lbDeepLTo.TabIndex = 52;
-            lbDeepLTo.Text = "로 번역";
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            label6.ForeColor = System.Drawing.Color.White;
-            label6.Location = new System.Drawing.Point(249, 38);
-            label6.Name = "label6";
-            label6.Size = new System.Drawing.Size(22, 17);
-            label6.TabIndex = 51;
-            label6.Text = "->";
-            // 
-            // cbDeepLLanguage
-            // 
-            cbDeepLLanguage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cbDeepLLanguage.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            cbDeepLLanguage.FormattingEnabled = true;
-            cbDeepLLanguage.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cbDeepLLanguage.Items.AddRange(new object[] { "영어", "일본어", "중국어 간체", "중국어 번체", "한국어", "러시아어", "독일어", "브라질어", "포르투갈어", "스페인어", "프랑스어", "베트남어", "태국어" });
-            cbDeepLLanguage.Location = new System.Drawing.Point(50, 35);
-            cbDeepLLanguage.Name = "cbDeepLLanguage";
-            cbDeepLLanguage.Size = new System.Drawing.Size(100, 25);
-            cbDeepLLanguage.TabIndex = 50;
-            // 
-            // lbDeepL
-            // 
-            lbDeepL.AutoSize = true;
-            lbDeepL.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
-            lbDeepL.ForeColor = System.Drawing.Color.White;
-            lbDeepL.Location = new System.Drawing.Point(4, 3);
-            lbDeepL.Name = "lbDeepL";
-            lbDeepL.Size = new System.Drawing.Size(123, 20);
-            lbDeepL.TabIndex = 8;
-            lbDeepL.Text = "DeepL 번역 설정";
-            // 
-            // lbDeepLFrom
-            // 
-            lbDeepLFrom.AutoSize = true;
-            lbDeepLFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbDeepLFrom.ForeColor = System.Drawing.Color.White;
-            lbDeepLFrom.Location = new System.Drawing.Point(170, 38);
-            lbDeepLFrom.Name = "lbDeepLFrom";
-            lbDeepLFrom.Size = new System.Drawing.Size(34, 17);
-            lbDeepLFrom.TabIndex = 49;
-            lbDeepLFrom.Text = "에서";
-            // 
             // panel27
             // 
             panel27.Controls.Add(cbTTSWaitEnd);
             panel27.Controls.Add(cbUseTTS);
             panel27.Controls.Add(label66);
-            panel27.Location = new System.Drawing.Point(3, 345);
+            panel27.Location = new System.Drawing.Point(3, 183);
             panel27.Name = "panel27";
             panel27.Size = new System.Drawing.Size(531, 84);
             panel27.TabIndex = 54;
@@ -2855,87 +2806,99 @@ namespace MORT
             label66.TabIndex = 8;
             label66.Text = "TTS";
             // 
-            // panel22
+            // pnTransLanguage
             // 
-            panel22.Controls.Add(googleResultCodeComboBox);
-            panel22.Controls.Add(lbGoogleTo);
-            panel22.Controls.Add(label56);
-            panel22.Controls.Add(googleTransComboBox);
-            panel22.Controls.Add(lbGoogle);
-            panel22.Controls.Add(lbGoogleFrom);
-            panel22.Location = new System.Drawing.Point(3, 183);
-            panel22.Name = "panel22";
-            panel22.Size = new System.Drawing.Size(531, 76);
-            panel22.TabIndex = 56;
-            panel22.Paint += panealBorder_Paint;
+            pnTransLanguage.Controls.Add(lbTransLanguageInformation);
+            pnTransLanguage.Controls.Add(cbTransLanguageTo);
+            pnTransLanguage.Controls.Add(lbTransLanguageTo);
+            pnTransLanguage.Controls.Add(lbTransLanguageArrow);
+            pnTransLanguage.Controls.Add(cbTransLanguageFrom);
+            pnTransLanguage.Controls.Add(lbTransLanguage);
+            pnTransLanguage.Controls.Add(lbTransLanguageFrom);
+            pnTransLanguage.Location = new System.Drawing.Point(3, 58);
+            pnTransLanguage.Name = "pnTransLanguage";
+            pnTransLanguage.Size = new System.Drawing.Size(531, 119);
+            pnTransLanguage.TabIndex = 54;
+            pnTransLanguage.Paint += panealBorder_Paint;
             // 
-            // googleResultCodeComboBox
+            // lbTransLanguageInformation
             // 
-            googleResultCodeComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            googleResultCodeComboBox.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            googleResultCodeComboBox.FormattingEnabled = true;
-            googleResultCodeComboBox.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            googleResultCodeComboBox.Items.AddRange(new object[] { "한국어", "영어", "일본어", "중국어 - 간체", "중국어 - 번체", "러시아어", "독일어", "브라질어", "포르투갈어", "스페인어", "프랑스어", "베트남어", "태국어" });
-            googleResultCodeComboBox.Location = new System.Drawing.Point(304, 35);
-            googleResultCodeComboBox.Name = "googleResultCodeComboBox";
-            googleResultCodeComboBox.Size = new System.Drawing.Size(100, 25);
-            googleResultCodeComboBox.TabIndex = 53;
+            lbTransLanguageInformation.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageInformation.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageInformation.Location = new System.Drawing.Point(21, 66);
+            lbTransLanguageInformation.Name = "lbTransLanguageInformation";
+            lbTransLanguageInformation.Size = new System.Drawing.Size(489, 42);
+            lbTransLanguageInformation.TabIndex = 56;
+            lbTransLanguageInformation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            lbTransLanguageInformation.Visible = false;
             // 
-            // lbGoogleTo
+            // cbTransLanguageTo
             // 
-            lbGoogleTo.AutoSize = true;
-            lbGoogleTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbGoogleTo.ForeColor = System.Drawing.Color.White;
-            lbGoogleTo.Location = new System.Drawing.Point(417, 38);
-            lbGoogleTo.Name = "lbGoogleTo";
-            lbGoogleTo.Size = new System.Drawing.Size(52, 17);
-            lbGoogleTo.TabIndex = 52;
-            lbGoogleTo.Text = "로 번역";
+            cbTransLanguageTo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbTransLanguageTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            cbTransLanguageTo.FormattingEnabled = true;
+            cbTransLanguageTo.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            cbTransLanguageTo.Location = new System.Drawing.Point(253, 33);
+            cbTransLanguageTo.Name = "cbTransLanguageTo";
+            cbTransLanguageTo.Size = new System.Drawing.Size(140, 25);
+            cbTransLanguageTo.TabIndex = 54;
+            cbTransLanguageTo.SelectedIndexChanged += cbTransLanguage_SelectedIndexChanged;
             // 
-            // label56
+            // lbTransLanguageTo
             // 
-            label56.AutoSize = true;
-            label56.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            label56.ForeColor = System.Drawing.Color.White;
-            label56.Location = new System.Drawing.Point(249, 38);
-            label56.Name = "label56";
-            label56.Size = new System.Drawing.Size(22, 17);
-            label56.TabIndex = 51;
-            label56.Text = "->";
+            lbTransLanguageTo.AutoSize = true;
+            lbTransLanguageTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageTo.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageTo.Location = new System.Drawing.Point(399, 36);
+            lbTransLanguageTo.Name = "lbTransLanguageTo";
+            lbTransLanguageTo.Size = new System.Drawing.Size(52, 17);
+            lbTransLanguageTo.TabIndex = 55;
+            lbTransLanguageTo.Text = "로 번역";
             // 
-            // googleTransComboBox
+            // lbTransLanguageArrow
             // 
-            googleTransComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            googleTransComboBox.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            googleTransComboBox.FormattingEnabled = true;
-            googleTransComboBox.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            googleTransComboBox.Items.AddRange(new object[] { "영어", "일본어", "중국어 간체", "중국어 번체", "한국어", "러시아어", "독일어", "브라질어", "포르투갈어", "스페인어", "프랑스어", "베트남어", "태국어" });
-            googleTransComboBox.Location = new System.Drawing.Point(50, 35);
-            googleTransComboBox.Name = "googleTransComboBox";
-            googleTransComboBox.Size = new System.Drawing.Size(100, 25);
-            googleTransComboBox.TabIndex = 50;
+            lbTransLanguageArrow.AutoSize = true;
+            lbTransLanguageArrow.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageArrow.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageArrow.Location = new System.Drawing.Point(215, 34);
+            lbTransLanguageArrow.Name = "lbTransLanguageArrow";
+            lbTransLanguageArrow.Size = new System.Drawing.Size(24, 20);
+            lbTransLanguageArrow.TabIndex = 53;
+            lbTransLanguageArrow.Text = "→";
             // 
-            // lbGoogle
+            // cbTransLanguageFrom
             // 
-            lbGoogle.AutoSize = true;
-            lbGoogle.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
-            lbGoogle.ForeColor = System.Drawing.Color.White;
-            lbGoogle.Location = new System.Drawing.Point(4, 3);
-            lbGoogle.Name = "lbGoogle";
-            lbGoogle.Size = new System.Drawing.Size(392, 20);
-            lbGoogle.TabIndex = 8;
-            lbGoogle.Text = "구글 번역 설정 (기본 번역기 , 구글 시트 번역기, Gemini)";
+            cbTransLanguageFrom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbTransLanguageFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            cbTransLanguageFrom.FormattingEnabled = true;
+            cbTransLanguageFrom.ImeMode = System.Windows.Forms.ImeMode.NoControl;
+            cbTransLanguageFrom.Location = new System.Drawing.Point(21, 33);
+            cbTransLanguageFrom.Name = "cbTransLanguageFrom";
+            cbTransLanguageFrom.Size = new System.Drawing.Size(140, 25);
+            cbTransLanguageFrom.TabIndex = 51;
+            cbTransLanguageFrom.SelectedIndexChanged += cbTransLanguage_SelectedIndexChanged;
             // 
-            // lbGoogleFrom
+            // lbTransLanguage
             // 
-            lbGoogleFrom.AutoSize = true;
-            lbGoogleFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbGoogleFrom.ForeColor = System.Drawing.Color.White;
-            lbGoogleFrom.Location = new System.Drawing.Point(170, 38);
-            lbGoogleFrom.Name = "lbGoogleFrom";
-            lbGoogleFrom.Size = new System.Drawing.Size(34, 17);
-            lbGoogleFrom.TabIndex = 49;
-            lbGoogleFrom.Text = "에서";
+            lbTransLanguage.AutoSize = true;
+            lbTransLanguage.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
+            lbTransLanguage.ForeColor = System.Drawing.Color.White;
+            lbTransLanguage.Location = new System.Drawing.Point(4, 3);
+            lbTransLanguage.Name = "lbTransLanguage";
+            lbTransLanguage.Size = new System.Drawing.Size(74, 20);
+            lbTransLanguage.TabIndex = 50;
+            lbTransLanguage.Text = "번역 언어";
+            // 
+            // lbTransLanguageFrom
+            // 
+            lbTransLanguageFrom.AutoSize = true;
+            lbTransLanguageFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbTransLanguageFrom.ForeColor = System.Drawing.Color.White;
+            lbTransLanguageFrom.Location = new System.Drawing.Point(167, 36);
+            lbTransLanguageFrom.Name = "lbTransLanguageFrom";
+            lbTransLanguageFrom.Size = new System.Drawing.Size(34, 17);
+            lbTransLanguageFrom.TabIndex = 52;
+            lbTransLanguageFrom.Text = "에서";
             // 
             // panel1
             // 
@@ -2997,100 +2960,6 @@ namespace MORT
             skinDarkRadioButton.TabStop = true;
             skinDarkRadioButton.Text = "어두운";
             skinDarkRadioButton.UseVisualStyleBackColor = true;
-            // 
-            // panel15
-            // 
-            panel15.Controls.Add(lbPapagoLanguageCodeInformation);
-            panel15.Controls.Add(cbNaverResultCode);
-            panel15.Controls.Add(lbPaPagoTo);
-            panel15.Controls.Add(label43);
-            panel15.Controls.Add(naverTransComboBox);
-            panel15.Controls.Add(lbPaPago);
-            panel15.Controls.Add(lbPaPagoFrom);
-            panel15.Location = new System.Drawing.Point(3, 58);
-            panel15.Name = "panel15";
-            panel15.Size = new System.Drawing.Size(531, 119);
-            panel15.TabIndex = 54;
-            panel15.Paint += panealBorder_Paint;
-            // 
-            // lbPapagoLanguageCodeInformation
-            // 
-            lbPapagoLanguageCodeInformation.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbPapagoLanguageCodeInformation.ForeColor = System.Drawing.Color.White;
-            lbPapagoLanguageCodeInformation.Location = new System.Drawing.Point(21, 74);
-            lbPapagoLanguageCodeInformation.Name = "lbPapagoLanguageCodeInformation";
-            lbPapagoLanguageCodeInformation.Size = new System.Drawing.Size(489, 34);
-            lbPapagoLanguageCodeInformation.TabIndex = 56;
-            lbPapagoLanguageCodeInformation.Text = "방식에 따라 지원되지 않는 언어가 있습니다\r\n실제 지원하는 언어는 API 문서를 참고하시기 바랍니다";
-            lbPapagoLanguageCodeInformation.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // cbNaverResultCode
-            // 
-            cbNaverResultCode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cbNaverResultCode.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            cbNaverResultCode.FormattingEnabled = true;
-            cbNaverResultCode.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            cbNaverResultCode.Items.AddRange(new object[] { "한국어", "영어" });
-            cbNaverResultCode.Location = new System.Drawing.Point(304, 30);
-            cbNaverResultCode.Name = "cbNaverResultCode";
-            cbNaverResultCode.Size = new System.Drawing.Size(100, 25);
-            cbNaverResultCode.TabIndex = 55;
-            // 
-            // lbPaPagoTo
-            // 
-            lbPaPagoTo.AutoSize = true;
-            lbPaPagoTo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbPaPagoTo.ForeColor = System.Drawing.Color.White;
-            lbPaPagoTo.Location = new System.Drawing.Point(417, 33);
-            lbPaPagoTo.Name = "lbPaPagoTo";
-            lbPaPagoTo.Size = new System.Drawing.Size(52, 17);
-            lbPaPagoTo.TabIndex = 54;
-            lbPaPagoTo.Text = "로 번역";
-            // 
-            // label43
-            // 
-            label43.AutoSize = true;
-            label43.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            label43.ForeColor = System.Drawing.Color.White;
-            label43.Location = new System.Drawing.Point(249, 38);
-            label43.Name = "label43";
-            label43.Size = new System.Drawing.Size(22, 17);
-            label43.TabIndex = 51;
-            label43.Text = "->";
-            // 
-            // naverTransComboBox
-            // 
-            naverTransComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            naverTransComboBox.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            naverTransComboBox.FormattingEnabled = true;
-            naverTransComboBox.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            naverTransComboBox.Items.AddRange(new object[] { "영어", "일본어", "중국어 간체", "중국어 번체", "스페인어", "프랑스어", "베트남어", "태국어", "인도네시아어", "한국어" });
-            naverTransComboBox.Location = new System.Drawing.Point(50, 35);
-            naverTransComboBox.Name = "naverTransComboBox";
-            naverTransComboBox.Size = new System.Drawing.Size(100, 25);
-            naverTransComboBox.TabIndex = 50;
-            // 
-            // lbPaPago
-            // 
-            lbPaPago.AutoSize = true;
-            lbPaPago.Font = new System.Drawing.Font("맑은 고딕", 11.25F, System.Drawing.FontStyle.Bold);
-            lbPaPago.ForeColor = System.Drawing.Color.White;
-            lbPaPago.Location = new System.Drawing.Point(4, 3);
-            lbPaPago.Name = "lbPaPago";
-            lbPaPago.Size = new System.Drawing.Size(179, 20);
-            lbPaPago.TabIndex = 8;
-            lbPaPago.Text = "네이버(파파고) 번역 설정";
-            // 
-            // lbPaPagoFrom
-            // 
-            lbPaPagoFrom.AutoSize = true;
-            lbPaPagoFrom.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbPaPagoFrom.ForeColor = System.Drawing.Color.White;
-            lbPaPagoFrom.Location = new System.Drawing.Point(170, 38);
-            lbPaPagoFrom.Name = "lbPaPagoFrom";
-            lbPaPagoFrom.Size = new System.Drawing.Size(34, 17);
-            lbPaPagoFrom.TabIndex = 49;
-            lbPaPagoFrom.Text = "에서";
             // 
             // tpETC
             // 
@@ -3803,35 +3672,35 @@ namespace MORT
             plDebugOn.Name = "plDebugOn";
             plDebugOn.Size = new System.Drawing.Size(507, 512);
             plDebugOn.TabIndex = 56;
-            //
+            // 
             // cbDisplayLowQuality
-            //
+            // 
             cbDisplayLowQuality.AutoSize = true;
             cbDisplayLowQuality.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             cbDisplayLowQuality.ForeColor = System.Drawing.Color.White;
             cbDisplayLowQuality.Location = new System.Drawing.Point(14, 267);
             cbDisplayLowQuality.Name = "cbDisplayLowQuality";
-            cbDisplayLowQuality.Size = new System.Drawing.Size(222, 21);
+            cbDisplayLowQuality.Size = new System.Drawing.Size(208, 21);
             cbDisplayLowQuality.TabIndex = 30;
             cbDisplayLowQuality.Text = "번역 결과에 [저품질] 표시하기";
             cbDisplayLowQuality.UseVisualStyleBackColor = true;
             cbDisplayLowQuality.CheckedChanged += cbDisplayLowQuality_CheckedChanged;
-            //
+            // 
             // cbSaveAnalysisResult
-            //
+            // 
             cbSaveAnalysisResult.AutoSize = true;
             cbSaveAnalysisResult.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             cbSaveAnalysisResult.ForeColor = System.Drawing.Color.White;
             cbSaveAnalysisResult.Location = new System.Drawing.Point(14, 240);
             cbSaveAnalysisResult.Name = "cbSaveAnalysisResult";
-            cbSaveAnalysisResult.Size = new System.Drawing.Size(383, 21);
+            cbSaveAnalysisResult.Size = new System.Drawing.Size(397, 21);
             cbSaveAnalysisResult.TabIndex = 29;
             cbSaveAnalysisResult.Text = "이미지 인식 결과 저장 - UserData/Debug/OcrAnalysis/*.json";
             cbSaveAnalysisResult.UseVisualStyleBackColor = true;
             cbSaveAnalysisResult.CheckedChanged += cbSaveAnalysisResult_CheckedChanged;
-            //
+            // 
             // cbShowOverlayWordArea
-            //
+            // 
             cbShowOverlayWordArea.AutoSize = true;
             cbShowOverlayWordArea.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             cbShowOverlayWordArea.ForeColor = System.Drawing.Color.White;
@@ -4036,6 +3905,7 @@ namespace MORT
             pnPapagoWeb.ResumeLayout(false);
             pnGoogleBasic.ResumeLayout(false);
             pnCustomApi.ResumeLayout(false);
+            pnChromeBridge.ResumeLayout(false);
             pnDeepLAPI.ResumeLayout(false);
             pnDeepLAPI.PerformLayout();
             pnDeepl.ResumeLayout(false);
@@ -4074,16 +3944,12 @@ namespace MORT
             ((System.ComponentModel.ISupportInitialize)imgZoomsizeUpDown).EndInit();
             tpTranslation.ResumeLayout(false);
             panel19.ResumeLayout(false);
-            panel4.ResumeLayout(false);
-            panel4.PerformLayout();
             panel27.ResumeLayout(false);
             panel27.PerformLayout();
-            panel22.ResumeLayout(false);
-            panel22.PerformLayout();
+            pnTransLanguage.ResumeLayout(false);
+            pnTransLanguage.PerformLayout();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
-            panel15.ResumeLayout(false);
-            panel15.PerformLayout();
             tpETC.ResumeLayout(false);
             panel18.ResumeLayout(false);
             panel16.ResumeLayout(false);
@@ -4231,6 +4097,14 @@ namespace MORT
         private System.Windows.Forms.Button about_Button;
         private System.Windows.Forms.TabPage tpTranslation;
         private System.Windows.Forms.Panel panel19;
+        private System.Windows.Forms.Panel pnTransLanguage;
+        private System.Windows.Forms.Label lbTransLanguage;
+        private System.Windows.Forms.ComboBox cbTransLanguageFrom;
+        private System.Windows.Forms.Label lbTransLanguageFrom;
+        private System.Windows.Forms.Label lbTransLanguageArrow;
+        private System.Windows.Forms.ComboBox cbTransLanguageTo;
+        private System.Windows.Forms.Label lbTransLanguageTo;
+        private System.Windows.Forms.Label lbTransLanguageInformation;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.RadioButton speedRadioButton5;
         private System.Windows.Forms.Label lbSpeed;
@@ -4248,11 +4122,6 @@ namespace MORT
         private System.Windows.Forms.TextBox NaverSecretKeyTextBox;
         private System.Windows.Forms.TextBox NaverIDKeyTextBox;
         private System.Windows.Forms.Label lbPapagoID;
-        private System.Windows.Forms.Panel panel15;
-        private System.Windows.Forms.Label label43;
-        private System.Windows.Forms.ComboBox naverTransComboBox;
-        private System.Windows.Forms.Label lbPaPagoFrom;
-        private System.Windows.Forms.Label lbPaPago;
         private KeyInputLabel quickKeyInputLabel;
         private System.Windows.Forms.Label lbHotKeyQuickOCR;
         private KeyInputLabel dicKeyInputLabel;
@@ -4285,13 +4154,6 @@ namespace MORT
         private System.Windows.Forms.Panel Google_Panel;
         private System.Windows.Forms.TextBox googleSheet_textBox;
         private System.Windows.Forms.Label lbGoogleSheetAddress;
-        private System.Windows.Forms.Panel panel22;
-        private System.Windows.Forms.ComboBox googleResultCodeComboBox;
-        private System.Windows.Forms.Label lbGoogleTo;
-        private System.Windows.Forms.Label label56;
-        private System.Windows.Forms.ComboBox googleTransComboBox;
-        private System.Windows.Forms.Label lbGoogle;
-        private System.Windows.Forms.Label lbGoogleFrom;
         private System.Windows.Forms.Button button_RemoveAllGoogleToekn;
         private System.Windows.Forms.TextBox textBox_GoogleSecretKey;
         private System.Windows.Forms.Label lbSheetSecret;
@@ -4336,8 +4198,6 @@ namespace MORT
         private System.Windows.Forms.CheckBox cbSaveCapture;
         private System.Windows.Forms.CheckBox cbSaveCaptureResult;
         private System.Windows.Forms.CheckBox cbDBMultiGet;
-        private System.Windows.Forms.ComboBox cbNaverResultCode;
-        private System.Windows.Forms.Label lbPaPagoTo;
         private System.Windows.Forms.Label lbSpeedInformation;
         private System.Windows.Forms.Panel panel16;
         private System.Windows.Forms.Button openBlogButton;
@@ -4387,16 +4247,13 @@ namespace MORT
         private System.Windows.Forms.Panel pnDeepl;
         private System.Windows.Forms.Label lbDeepLStatus;
         private System.Windows.Forms.Label lbDeepLInfo;
-        private System.Windows.Forms.Panel panel4;
-        private System.Windows.Forms.ComboBox cbDeepLLanguageTo;
-        private System.Windows.Forms.Label lbDeepLTo;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.ComboBox cbDeepLLanguage;
-        private System.Windows.Forms.Label lbDeepL;
-        private System.Windows.Forms.Label lbDeepLFrom;
         private System.Windows.Forms.Button btnCheckDeeplState;
         private System.Windows.Forms.Panel pnCustomApi;
         private System.Windows.Forms.Label lbCustomApiInformation;
+        private System.Windows.Forms.Panel pnChromeBridge;
+        private System.Windows.Forms.Label lbChromeBridgeInformation;
+        private System.Windows.Forms.Label lbChromeBridgeStatus;
+        private System.Windows.Forms.Button btChromeBridgeRun;
         private System.Windows.Forms.Panel pnDeepLAPI;
         private System.Windows.Forms.RadioButton rbDeepLAPIEndpointFree;
         private System.Windows.Forms.Panel pnEasyOcr;
@@ -4405,7 +4262,6 @@ namespace MORT
         private System.Windows.Forms.Button btnInstallEasyOcr;
         private System.Windows.Forms.Panel pnPapagoWeb;
         private System.Windows.Forms.Label lbPapagoWebInfo;
-        private System.Windows.Forms.Label lbPapagoLanguageCodeInformation;
         private System.Windows.Forms.Button btnAddWinOcrLanguage;
         private System.Windows.Forms.RadioButton rbDeepLAPIEndpointPaid;
         private System.Windows.Forms.TextBox tbDeeplApi;
