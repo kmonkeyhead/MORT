@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
+using MORT.Service.Http;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml.Linq;
@@ -71,17 +71,14 @@ namespace MORT.VersionCheck
         {
             try
             {
-                using (WebClient client = new WebClient())
+                string content = HttpTextDownloader.DownloadString(url);
+                if (string.IsNullOrWhiteSpace(content))
                 {
-                    string content = client.DownloadString(url);
-                    if (string.IsNullOrWhiteSpace(content))
-                    {
-                        return "";
-                    }
-                    //파일 안에 해시만 있는 경우, sha256sum 호환 포맷("hash *filename") 모두 첫 토큰만 취한다
-                    string first = content.Trim().Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)[0];
-                    return first.Trim();
+                    return "";
                 }
+                //파일 안에 해시만 있는 경우, sha256sum 호환 포맷("hash *filename") 모두 첫 토큰만 취한다
+                string first = content.Trim().Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)[0];
+                return first.Trim();
             }
             catch (Exception e)
             {
@@ -107,17 +104,14 @@ namespace MORT.VersionCheck
                 //Updater가 받는 것과 동일 규칙: exe와 같은 위치의 MORT.dll.config. URL은 다운로드 직전 https로 강제(MITM 방지).
                 string configUrl = ForceHttps(fileUrl).Replace("MORT.exe", "MORT.dll.config");
 
-                using (WebClient client = new WebClient())
-                {
-                    string configContent = client.DownloadString(configUrl);
-                    string configVersion = ParseConfigVersionValue(configContent);
+                string configContent = HttpTextDownloader.DownloadString(configUrl);
+                string configVersion = ParseConfigVersionValue(configContent);
 
-                    Util.ShowLog("Remote config MORT_VERSION_VALUE : " + configVersion + " / version.txt : " + expectedVersion);
+                Util.ShowLog("Remote config MORT_VERSION_VALUE : " + configVersion + " / version.txt : " + expectedVersion);
 
-                    return int.TryParse(configVersion, out int remote)
-                        && int.TryParse(expectedVersion, out int expected)
-                        && remote == expected;
-                }
+                return int.TryParse(configVersion, out int remote)
+                    && int.TryParse(expectedVersion, out int expected)
+                    && remote == expected;
             }
             catch (Exception e)
             {
@@ -186,9 +180,8 @@ namespace MORT.VersionCheck
                 {
                     nowVersion = Properties.Settings.Default.MORT_VERSION_VALUE;
                     //http://kmonkeyhead.github.io/MORT_VERSION/version.txt
-                    using(WebClient client = new WebClient())
+                    using(Stream stream = HttpTextDownloader.OpenRead("https://kmonkeyhead.github.io/MORT_VERSION/version.txt"))
                     {
-                        Stream stream = client.OpenRead("https://kmonkeyhead.github.io/MORT_VERSION/version.txt");
                         using (StreamReader reader = new StreamReader(stream))
                         {
                             String content = reader.ReadToEnd();
@@ -218,9 +211,8 @@ namespace MORT.VersionCheck
             try
             {
                 //http://kmonkeyhead.github.io/MORT_VERSION/default_setting.txt
-                using(WebClient client = new WebClient())
+                using(Stream stream = HttpTextDownloader.OpenRead("https://kmonkeyhead.github.io/MORT_VERSION/default_setting.txt"))
                 {
-                    Stream stream = client.OpenRead("https://kmonkeyhead.github.io/MORT_VERSION/default_setting.txt");
                     using (StreamReader reader = new StreamReader(stream))
                     {
                         String content = reader.ReadToEnd();
@@ -519,9 +511,8 @@ namespace MORT.VersionCheck
 
                     if (dicVersion < Convert.ToInt32(newVersionString))
                     {
-                        using (WebClient client = new WebClient())
+                        using(Stream stream = HttpTextDownloader.OpenRead(ForceHttps(downloadPage)))
                         {
-                            Stream stream = client.OpenRead(ForceHttps(downloadPage));
                             using (StreamReader reader = new StreamReader(stream))
                             {
                                 String dicData = reader.ReadToEnd();

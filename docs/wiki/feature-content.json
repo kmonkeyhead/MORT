@@ -243,6 +243,7 @@
     "entry": "VersionCheckLogic, Updater.Program, PipeServer",
     "implementation": [
       "VersionCheckLogic은 배포 버전을 확인하고 업데이트가 필요할 때 별도 Updater 실행 흐름을 시작한다. Updater 프로젝트는 메인 프로세스 종료를 기다린 뒤 파일을 다운로드·교체한다.",
+      "원격 텍스트(version.txt, default_setting.txt, 사전, .sha256, 원격 MORT.dll.config, 설정 검색 목록)는 HttpTextDownloader의 공유 HttpClient로 동기 호출해 받는다. Updater는 자체 HttpClient로 MORT.exe → MORT.dll.config 순서로 스트림을 받으며 진행률을 표시하고, 둘 중 하나라도 실패하면 교체 없이 에러 흐름으로 간다.",
       "MORT_2.exe와 관련 설정 파일 검사는 업데이트 중간 산출물을 정리하고 다음 실행으로 넘기기 위한 시작 경로와 연결된다.",
       "EzTrans는 네이티브 DLL 직접 호출 경로와 PipeServer/PipeClient IPC 경로가 공존한다. 프로세스 비트수와 DLL 로딩 조건 때문에 일반 HTTP 번역기처럼 취급할 수 없다."
     ],

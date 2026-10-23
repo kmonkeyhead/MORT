@@ -173,5 +173,10 @@
     "category": "버전 확인",
     "intent": "현재 버전과 배포 버전을 비교하고 업데이트가 필요한 경우 별도 Updater 실행에 필요한 정보를 준비한다.",
     "operation": "원격 버전 정보를 읽어 비교하고 사용자 확인 뒤 업데이트 모듈을 시작하며 실패 시 현재 앱을 계속 사용할 수 있도록 오류를 분리한다."
+  },
+  "MORT/Service/Http/HttpTextDownloader.cs": {
+    "category": "원격 텍스트 다운로드",
+    "intent": "사용 중단된 WebClient를 대신해 버전 확인·설정 검색에서 작은 텍스트 파일을 받는 공통 진입점을 제공한다. 호출하는 쪽이 동기 흐름이라 동기 API를 유지한다.",
+    "operation": "공유 HttpClient의 Send로 요청하고 2xx가 아니면 예외를 던진다. 본문을 MemoryStream으로 모두 받은 뒤 돌려주므로 호출 측은 기존 OpenRead + StreamReader 구조를 그대로 쓴다."
   }
 }

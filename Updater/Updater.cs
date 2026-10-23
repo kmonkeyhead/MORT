@@ -3,7 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Policy;
 using System.Threading.Tasks;
@@ -17,6 +17,8 @@ namespace Updater
         private string url = "";
         private string info = "";
         private string expectedHash = "";
+
+        private static readonly HttpClient httpClient = new HttpClient();
 
         private string _prepare = "Preparing for download";
         private string _downloadError = "Error has occurred! Please manually update";
@@ -113,22 +115,58 @@ namespace Updater
             }
         }
 
-        public void DoDownload()
+        //exe -> config 순서로 받은 뒤 AfterAsync로 넘긴다. 어느 쪽이든 실패하면 에러로 처리한다.
+        public async void DoDownload()
         {
+            bool isError = false;
+
             try
             {
                 lbStatus.Text = _prepare;
-                using (var client = new WebClient())
-                {
-                    Uri uri = new Uri(url);
-                    client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(DownloadProgressCallback4);
-                    client.DownloadFileAsync(uri, "MORT_backup.exe"); 
-                    client.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadConfig);
-                }
-            }
-            catch
-            {
+                await DownloadFileAsync(url, "MORT_backup.exe");
 
+                lbStatus.Text = _downloadConfig;
+                string configUrl = url.Replace("MORT.exe", "MORT.dll.config");
+                await DownloadFileAsync(configUrl, "MORT_backup.dll.config");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                isError = true;
+            }
+
+            DoDownloadAfter(isError);
+        }
+
+        //받은 크기만큼 진행률을 갱신하며 파일로 저장한다. 큰 exe도 받으므로 본문은 스트림으로 읽는다.
+        private async Task DownloadFileAsync(string fileUrl, string filePath)
+        {
+            using (HttpResponseMessage response = await httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead))
+            {
+                response.EnsureSuccessStatusCode();
+
+                long totalBytes = response.Content.Headers.ContentLength ?? -1;
+                long receivedBytes = 0;
+                int lastPercent = -1;
+                byte[] buffer = new byte[81920];
+
+                using (Stream source = await response.Content.ReadAsStreamAsync())
+                using (FileStream target = File.Create(filePath))
+                {
+                    int read;
+                    while ((read = await source.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    {
+                        await target.WriteAsync(buffer, 0, read);
+                        receivedBytes += read;
+
+                        int percent = totalBytes > 0 ? (int)(receivedBytes * 100 / totalBytes) : 0;
+                        if (percent != lastPercent)
+                        {
+                            lastPercent = percent;
+                            OnDownloadProgress(receivedBytes, totalBytes, percent);
+                        }
+                    }
+                }
             }
         }
 
@@ -277,36 +315,9 @@ namespace Updater
             }
         }
 
-        private void DoDownloadAfter(object sender, AsyncCompletedEventArgs e)
+        private void DoDownloadAfter(bool isError)
         {
-            bool isError = false;
-            if (e.Cancelled || e.Error != null)
-            {
-                isError = true;
-            }
-
             var result = Task.Run(async () => await AfterAsync(isError));
-
-        }
-
-        private void DownloadConfig(object sender, AsyncCompletedEventArgs e)
-        {
-            try
-            {
-                lbStatus.Text = _downloadConfig;
-                using (var client = new WebClient())
-                {
-                    string configUrl = url.Replace("MORT.exe", "MORT.dll.config");
-                    Uri uri = new Uri(configUrl);
-                    client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(DownloadProgressCallback4);
-                    client.DownloadFileAsync(uri, "MORT_backup.dll.config");
-                    client.DownloadFileCompleted += new AsyncCompletedEventHandler(DoDownloadAfter);
-                }
-            }
-            catch
-            {
-
-            }
 
         }
 
@@ -387,17 +398,16 @@ namespace Updater
                 Environment.Exit(1);
         }
 
-        private void DownloadProgressCallback4(object sender, DownloadProgressChangedEventArgs e)
+        private void OnDownloadProgress(long receivedBytes, long totalBytes, int percent)
         {
-            // Displays the operation identifier, and the transfer progress.
-            Console.WriteLine("{0}    downloaded {1} of {2} bytes. {3} % complete...",
-                (string)e.UserState,
-                e.BytesReceived,
-                e.TotalBytesToReceive,
-                e.ProgressPercentage);
+            // Displays the transfer progress.
+            Console.WriteLine("downloaded {0} of {1} bytes. {2} % complete...",
+                receivedBytes,
+                totalBytes,
+                percent);
 
-            lbStatus.Text = _downloading + e.ProgressPercentage.ToString() + "%";
-            progressBar1.Value = e.ProgressPercentage;
+            lbStatus.Text = _downloading + percent.ToString() + "%";
+            progressBar1.Value = percent;
 
           
         }

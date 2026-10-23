@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
+using MORT.Service.Http;
 using System.Windows.Forms;
 
 namespace MORT.SettingBrowser
@@ -213,9 +213,8 @@ namespace MORT.SettingBrowser
 
         private void DownloadList()
         {
-            using(WebClient client = new WebClient())
+            using(Stream stream = HttpTextDownloader.OpenRead("https://kmonkeyhead.github.io/MORT_VERSION/Data/SETTING/list.txt"))
             {
-                Stream stream = client.OpenRead("https://kmonkeyhead.github.io/MORT_VERSION/Data/SETTING/list.txt");
                 using(StreamReader reader = new StreamReader(stream))
                 {
                     gameDataList.Clear();
@@ -265,9 +264,8 @@ namespace MORT.SettingBrowser
 
             if(isRequireDownload)
             {
-                using(WebClient client = new WebClient())
+                using(Stream stream = HttpTextDownloader.OpenRead(DATA_PATH + data.path + "/" + key + "/info.txt"))
                 {
-                    Stream stream = client.OpenRead(DATA_PATH + data.path + "/" + key + "/info.txt");
                     using(StreamReader reader = new StreamReader(stream))
                     {
 
@@ -397,9 +395,8 @@ namespace MORT.SettingBrowser
                     bool isDownloadComplete = false;
                     if(settingPath != "")
                     {
-                        using(WebClient client = new WebClient())
+                        using(Stream stream = HttpTextDownloader.OpenRead(settingPath))
                         {
-                            Stream stream = client.OpenRead(settingPath);
                             using(StreamReader reader = new StreamReader(stream))
                             {
                                 string data = reader.ReadToEnd();
@@ -414,9 +411,8 @@ namespace MORT.SettingBrowser
 
                     if(dbPath != "")
                     {
-                        using(WebClient client = new WebClient())
+                        using(Stream stream = HttpTextDownloader.OpenRead(dbPath))
                         {
-                            Stream stream = client.OpenRead(dbPath);
                             using(StreamReader reader = new StreamReader(stream))
                             {
                                 string data = reader.ReadToEnd();
