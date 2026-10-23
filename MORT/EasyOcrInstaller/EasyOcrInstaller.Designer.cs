@@ -176,7 +176,7 @@
             // 
             cbCuda.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cbCuda.FormattingEnabled = true;
-            cbCuda.Items.AddRange(new object[] { "CUDA 11.8", "CUDA 12.1", "CUDA 12.4" });
+            cbCuda.Items.AddRange(new object[] { "CUDA 11.8", "CUDA 12.1", "CUDA 12.4", "CUDA 12.6", "CUDA 12.8" });
             cbCuda.Location = new System.Drawing.Point(275, 47);
             cbCuda.Name = "cbCuda";
             cbCuda.Size = new System.Drawing.Size(433, 23);

@@ -14,8 +14,10 @@ namespace MORT.Service.PythonService
     public class PythonModouleService
     {
         private string _installPath = Path.GetFullPath(".");
-        private string _embedPythonFile = "python-3.9.0-embed-amd64.zip";
-        private string _embedPython = "python-3.9.0-embed-amd64";
+        //3.12.10이 embed zip이 제공되는 마지막 3.12 버전이다. 배포 폴더에 같은 이름의 zip이 있어야 한다
+        private string _embedPythonFile = "python-3.12.10-embed-amd64.zip";
+        private string _embedPython = "python-3.12.10-embed-amd64";
+        private string _pythonDll = "python312.dll";
         private bool _ininted;
         public bool Ininted { get { return _ininted;} }
 
@@ -28,7 +30,7 @@ namespace MORT.Service.PythonService
 
             try
             {
-                Runtime.PythonDLL = _installPath + @"\python-3.9.0-embed-amd64\python39.dll";
+                Runtime.PythonDLL = _installPath + $"\\{_embedPython}\\{_pythonDll}";
                 Python.Deployment.Installer.Source = new Python.Deployment.Installer.EmbeddedResourceInstallationSource()
                 {
                     Assembly = typeof(Program).Assembly,

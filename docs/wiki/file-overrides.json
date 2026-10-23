@@ -42,7 +42,12 @@
   "MORT/EasyOcrInstaller/EasyOcrInstaller.cs": {
     "category": "EasyOCR 설치 UI",
     "intent": "내장 Python, pip, EasyOCR 모델과 GPU 패키지 설치 과정을 사용자에게 보여주고 제어한다.",
-    "operation": "OcrManager와 PythonModouleService의 비동기 준비 메서드를 순서대로 호출하고 진행·성공·실패 상태를 UI에 반영한다."
+    "operation": "OcrManager와 PythonModouleService의 비동기 준비 메서드를 순서대로 호출하고 진행·성공·실패 상태를 UI에 반영한다. GPU 설치는 cbCuda 순서와 같은 _cudaCommandLineLinst(cu118·cu121·cu124·cu126·cu128) 중 하나를 pip 명령으로 넘기며, RTX 50 시리즈는 cu128이 필요하다."
+  },
+  "MORT/Service/PythonService/PythonModouleService.cs": {
+    "category": "내장 Python 환경",
+    "intent": "EasyOCR이 쓰는 내장 Python(3.12.10 embed)을 실행 폴더에 준비하고 pythonnet 엔진을 한 번만 초기화한다.",
+    "operation": "실행 폴더의 python-3.12.10-embed-amd64.zip을 Python.Deployment로 풀고 pip를 설치한 뒤 python312.dll로 PythonEngine을 시작한다. zip은 배포 폴더에 같이 넣어야 하며, 3.12는 3.12.10이 embed zip이 나오는 마지막 버전이다. 설치 여부는 embed 폴더 존재로 판단한다."
   },
   "MORT/Form1Button.cs": {
     "category": "메인 명령 연결",

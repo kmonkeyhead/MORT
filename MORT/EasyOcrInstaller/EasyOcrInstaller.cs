@@ -14,7 +14,10 @@ namespace MORT.EasyOcrInstaller
         {
             "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118",
             "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121",
-            "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124"
+            "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124",
+            "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126",
+            //RTX 50 시리즈는 cu128 이상이 필요하다
+            "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128"
         };
 
         private Action _closeCallback;

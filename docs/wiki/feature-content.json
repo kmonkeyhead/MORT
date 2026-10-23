@@ -73,6 +73,7 @@
     "implementation": [
       "SettingManager.OcrType 값은 기존 설정 파일에 저장되므로 순서를 유지한다. 분기는 이 값으로 엔진별 실행 경로를 선택한다.",
       "OcrManager는 Google 자격 증명 순환과 EasyOCR Python 설치를 관리한다. WindowOcr와 OneOcr는 각 플랫폼 API와 네이티브 DLL 수명을 직접 다룬다.",
+      "EasyOCR은 배포 폴더의 Python 3.12.10 embed zip을 PythonModouleService가 풀어 쓴다. easyocr과 의존성은 버전을 고정하지 않으므로 pip가 3.12용 최신 버전(torch·numpy·scipy 등)을 고른다. 좌표는 numpy 2에서 np.int32로 오지만 str 변환 결과가 숫자라 기존 파싱이 그대로 동작한다.",
       "엔진 결과는 OcrResult를 거쳐 OCRDataManager.ResultData에 들어간다. 여기서 줄·단어 위치, 영역 인덱스, 스냅샷 여부, 공백 제거 옵션을 공통 형태로 정리한다."
     ],
     "operation": ["선택 엔진의 설치·DLL·자격 증명 사용 가능 여부를 확인한다.", "캡처 바이트를 엔진이 요구하는 비트맵 또는 네이티브 구조로 변환한다.", "엔진을 실행해 문자열과 바운딩 박스를 얻는다.", "OCRDataManager가 줄을 병합하고 읽기 순서로 정렬한다.", "정규화된 문자열과 위치 목록을 번역 단계에 넘긴다."],
