@@ -582,12 +582,10 @@ namespace MORT
                         Math.Max(minimumSize, AdvencedOptionManager.MaxAutoFontSize))
                     : overlayBaseFont.SizeInPoints;
 
-                if(AdvencedOptionManager.IsAutoFontSize)
-                {
-                    TryExpandInReadingDirection(g, block, blocks, overlayBaseFont, blockFormat, preferredSize);
-                    TryExpandForFont(g, block, blocks, overlayBaseFont, blockFormat, minimumSize);
-                    contentRect = GetContentRect(block.ViewRect);
-                }
+                //영역 확장은 기본 동작이다. 고정 크기에서도 현재 글꼴이 들어갈 공간을 확보한다.
+                TryExpandInReadingDirection(g, block, blocks, overlayBaseFont, blockFormat, preferredSize);
+                TryExpandForFont(g, block, blocks, overlayBaseFont, blockFormat, minimumSize);
+                contentRect = GetContentRect(block.ViewRect);
 
                 float fontSize = AdvencedOptionManager.IsAutoFontSize
                     ? FindBestFontSize(g, block, overlayBaseFont, contentRect, blockFormat, preferredSize)
@@ -750,6 +748,10 @@ namespace MORT
                 {
                     var transData = targetData.TransDataList[colorIndex];
                     Rectangle source = transData.SourceRect == Rectangle.Empty ? transData.lineRect : transData.SourceRect;
+                    if(source.Width <= 0 || source.Height <= 0)
+                    {
+                        continue;
+                    }
                     Rectangle screenRect = Rectangle.FromLTRB(
                         originX + (int)Math.Floor(source.Left / zoom) - Location.X,
                         originY + (int)Math.Floor(source.Top / zoom) - Location.Y,
@@ -1246,6 +1248,11 @@ namespace MORT
             {
                 Rectangle lineRect = GetLineRect(block.ContentRect, index, advance, block.VerticalMode);
                 lineRect = Rectangle.Intersect(lineRect, block.ContentRect);
+                if(lineRect.Width <= 0 || lineRect.Height <= 0)
+                {
+                    //확장 가능한 공간이 없어도 빈 사각형을 원점에 그리지는 않는다.
+                    continue;
+                }
                 DrawStringWithOutline2(g, lines[index], font, lineRect, format, block.TargetData, block.ColorIndex, outlineColor1, outlineWidth1, outlineColor2, outlineWidth2);
             }
         }
