@@ -406,6 +406,8 @@ namespace MORT
             public void InitLine(bool mergeLine, bool removeSpaceMode)
             {
                 TransDataList.Clear();
+                //면적이 없는 줄은 독립 블록이나 병합 후보로 사용하지 않는다.
+                LineDataList.RemoveAll(line => line.lineRect.Width <= 0 || line.lineRect.Height <= 0);
 
                 if(!mergeLine || Form1.IsDebugTransOneLine)
                 {
@@ -1144,13 +1146,22 @@ namespace MORT
 
                 for(int j2 = 0; j2 < data.wordCounts[i]; j2++)
                 {
-                    lineString += data.words[count] + " ";
-
                     Rectangle rect = CreateOutwardRectangle(data.x[count], data.y[count], data.sizeX[count], data.sizeY[count]);
+                    if(rect.Width <= 0 || rect.Height <= 0)
+                    {
+                        count++;
+                        continue;
+                    }
+
+                    lineString += data.words[count] + " ";
                     lineData.wordList.Add(data.words[count]);
                     lineData.wordRectList.Add(rect);
 
                     count++;
+                }
+                if(lineData.wordRectList.Count == 0)
+                {
+                    continue;
                 }
                 Rectangle lineRect = new Rectangle();
                 //줄 처리.
@@ -1205,6 +1216,12 @@ namespace MORT
 
         private static Rectangle CreateOutwardRectangle(double x, double y, double width, double height)
         {
+            //소수 좌표의 바깥 반올림으로 크기 0이 1px 영역으로 되살아나지 않도록 먼저 검사한다.
+            if(width <= 0 || height <= 0)
+            {
+                return Rectangle.Empty;
+            }
+
             int left = (int)Math.Floor(x);
             int top = (int)Math.Floor(y);
             int right = (int)Math.Ceiling(x + Math.Max(0, width));
