@@ -18,6 +18,7 @@ namespace MORT
 
         public bool RefreshOverlayOutput()
         {
+            StopAdaptiveBackground();
             _windowBlur?.Dispose();
             _windowBlur = null;
             _windowBlurRects.Clear();
@@ -76,6 +77,9 @@ namespace MORT
             foreach(var block in blocks)
             {
                 OverlayBlurFrame frame = block.TargetData.BlurFrame;
+                var live = _adaptiveRefresh?.Latest;
+                if(live != null && ReferenceEquals(live.Scene, _adaptiveScene))
+                    live.Frames.TryGetValue(block.TargetData.Index, out frame);
                 if(frame == null || frame.Mode != OverlayBlurMode.Restore
                     || block.CaptureImageRect.Width <= 0 || block.CaptureImageRect.Height <= 0
                     || !drawn.Add(block.TargetData.Index)) continue;
@@ -86,7 +90,14 @@ namespace MORT
                     graphics.SetClip(block.CaptureRect, CombineMode.Intersect);
                     graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
                     graphics.PixelOffsetMode = PixelOffsetMode.Half;
-                    graphics.DrawImage(image, block.CaptureImageRect, 0, 0, frame.Width, frame.Height, GraphicsUnit.Pixel);
+                    RectangleF destination = block.CaptureImageRect;
+                    if(frame.SourceRect.Width > 0 && frame.SourceRect.Height > 0 && frame.SourceSize.Width > 0 && frame.SourceSize.Height > 0)
+                    {
+                        float sx = destination.Width / frame.SourceSize.Width, sy = destination.Height / frame.SourceSize.Height;
+                        destination = new RectangleF(destination.X + frame.SourceRect.X * sx, destination.Y + frame.SourceRect.Y * sy,
+                            frame.SourceRect.Width * sx, frame.SourceRect.Height * sy);
+                    }
+                    graphics.DrawImage(image, destination, new RectangleF(0, 0, frame.Width, frame.Height), GraphicsUnit.Pixel);
                 }
                 finally { graphics.Restore(saved); }
             }
@@ -97,9 +108,13 @@ namespace MORT
         {
             if(!_captureBlurImages.TryGetValue(index, out var cached) || !ReferenceEquals(cached.Frame, frame))
             {
-                cached.Image?.Dispose();
+                var image = cached.Image;
                 _captureBlurImages.Remove(index);
-                var image = new Bitmap(frame.Width, frame.Height, PixelFormat.Format32bppPArgb);
+                if(image == null || image.Width != frame.Width || image.Height != frame.Height)
+                {
+                    image?.Dispose();
+                    image = new Bitmap(frame.Width, frame.Height, PixelFormat.Format32bppPArgb);
+                }
                 try
                 {
                     BitmapData locked = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
@@ -188,9 +203,10 @@ namespace MORT
             base.OnVisibleChanged(e);
             if(!Visible)
             {
+                StopAdaptiveBackground();
                 _windowBlur?.Hide();
             }
-            else if(_isStart && IsHandleCreated && AdvencedOptionManager.OverlayOutputMode == OverlayBlurMode.Window)
+            else if(_isStart && IsHandleCreated && AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.None)
             {
                 BeginInvoke(new Action(UpdatePaint));
             }
@@ -199,13 +215,17 @@ namespace MORT
         protected override void OnLocationChanged(EventArgs e)
         {
             base.OnLocationChanged(e);
+            StopAdaptiveBackground();
+            if(IsHandleCreated) RequestOverlayPaint();
 
             if(IsHandleCreated && _windowBlurRects != null) PresentWindowBlur();
         }
 
         protected override void OnHandleDestroyed(EventArgs e)
         {
-            System.Threading.Interlocked.Exchange(ref _paintPending, 0);
+            DisposeAdaptiveBackground();
+            _paintScheduler?.Dispose();
+            _paintScheduler = null;
             ClearOverlayRenderCaches();
             _windowBlur?.Dispose();
             _windowBlur = null;

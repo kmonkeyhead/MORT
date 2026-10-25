@@ -109,6 +109,7 @@ namespace MORT
         public const string KeyOverlayOutputMode = "@OverlayOutputMode ";
         public const string KeyOverlayRestoreLevel = "@OverlayRestoreLevel ";
         public const string KeyOverlayBlurLevel = "@OverlayBlurLevel ";
+        public const string KeyOverlayTargetFps = "@OverlayTargetFps ";
         public const string KEY_FONT_AUTO_SIZE = "@OVERLAY_FONT_AUTO_SIZE ";
         public const string KEY_FONT_AUTO_MIN_SIZE = "@OVERLAY_FONT_AUTO_MIN_SIZE ";
         public const string KEY_FONT_AUTO_MAX_SIZE = "@OVERLAY_FONT_AUTO_MAX_SIZE ";
@@ -193,6 +194,7 @@ namespace MORT
             public ISettingData<int> OverlayOutputMode;
             public ISettingData<int> OverlayRestoreLevel;
             public ISettingData<int> OverlayBlurLevel;
+            public ISettingData<int> OverlayTargetFps;
             public ISettingData<bool> EnableAdvencedHideTransform;
 
             public ISettingData<string> BasicFont;
@@ -413,6 +415,15 @@ namespace MORT
         public static bool OverlayUseBackgroundAlpha => data.OverlayUseBackgroundAlpha.Value;
         //기존 진단 값(0/1/3)을 보존한다. 누락되거나 지원하지 않는 값은 기본 출력이다.
         public static Model.OverlayBlurMode OverlayOutputMode => NormalizeOverlayOutputMode(data.OverlayOutputMode?.Value ?? 0);
+        public static int OverlayTargetFps
+        {
+            get
+            {
+                int fps = data.OverlayTargetFps?.Value ?? 60;
+                return fps == 0 ? 60 : Math.Clamp(fps, 1, 120);
+            }
+        }
+        public static void SetOverlayTargetFps(int fps) => data.OverlayTargetFps.Value = Math.Clamp(fps, 1, 120);
         public static int OverlayRestoreLevel
         {
             get
@@ -766,6 +777,7 @@ namespace MORT
             data.OverlayOutputMode = SettingDataFactory.Create<int>(KeyOverlayOutputMode, data.ParseList, 0);
             data.OverlayRestoreLevel = SettingDataFactory.Create<int>(KeyOverlayRestoreLevel, data.ParseList, 2);
             data.OverlayBlurLevel = SettingDataFactory.Create<int>(KeyOverlayBlurLevel, data.ParseList, 5);
+            data.OverlayTargetFps = SettingDataFactory.Create<int>(KeyOverlayTargetFps, data.ParseList, 60);
             data.UseAutoSizeFont = SettingDataFactory.Create<bool>(KEY_FONT_AUTO_SIZE, data.ParseList, false);
             data.MinAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MIN_SIZE, data.ParseList, 10);
             data.MaxAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MAX_SIZE, data.ParseList, 50);

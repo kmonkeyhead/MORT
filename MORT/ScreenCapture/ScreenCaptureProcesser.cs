@@ -32,7 +32,6 @@ using Windows.Graphics.DirectX.Direct3D11;
 using SharpDX.DXGI;
 using MapFlags = SharpDX.Direct3D11.MapFlags;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using MORT.OcrApi.WindowOcr;
 using System.Security.Cryptography.Xml;
@@ -195,8 +194,11 @@ namespace MORT.ScreenCapture
             }
         }
 
+        private bool _disposed;
+
         public void Dispose()
         {
+            _disposed = true;
             isStartCapture = false;
             session?.Dispose();
             framePool?.Dispose();
@@ -207,6 +209,13 @@ namespace MORT.ScreenCapture
         {
             session.StartCapture();
         }
+
+        internal volatile bool AdaptiveCapture;
+        internal volatile int AdaptiveTargetFps = 60;
+        private int _lastAdaptiveFps;
+        private long _nextAdaptiveCopy;
+        private MORT.Model.OverlayCaptureFrame? _adaptiveFrame;
+        internal MORT.Model.OverlayCaptureFrame? LatestAdaptiveFrame => System.Threading.Volatile.Read(ref _adaptiveFrame);
 
         public bool isWait = false;
         public bool isStartCapture = false;
@@ -248,126 +257,159 @@ namespace MORT.ScreenCapture
         private int _remainbackupFrameCount = 5;
         private int _autoCaptureFrameCounter = 0;
 
-        private void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
+        private async void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
         {
-            var newSize = false;
-
-            using(var frame = sender.TryGetNextFrame())
+            if(_disposed || isWait) return;
+            bool ownsCopy = false;
+            try
             {
-                _dtLastUpdate = DateTime.Now;
-                //Console.WriteLine($"arrive : {TestIndex} isStartCapture {isStartCapture} isDataSuccess {isDataSuccess}");
+                var newSize = false;
 
-                bool autoCapture = false;
-                if(!isStartCapture)
+                using(var frame = sender.TryGetNextFrame())
                 {
-                    _autoCaptureFrameCounter++;
-                    if(_autoCaptureFrameCounter >= 10)
+                    if(frame == null) return;
+                    _dtLastUpdate = DateTime.Now;
+                    //Console.WriteLine($"arrive : {TestIndex} isStartCapture {isStartCapture} isDataSuccess {isDataSuccess}");
+
+                    bool autoCapture = false;
+                    if(!isStartCapture)
                     {
-                        autoCapture = true;
+                        _autoCaptureFrameCounter++;
+                        if(_autoCaptureFrameCounter >= 10)
+                        {
+                            autoCapture = true;
+                            _autoCaptureFrameCounter = 0;
+                        }
+                    }
+                    else
+                    {
                         _autoCaptureFrameCounter = 0;
                     }
-                }
-                else
-                {
-                    _autoCaptureFrameCounter = 0;
-                }
 
-                if(isStartCapture || _remainbackupFrameCount >= 0 || autoCapture)
-                {
-                    if(isWait)
+                    int adaptiveFps = Math.Clamp(AdaptiveTargetFps, 1, 120);
+                    if(adaptiveFps != _lastAdaptiveFps) { _nextAdaptiveCopy = 0; _lastAdaptiveFps = adaptiveFps; }
+                    long copyTick = System.Diagnostics.Stopwatch.GetTimestamp();
+                    bool adaptiveDue = AdaptiveCapture && copyTick + System.Diagnostics.Stopwatch.Frequency / 1000 >= _nextAdaptiveCopy;
+                    if(AdaptiveCapture) autoCapture = false;
+                    if(isStartCapture || _remainbackupFrameCount >= 0 || autoCapture || adaptiveDue)
                     {
-                        return;
-                    }
-                    _remainbackupFrameCount--;
-
-                    if(_remainbackupFrameCount < -1)
-                    {
-                        _remainbackupFrameCount = -1;
-                    }
-
-                    isWait = true;
-                    if(frame.ContentSize.Width != lastSize.Width || frame.ContentSize.Height != lastSize.Height)
-                    {
-                        // The thing we have been capturing has changed size.
-                        // We need to resize the swap chain first, then blit the pixels.
-                        // After we do that, retire the frame and then recreate the frame pool.
-                        newSize = true;
-                        lastSize = frame.ContentSize;
-
-                        swapChain.ResizeBuffers(
-                            2,
-                            lastSize.Width,
-                            lastSize.Height,
-                            SharpDX.DXGI.Format.B8G8R8A8_UNorm,
-                            SharpDX.DXGI.SwapChainFlags.None);
-
-                    }
-                    using(var backBuffer = swapChain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0))
-                    {
-                        using(var softwareBitmap = Task.Run(async () => await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Surface)).Result)
-                        using(var buffer = softwareBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite))
+                        if(isWait)
                         {
-                            using(var reference = buffer.CreateReference())
+                            return;
+                        }
+                        _remainbackupFrameCount--;
+
+                        if(_remainbackupFrameCount < -1)
+                        {
+                            _remainbackupFrameCount = -1;
+                        }
+
+                        isWait = true;
+                        ownsCopy = true;
+                        if(AdaptiveCapture)
+                        {
+                            _nextAdaptiveCopy += System.Diagnostics.Stopwatch.Frequency / adaptiveFps;
+                            if(_nextAdaptiveCopy <= copyTick) _nextAdaptiveCopy = copyTick + System.Diagnostics.Stopwatch.Frequency / adaptiveFps;
+                        }
+                        if(frame.ContentSize.Width != lastSize.Width || frame.ContentSize.Height != lastSize.Height)
+                        {
+                            // The thing we have been capturing has changed size.
+                            // We need to resize the swap chain first, then blit the pixels.
+                            // After we do that, retire the frame and then recreate the frame pool.
+                            newSize = true;
+                            lastSize = frame.ContentSize;
+
+                            swapChain.ResizeBuffers(
+                                2,
+                                lastSize.Width,
+                                lastSize.Height,
+                                SharpDX.DXGI.Format.B8G8R8A8_UNorm,
+                                SharpDX.DXGI.SwapChainFlags.None);
+
+                        }
+                        using(var backBuffer = swapChain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0))
+                        {
+                            using(var softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Surface))
                             {
-                                unsafe
+                                //GPU 복사 완료를 비동기로 기다린다. 대기 중 닫힌 캡처 소스에는 접근하지 않는다.
+                                if(_disposed) return;
+                                using(var buffer = softwareBitmap.LockBuffer(BitmapBufferAccessMode.ReadWrite))
                                 {
-                                    byte* data;
-                                    uint capacity;
-                                    var desc = buffer.GetPlaneDescription(0);
-                                    var memoryBuffer = reference.As<IMemoryBufferByteAccess>();
-
-                                    memoryBuffer.GetBuffer(out data, out capacity);
-
-                                    byte[] arr = new byte[softwareBitmap.PixelWidth * softwareBitmap.PixelHeight * 4];
-                                    for(int row = 0; row < softwareBitmap.PixelHeight; row++)
-                                        Marshal.Copy((IntPtr)data + desc.StartIndex + row * desc.Stride,
-                                            arr, row * softwareBitmap.PixelWidth * 4, softwareBitmap.PixelWidth * 4);
-
-                                    array = arr;
-                                    lastX = softwareBitmap.PixelWidth;
-                                    lastY = softwareBitmap.PixelHeight;
-
-                                    try
+                                    using(var reference = buffer.CreateReference())
                                     {
-                                        if(TryGetCaptureBounds(hWnd, out Rect rect))
+                                        unsafe
                                         {
-                                            lastPositionX = rect.Left;
-                                            lastPositionY = rect.Top;
+                                            byte* data;
+                                            uint capacity;
+                                            var desc = buffer.GetPlaneDescription(0);
+                                            var memoryBuffer = reference.As<IMemoryBufferByteAccess>();
+
+                                            memoryBuffer.GetBuffer(out data, out capacity);
+
+                                            byte[] arr = new byte[softwareBitmap.PixelWidth * softwareBitmap.PixelHeight * 4];
+                                            for(int row = 0; row < softwareBitmap.PixelHeight; row++)
+                                                Marshal.Copy((IntPtr)data + desc.StartIndex + row * desc.Stride,
+                                                    arr, row * softwareBitmap.PixelWidth * 4, softwareBitmap.PixelWidth * 4);
+
+                                            array = arr;
+                                            lastX = softwareBitmap.PixelWidth;
+                                            lastY = softwareBitmap.PixelHeight;
+
+                                            try
+                                            {
+                                                if(TryGetCaptureBounds(hWnd, out Rect rect))
+                                                {
+                                                    lastPositionX = rect.Left;
+                                                    lastPositionY = rect.Top;
+                                                }
+                                                TestIndex++;
+                                                //Console.WriteLine("Capture : " + _remainbackupFrameCount + "/" + DateTime.Now.ToString());
+                                            }
+                                            catch
+                                            {
+
+                                            }
+
+
+                                            System.Threading.Volatile.Write(ref _adaptiveFrame, new MORT.Model.OverlayCaptureFrame(
+                                                arr, lastX, lastY, new System.Drawing.Rectangle(lastPositionX, lastPositionY, lastX, lastY)));
+                                            isDataSuccess = true;
+
                                         }
-                                        TestIndex++;
-                                        //Console.WriteLine("Capture : " + _remainbackupFrameCount + "/" + DateTime.Now.ToString());
                                     }
-                                    catch
-                                    {
-
-                                    }
-
-
-                                    isDataSuccess = true;
-
                                 }
+
                             }
+
+                        }
+
+                        isStartCapture = false;
+
+                        swapChain.Present(0, SharpDX.DXGI.PresentFlags.None);
+
+                        if(newSize)
+                        {
+                            framePool.Recreate(
+                                _device,
+                                DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                                2,
+                                lastSize);
                         }
 
                     }
-
-                    isStartCapture = false;
-
-                    swapChain.Present(0, SharpDX.DXGI.PresentFlags.None);
-
-                    if(newSize)
-                    {
-                        framePool.Recreate(
-                            _device,
-                            DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                            2,
-                            lastSize);
-                    }
-
-                    isWait = false;
                 }
             }
+            catch(Exception ex)
+            {
+                if(!_disposed) Util.ShowLog($"Screen capture frame failed: {ex.Message}");
+            }
+            finally
+            {
+                //실패한 복사도 대기 플래그를 풀어 다음 프레임에서 재시도한다.
+                if(ownsCopy) isWait = false;
+            }
         }
+
 
 
         private void CopyBitmap(IDirect3DSurface surface, SharpDX.Direct3D11.Texture2D screenTexture2D, int Width, int Height)

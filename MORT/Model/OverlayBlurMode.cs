@@ -11,5 +11,8 @@ namespace MORT.Model
     public sealed record OverlayBlurFrame(byte[] Pixels, int Width, int Height)
     {
         public OverlayBlurMode Mode { get; init; } = OverlayBlurMode.Restore;
+        //실시간 복원은 전체 캡처 대신 패치만 보관한다. 기존 프레임은 Empty로 전체 크기를 뜻한다.
+        public System.Drawing.Rectangle SourceRect { get; init; }
+        public System.Drawing.Size SourceSize { get; init; }
     }
 }

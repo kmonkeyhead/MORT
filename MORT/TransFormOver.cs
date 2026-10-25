@@ -296,7 +296,8 @@ namespace MORT
                     && cache.ClientPositionX == clientPositionX
                     && cache.ClientPositionY == clientPositionY
                     && cache.OcrText == ocrText
-                    && cache.TransText == transText)
+                    && cache.TransText == transText
+                    && (AdvencedOptionManager.OverlayOutputMode != MORT.Model.OverlayBlurMode.Restore || SameAdaptiveGeometry(cache.Data, data)))
                 {
                     cache.Data.ReplaceAutoColor(data);
                     cache.Data.BlurFrame = data.BlurFrame;
@@ -336,6 +337,7 @@ namespace MORT
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
+            _paintScheduler = new MORT.Service.Overlay.OverlayPaintScheduler(UpdatePaint);
 
             // 이 창(오버레이)을 모든 스크린 캡처 도구에서 보이지 않게 설정합니다.
             // 이제 캡처 시 창을 Hide/Show 하지 않아도 됩니다.
@@ -366,6 +368,7 @@ namespace MORT
 
                 if(!_attchedCapture && !_forceLock && (isPrtSc || isWinShiftS))
                 {
+                    StopAdaptiveBackground();
                     _forceLock = true;
                     // 캡처에 포함되도록 즉시 변경
                     SetWindowDisplayAffinity(this.Handle, WDA_NONE);
@@ -382,6 +385,7 @@ namespace MORT
                             _windowBlur?.SetCaptureExclusion(true);
                         }
 
+                        RequestOverlayPaint();
                         timer.Stop();
                         timer.Dispose();
                     };
@@ -422,6 +426,7 @@ namespace MORT
 
         private void ApplyAttachedCapture(bool attached)
         {
+            StopAdaptiveBackground();
             _attchedCapture = attached;
             _windowBlur?.SetCaptureExclusion(!attached && !_forceLock);
             if(_attchedCapture)
@@ -541,6 +546,7 @@ namespace MORT
         {
             if(!isActiveGDI || _dataList == null)
             {
+                StopAdaptiveBackground();
                 if(_dataList == null) ClearOverlayRenderCaches();
                 _windowBlurRects.Clear();
                 _windowBlur?.Hide();
@@ -560,6 +566,7 @@ namespace MORT
             using Font overlayBaseFont = new Font(textFont.FontFamily, textFont.SizeInPoints, overlayFontStyle, GraphicsUnit.Point);
 
             List<OverlayRenderBlock> blocks = BuildRenderBlocks();
+            UpdateAdaptiveScene(blocks);
             var layoutContext = GetLayoutContext(g, overlayBaseFont, sf);
             var layoutInputs = blocks.Count <= 256 ? GetLayoutInputs(blocks) : null;
             bool reuseLayout = layoutInputs != null && _layoutInputs != null && _layoutResults != null
@@ -1971,7 +1978,7 @@ namespace MORT
                 else
                 {
                     if(isLockPaint) { RequestOverlayPaint(); return; }
-                    Interlocked.Exchange(ref _paintPending, 0);
+                    _paintScheduler?.Clear();
                     DoUpdatePaint();
                 }
             }
@@ -2226,6 +2233,7 @@ namespace MORT
                 return;
             }
 
+            StopAdaptiveBackground();
             _dataList = new List<OCRDataManager.ResultData>();
             _overlayDataCache.Clear();
             _windowBlurRects.Clear();
@@ -2250,11 +2258,13 @@ namespace MORT
             }
 
             TranslateStatusType = TranslateStatusType.Translate;
+            RequestOverlayPaint();
         }
 
         public void StopTrans()
         {
             TranslateStatusType = TranslateStatusType.Stop;
+            StopAdaptiveBackground();
         }
 
         public void ApplyTopMost()
@@ -2447,6 +2457,7 @@ namespace MORT
         public void setVisibleBackground()
         {
             isLockPaint = false;
+            StopAdaptiveBackground();
             _isStart = false;
             _forceLock = false;
             alpha = 190;

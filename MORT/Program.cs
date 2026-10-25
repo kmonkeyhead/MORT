@@ -248,6 +248,7 @@ namespace MORT
             //using System.Diagnostics 와 이름이 겹쳐서 네임스페이스를 그대로 적는다
             services.AddSingleton<Service.Debug.OcrDebugSnapshotService>();
             services.AddSingleton<Service.Overlay.OverlayTextRestorationService>();
+            services.AddTransient<Service.Overlay.OverlayAdaptiveRefreshService>();
 
 
             // 만약 Form1이 의존하는 다른 서비스들이 있다면 여기서 추가로 등록합니다.

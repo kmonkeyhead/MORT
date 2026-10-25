@@ -42,7 +42,7 @@ namespace MORT.Service.ProcessTranslateService
             }
 
             PrepareChromeBridge();
-            PrepareTranslationWindow();
+            PrepareTranslationWindow(!isOnce);
             return new TranslationProcessInitializationResult(true, isOnce, useGoogleOcr, requireOriginalScreen);
         }
 
@@ -73,7 +73,7 @@ namespace MORT.Service.ProcessTranslateService
             }
         }
 
-        private void PrepareTranslationWindow()
+        private void PrepareTranslationWindow(bool live)
         {
             ITransform transForm = FormManager.Instace.GetITransform();
             if(transForm == null)
@@ -83,6 +83,7 @@ namespace MORT.Service.ProcessTranslateService
 
             void PrepareAndStart()
             {
+                if(transForm is TransFormOver overlay) overlay.SetAdaptiveLiveEnabled(live);
                 transForm.Prepare();
                 transForm.StartTrans();
             }

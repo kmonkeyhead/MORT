@@ -17,7 +17,7 @@ namespace MORT
         private Dictionary<OverlayPathKey, GraphicsPath> _textPathCache;
         private Dictionary<OverlayFitKey, bool> _textFitCache;
         private int _cachedPathPoints;
-        private int _paintPending;
+        private MORT.Service.Overlay.OverlayPaintScheduler _paintScheduler;
         private readonly record struct OverlayLayoutContext(OverlayPathKey Font, bool AutoSize, int Minimum,
             int Maximum, bool Outline, bool Rtl, float Zoom);
         private readonly record struct OverlayLayoutInput(OCRDataManager.ResultData Owner, string Text,
@@ -99,19 +99,11 @@ namespace MORT
             _textFitCache?.Clear();
         }
 
-        //연속된 OCR 결과는 최신 상태를 한 번 그린다. UI의 명시적 UpdatePaint는 동기 동작을 유지한다.
+        //BeginInvoke 내부 큐를 계속 채우지 않는다. 입력 처리 후 WM_TIMER에서 최신 상태만 그린다.
         private void RequestOverlayPaint()
         {
             if(IsDisposed || isDestroyFormFlag || !IsHandleCreated || _forceLock) return;
-            if(Interlocked.Exchange(ref _paintPending, 1) != 0) return;
-            try { BeginInvoke(new Action(DrainOverlayPaint)); }
-            catch(InvalidOperationException) { Interlocked.Exchange(ref _paintPending, 0); }
-        }
-
-        private void DrainOverlayPaint()
-        {
-            if(Interlocked.Exchange(ref _paintPending, 0) == 0) return;
-            UpdatePaint();
+            _paintScheduler?.Request();
         }
     }
 }
