@@ -1,4 +1,4 @@
-﻿using MORT.Manager;
+using MORT.Manager;
 using MORT.Model;
 using MORT.OcrApi.OneOcr;
 using MORT.OcrApi.WindowOcr;
@@ -71,6 +71,7 @@ namespace MORT.Service.ProcessTranslateService
         private readonly TranslationProcessInitializationService _initializationService;
         private readonly TranslationImageModelService _imageModelService;
         private readonly MORT.Service.Debug.OcrDebugSnapshotService _debugSnapshotService;
+        private readonly OverlayTextRestorationService _textRestorationService;
         private OcrMethodType _ocrMethodType = OcrMethodType.None;
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
@@ -94,6 +95,7 @@ namespace MORT.Service.ProcessTranslateService
                 () => isEndFlag = true);
             _debugSnapshotService = Program.ServiceContainer?.GetService(typeof(MORT.Service.Debug.OcrDebugSnapshotService))
                 as MORT.Service.Debug.OcrDebugSnapshotService;
+            _textRestorationService = Program.ServiceContainer?.GetService(typeof(OverlayTextRestorationService)) as OverlayTextRestorationService;
             this.OnStopTranslate = OnStopTranslate;
         }
 
@@ -256,7 +258,21 @@ namespace MORT.Service.ProcessTranslateService
             {
                 ocrResultData.ApplyTransResult(transResult, TransType);
 
-                if (imgDataList[index].UseAutoColor)
+                var image = imgDataList[index];
+                ocrResultData.OcrImageSize = new Size(image.x, image.y);
+                var backgroundMode = AdvencedOptionManager.OverlayOutputMode;
+                if(backgroundMode == OverlayBlurMode.Restore)
+                {
+                    var words = ocrResultData.TransDataList.SelectMany(block => block.lineDataList)
+                        .SelectMany(line => line.wordRectList.Count > 0 ? line.wordRectList : new List<Rectangle> { line.lineRect })
+                        .Where(rect => rect.Width > 0 && rect.Height > 0)
+                        .Select(rect => ScaleSourceRect(rect, image)).ToList();
+                    var restored = _textRestorationService?.CreateFrame(
+                        image.originalData, image.originalX, image.originalY, image.originalChannels, words, AdvencedOptionManager.OverlayRestoreLevel);
+                    ocrResultData.BlurFrame = restored;
+                }
+
+                if (AdvencedOptionManager.OverlayAutoColor && image.UseAutoColor)
                 {
                     var item = imgDataList[index];
                     if(Form1.IsDebugShowWordArea)
@@ -908,7 +924,19 @@ namespace MORT.Service.ProcessTranslateService
 
                                     if (_settingManager.NowSkin == SettingManager.Skin.over && FormManager.Instace.MyOverTransForm != null)
                                     {
-                                        FormManager.Instace.MyOverTransForm.UpdatePaint();
+                                        if(AdvencedOptionManager.OverlayOutputMode == OverlayBlurMode.Restore)
+                                        {
+                                            //문장이 같아도 캡처 배경은 바뀐다. 번역/TTS를 반복하지 않고 새 프레임만 전달한다.
+                                            var data = OCRDataManager.Instace.GetData();
+                                            int frameX = clientPositionX;
+                                            int frameY = clientPositionY;
+                                            _parent.BeginInvoke((Action)(() => FormManager.Instace.MyOverTransForm?.UpdateText(
+                                                data, _settingManager.NowIsShowOcrResultFlag, frameX, frameY)));
+                                        }
+                                        else
+                                        {
+                                            FormManager.Instace.MyOverTransForm.UpdatePaint();
+                                        }
                                     }
                                 }
 

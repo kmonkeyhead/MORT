@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using MORT.Service.CustomApi;
 using MORT.Service.Gemini;
 using MORT.Service.MouseFollowOcrArea;
@@ -247,6 +247,7 @@ namespace MORT
             services.AddSingleton<MouseFollowOcrAreaService>();
             //using System.Diagnostics 와 이름이 겹쳐서 네임스페이스를 그대로 적는다
             services.AddSingleton<Service.Debug.OcrDebugSnapshotService>();
+            services.AddSingleton<Service.Overlay.OverlayTextRestorationService>();
 
 
             // 만약 Form1이 의존하는 다른 서비스들이 있다면 여기서 추가로 등록합니다.

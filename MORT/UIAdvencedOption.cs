@@ -35,6 +35,7 @@ namespace MORT
         public UIAdvencedOption()
         {
             InitializeComponent();
+            UpdateOverlayOutputControls();
             _customApiPresetService = Program.ServiceContainer?.GetService(typeof(CustomApiPresetService)) as CustomApiPresetService;
         }
 
@@ -43,10 +44,46 @@ namespace MORT
             return LocalizeManager.LocalizeManager.GetLocalizeString(key, "");
         }
 
+        private void LocalizeOverlayOutput()
+        {
+            //스프레드시트에 새 키가 반영되기 전에도 설명 대신 키 문자열이 노출되지 않도록 한다.
+            foreach(var item in new (Control Control, string Key)[]
+            {
+                (gbOverlayGeneral, "Adv Overlay General"),
+                (cbOverlayKeepSourceDirection, "Adv Overlay Keep Source Direction"),
+                (cbOverlayUseFontOutline, "Adv Overlay Use Font Outline"),
+                (cbOverlayUseBackgroundAlpha, "Adv Overlay Use Background Alpha"),
+                (gbOverlayOutputMode, "Adv Overlay Output Mode"),
+                (rbOverlayOutputDefault, "Adv Overlay Output Default"),
+                (rbOverlayOutputBlur, "Adv Overlay Output Blur"),
+                (rbOverlayOutputRestore, "Adv Overlay Output Restore"),
+                (lbOverlayRestoreLevel, "Adv Overlay Restore Level"),
+                (lbOverlayRestoreLevelInfo, "Adv Overlay Restore Level Info"),
+                (lbOverlayBlurLevel, "Adv Overlay Blur Level"),
+                (lbOverlayBlurLevelInfo, "Adv Overlay Blur Level Info")
+            })
+            {
+                string text = LocalizeString(item.Key);
+                if(!string.IsNullOrWhiteSpace(text) && text != item.Key) item.Control.Text = text;
+            }
+        }
+
         private void AddHotKey(string title, string information, KeyInputLabel.KeyType type, CustomControl.CtHotKey hotKey)
         {
             hotKey.Init(title, information, LocalizeString("Common HotKey Clear"), type);
             hotKeyDic.Add(type, hotKey);
+        }
+
+        private void OverlayOutputMode_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateOverlayOutputControls();
+        }
+
+        private void UpdateOverlayOutputControls()
+        {
+            cbOverlayUseBackgroundAlpha.Enabled = rbOverlayOutputDefault.Checked;
+            lbOverlayBlurLevel.Enabled = udOverlayBlurLevel.Enabled = lbOverlayBlurLevelInfo.Enabled = rbOverlayOutputBlur.Checked;
+            lbOverlayRestoreLevel.Enabled = udOverlayRestoreLevel.Enabled = lbOverlayRestoreLevelInfo.Enabled = rbOverlayOutputRestore.Checked;
         }
 
         private void Init()
@@ -122,6 +159,12 @@ namespace MORT
             ocrAreaSelectedColor.BackColor = AdvencedOptionManager.SelectOcrAreaColor;
 
             //번역창 설정
+            rbOverlayOutputDefault.Checked = AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.None;
+            rbOverlayOutputBlur.Checked = AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.Window;
+            rbOverlayOutputRestore.Checked = AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.Restore;
+            udOverlayRestoreLevel.Value = AdvencedOptionManager.OverlayRestoreLevel;
+            udOverlayBlurLevel.Value = AdvencedOptionManager.OverlayBlurLevel;
+            UpdateOverlayOutputControls();
             cbOverlayAutoSize.Checked = AdvencedOptionManager.IsAutoFontSize;
             cbOverlayAutoMerge.Checked = AdvencedOptionManager.UseAutoMerge;
             cbOverlayKeepSourceDirection.Checked = AdvencedOptionManager.OverlayKeepSourceDirection;
@@ -420,6 +463,10 @@ namespace MORT
 
         public void SetOverlaySetting()
         {
+            AdvencedOptionManager.SetOverlayOutputMode(rbOverlayOutputBlur.Checked ? Model.OverlayBlurMode.Window
+                : rbOverlayOutputRestore.Checked ? Model.OverlayBlurMode.Restore : Model.OverlayBlurMode.None);
+            AdvencedOptionManager.SetOverlayRestoreLevel((int)udOverlayRestoreLevel.Value);
+            AdvencedOptionManager.SetOverlayBlurLevel((int)udOverlayBlurLevel.Value);
             AdvencedOptionManager.SetOverLay(
                 cbOverlayAutoSize.Checked,
                 (int)udMinFontSize.Value, (int)udMaxSFontize.Value,
@@ -845,15 +892,13 @@ namespace MORT
 
             //번역창
             gbOverlay.LocalizeLabel("Adv Transform Overlay");
+            LocalizeOverlayOutput();
             gbDark.LocalizeLabel("Adv Transform Dark");
             gbTransformLayer.LocalizeLabel("Adv Transform Layer");
             gbTransformGeneral.LocalizeLabel("Adv Transform General");
 
             cbOverlayAutoSize.LocalizeLabel("Adv Overlay Auto Size");
             cbOverlayAutoMerge.LocalizeLabel("Adv Overlay Auto Merge");
-            cbOverlayKeepSourceDirection.LocalizeLabel("Adv Overlay Keep Source Direction");
-            cbOverlayUseFontOutline.LocalizeLabel("Adv Overlay Use Font Outline");
-            cbOverlayUseBackgroundAlpha.LocalizeLabel("Adv Overlay Use Background Alpha");
             cbOverlayAutoColor.LocalizeLabel("Adv Overlay Auto Color Option");
             gbAutoColor.LocalizeLabel("Adv Overlay Auto Color");
             cbAutoFontColor.LocalizeLabel("Adv Overlay Auto Font Color");

@@ -1,4 +1,4 @@
-﻿using R3;
+using R3;
 using System;
 using MORT.Model.Debug;
 using MORT.Service.Debug;
@@ -271,7 +271,7 @@ namespace MORT
                 // Error logging, post processing etc.
                 return;
             }
-            this.BeginInvoke(new Action(UpdatePaint));
+            RequestOverlayPaint();
 
             Util.CheckTimeSpan(false);
 
@@ -299,6 +299,8 @@ namespace MORT
                     && cache.TransText == transText)
                 {
                     cache.Data.ReplaceAutoColor(data);
+                    cache.Data.BlurFrame = data.BlurFrame;
+                    cache.Data.OcrImageSize = data.OcrImageSize;
                     stableList.Add(cache.Data);
                     continue;
                 }
@@ -367,6 +369,7 @@ namespace MORT
                     _forceLock = true;
                     // 캡처에 포함되도록 즉시 변경
                     SetWindowDisplayAffinity(this.Handle, WDA_NONE);
+                    _windowBlur?.SetCaptureExclusion(false);
 
                     // 1초 후 자동 복구
                     var timer = new System.Windows.Forms.Timer { Interval = 5000 };
@@ -376,6 +379,7 @@ namespace MORT
                         if(!_attchedCapture)
                         {
                             SetWindowDisplayAffinity(this.Handle, WDA_EXCLUDEFROMCAPTURE);
+                            _windowBlur?.SetCaptureExclusion(true);
                         }
 
                         timer.Stop();
@@ -419,6 +423,7 @@ namespace MORT
         private void ApplyAttachedCapture(bool attached)
         {
             _attchedCapture = attached;
+            _windowBlur?.SetCaptureExclusion(!attached && !_forceLock);
             if(_attchedCapture)
             {
                 SetWindowDisplayAffinity(this.Handle, WDA_NONE);
@@ -524,6 +529,8 @@ namespace MORT
             public OCRDataManager.TransData TransData;
             public int ColorIndex;
             public Rectangle CaptureRect;
+            public Rectangle CaptureImageRect;
+            public List<Rectangle> BlurRects;
             public Rectangle SourceRect;
             public Rectangle ViewRect;
             public Rectangle ContentRect;
@@ -534,8 +541,14 @@ namespace MORT
         {
             if(!isActiveGDI || _dataList == null)
             {
+                if(_dataList == null) ClearOverlayRenderCaches();
+                _windowBlurRects.Clear();
+                _windowBlur?.Hide();
                 return;
             }
+
+            bool windowBlur = BeginWindowBlur();
+            TrimCaptureBlurImages();
 
             Color outlineColor1 = FormManager.Instace.MyMainForm.MySettingManager.OutLineColor1;
             Color outlineColor2 = FormManager.Instace.MyMainForm.MySettingManager.OutLineColor2;
@@ -547,7 +560,18 @@ namespace MORT
             using Font overlayBaseFont = new Font(textFont.FontFamily, textFont.SizeInPoints, overlayFontStyle, GraphicsUnit.Point);
 
             List<OverlayRenderBlock> blocks = BuildRenderBlocks();
-            ResolveBlockCollisions(blocks);
+            var layoutContext = GetLayoutContext(g, overlayBaseFont, sf);
+            var layoutInputs = blocks.Count <= 256 ? GetLayoutInputs(blocks) : null;
+            bool reuseLayout = layoutInputs != null && _layoutInputs != null && _layoutResults != null
+                && layoutContext == _layoutContext && layoutInputs.SequenceEqual(_layoutInputs);
+            var layoutResults = new OverlayLayoutResult[blocks.Count];
+            if(reuseLayout)
+            {
+                for(int i = 0; i < blocks.Count; i++) blocks[i].ViewRect = _layoutResults[i].View;
+            }
+            else ResolveBlockCollisions(blocks);
+            HashSet<int> restoredAreas = DrawRestoredBackgrounds(g, blocks);
+            var textPass = new List<(OverlayRenderBlock Block, float FontSize)>();
 
             //디버깅 : 실제로 그린 값 그대로를 모아 스냅샷에 넘긴다.
             var debugService = DebugSnapshotService;
@@ -556,8 +580,10 @@ namespace MORT
                     ? new List<OcrDebugOverlayBlock>()
                     : null;
 
+            int layoutIndex = 0;
             foreach(var block in blocks)
             {
+                int currentLayoutIndex = layoutIndex++;
                 using StringFormat blockFormat = (StringFormat)sf.Clone();
                 ConfigureStringFormat(blockFormat, block.VerticalMode);
 
@@ -566,6 +592,7 @@ namespace MORT
                 {
                     block.TransData.ViewRect = block.ViewRect;
                     block.TransData.ContentRect = Rectangle.Empty;
+                    layoutResults[currentLayoutIndex] = new OverlayLayoutResult(block.ViewRect, Rectangle.Empty, 0, 0, 0, true);
                     Util.ShowLog($"Overlay block clipped: {block.TransData.trans}");
                     debugBlocks?.Add(MakeDebugOverlayBlock(
                         g, block, null, Rectangle.Empty, 0f, 0f, 0f, false, blockFormat, outlineColor1, outlineColor2, true));
@@ -575,7 +602,7 @@ namespace MORT
                 float minimumSize = AdvencedOptionManager.IsAutoFontSize
                     ? Math.Max(1, AdvencedOptionManager.MinAutoFontSize)
                     : overlayBaseFont.SizeInPoints;
-                float preferredSize = AdvencedOptionManager.IsAutoFontSize
+                float preferredSize = reuseLayout ? _layoutResults[currentLayoutIndex].Preferred : AdvencedOptionManager.IsAutoFontSize
                     ? Math.Clamp(
                         GetPreferredFontPointSize(g, block, blocks),
                         minimumSize,
@@ -583,15 +610,21 @@ namespace MORT
                     : overlayBaseFont.SizeInPoints;
 
                 //영역 확장은 기본 동작이다. 고정 크기에서도 현재 글꼴이 들어갈 공간을 확보한다.
-                TryExpandInReadingDirection(g, block, blocks, overlayBaseFont, blockFormat, preferredSize);
-                TryExpandForFont(g, block, blocks, overlayBaseFont, blockFormat, minimumSize);
+                Rectangle unexpandedRect = block.ViewRect;
+                if(!reuseLayout)
+                {
+                    TryExpandInReadingDirection(g, block, blocks, overlayBaseFont, blockFormat, preferredSize);
+                    TryExpandForFont(g, block, blocks, overlayBaseFont, blockFormat, minimumSize);
+                }
                 contentRect = GetContentRect(block.ViewRect);
 
-                float fontSize = AdvencedOptionManager.IsAutoFontSize
+                float fontSize = reuseLayout ? _layoutResults[currentLayoutIndex].FontSize : AdvencedOptionManager.IsAutoFontSize
                     ? FindBestFontSize(g, block, overlayBaseFont, contentRect, blockFormat, preferredSize)
                     : overlayBaseFont.SizeInPoints;
 
                 using Font renderFont = new Font(overlayBaseFont.FontFamily, fontSize, overlayBaseFont.Style, GraphicsUnit.Point);
+                if(!reuseLayout) TrimExpandedTextArea(g, block, unexpandedRect, renderFont, blockFormat);
+                contentRect = GetContentRect(block.ViewRect);
                 block.ContentRect = contentRect;
                 block.TransData.ViewRect = block.ViewRect;
                 block.TransData.ContentRect = contentRect;
@@ -603,7 +636,29 @@ namespace MORT
                 }
 
                 bool drawBackground = false;
-                if(_isStart && Form1.IsDebugShowWordArea)
+                bool blurBackground = false;
+                if(_isStart && windowBlur)
+                    block.BlurRects = GetBlurTextRegions(g, block, renderFont, blockFormat);
+                if(_isStart && windowBlur)
+                {
+                    //DWM이 현재 창 뒤 화면을 합성한다. 배경 캡처를 보관하지 않는다.
+                    _windowBlurRects.AddRange(block.BlurRects);
+                    blurBackground = block.BlurRects.Count > 0;
+                }
+                else if(_isStart && AdvencedOptionManager.OverlayOutputMode == MORT.Model.OverlayBlurMode.Restore)
+                {
+                    blurBackground = restoredAreas.Contains(block.TargetData.Index);
+                }
+                if(blurBackground)
+                {
+                    drawBackground = true;
+                    if(Form1.IsDebugShowWordArea)
+                    {
+                        using var debugPen = new Pen(Color.OrangeRed);
+                        g.DrawRectangle(debugPen, block.SourceRect);
+                    }
+                }
+                else if(_isStart && Form1.IsDebugShowWordArea)
                 {
                     using var debugBrush = new SolidBrush(Color.FromArgb(90, 0, 0, 0));
                     g.FillRectangle(debugBrush, block.SourceRect);
@@ -624,9 +679,12 @@ namespace MORT
                     g.FillRectangle(backgroundBrush, block.ViewRect);
                 }
 
-                DrawWrappedText(g, block, renderFont, blockFormat, outlineColor1, outlineWidth1, outlineColor2, outlineWidth2);
+                //블러 여백이 이웃 영역까지 닿아도 먼저 그린 번역문을 덮지 않도록 텍스트는 마지막에 그린다.
+                textPass.Add((block, fontSize));
 
-                bool clipped = !DoesTextFit(g, block.TransData.trans, renderFont, contentRect, blockFormat, block.VerticalMode);
+                bool clipped = reuseLayout ? _layoutResults[currentLayoutIndex].Clipped
+                    : !DoesTextFit(g, block.TransData.trans, renderFont, contentRect, blockFormat, block.VerticalMode);
+                layoutResults[currentLayoutIndex] = new OverlayLayoutResult(block.ViewRect, contentRect, fontSize, preferredSize, minimumSize, clipped);
                 if(clipped)
                 {
                     Util.ShowLog($"Overlay block clipped at minimum font: {block.TransData.trans}");
@@ -637,9 +695,20 @@ namespace MORT
                     blockFormat, outlineColor1, outlineColor2, clipped));
             }
 
+            foreach(var item in textPass)
+            {
+                using StringFormat format = (StringFormat)sf.Clone();
+                ConfigureStringFormat(format, item.Block.VerticalMode);
+                using Font font = new Font(overlayBaseFont.FontFamily, item.FontSize, overlayBaseFont.Style, GraphicsUnit.Point);
+                DrawWrappedText(g, item.Block, font, format, outlineColor1, outlineWidth1, outlineColor2, outlineWidth2);
+            }
+
             //스냅샷 저장은 DoUpdatePaint 가 화면 반영까지 끝낸 뒤에 한다.
             //여기서 바로 넘기면 GetHbitmap / UpdateLayeredWindow 시간을 담을 수 없다.
             _pendingDebugBlocks = debugBlocks;
+            _layoutContext = layoutContext;
+            _layoutInputs = layoutInputs;
+            _layoutResults = layoutInputs == null ? null : layoutResults;
         }
 
         //AddText 가 모은 디버깅 블록. DoUpdatePaint 가 마지막에 넘긴다.
@@ -742,6 +811,7 @@ namespace MORT
                     originY - Location.Y,
                     areaRect.Width,
                     areaRect.Height);
+                Rectangle captureImageRect = captureRect;
                 captureRect = Rectangle.Intersect(ClientRectangle, captureRect);
 
                 for(int colorIndex = 0; colorIndex < targetData.TransDataList.Count; colorIndex++)
@@ -769,6 +839,7 @@ namespace MORT
                         TransData = transData,
                         ColorIndex = colorIndex,
                         CaptureRect = captureRect,
+                        CaptureImageRect = captureImageRect,
                         SourceRect = screenRect,
                         ViewRect = screenRect,
                         ContentRect = Rectangle.Inflate(screenRect, -4, -4),
@@ -945,11 +1016,12 @@ namespace MORT
             }
 
             Rectangle maximum = Rectangle.FromLTRB(block.ViewRect.Left, block.ViewRect.Top, maximumRight, block.ViewRect.Bottom);
-            if(WrapsPastSourceLineCount(g, block, targetFont, GetContentRect(maximum), format))
-            {
-                block.ViewRect = maximum;
-                return;
-            }
+            Rectangle maximumContent = GetContentRect(maximum);
+            //강제 줄바꿈이나 공간 제한 때문에 원문 줄 수에 도달할 수 없어도
+            //가능한 줄 수에 필요한 최소 너비만 사용한다.
+            int targetLineCount = Math.Max(Math.Max(1, block.TransData.lineDataList.Count),
+                GetWrappedLinesByAddString(g, block.TransData.trans, targetFont,
+                    maximumContent.Width, maximumContent.Height, format, false).Count);
 
             int low = block.ViewRect.Right;
             int high = maximumRight;
@@ -957,7 +1029,9 @@ namespace MORT
             {
                 int middle = (low + high) / 2;
                 Rectangle candidate = Rectangle.FromLTRB(block.ViewRect.Left, block.ViewRect.Top, middle, block.ViewRect.Bottom);
-                if(!WrapsPastSourceLineCount(g, block, targetFont, GetContentRect(candidate), format))
+                Rectangle candidateContent = GetContentRect(candidate);
+                if(GetWrappedLinesByAddString(g, block.TransData.trans, targetFont,
+                    candidateContent.Width, candidateContent.Height, format, false).Count <= targetLineCount)
                 {
                     high = middle;
                 }
@@ -967,6 +1041,70 @@ namespace MORT
                 }
             }
             block.ViewRect = Rectangle.FromLTRB(block.ViewRect.Left, block.ViewRect.Top, low, block.ViewRect.Bottom);
+        }
+
+        private void TrimExpandedTextArea(Graphics g, OverlayRenderBlock block, Rectangle unexpandedRect, Font font, StringFormat format)
+        {
+            if(block.ViewRect == unexpandedRect)
+            {
+                return;
+            }
+
+            Rectangle content = GetContentRect(block.ViewRect);
+            if(!DoesTextFit(g, block.TransData.trans, font, content, format, block.VerticalMode))
+            {
+                return;
+            }
+
+            int lineCount = GetWrappedLinesByAddString(g, block.TransData.trans, font,
+                content.Width, content.Height, format, block.VerticalMode).Count;
+            bool FitsWithoutExtraLines(Rectangle candidate)
+            {
+                Rectangle candidateContent = GetContentRect(candidate);
+                return GetWrappedLinesByAddString(g, block.TransData.trans, font,
+                    candidateContent.Width, candidateContent.Height, format, block.VerticalMode).Count <= lineCount
+                    && DoesTextFit(g, block.TransData.trans, font, candidateContent, format, block.VerticalMode);
+            }
+
+            //확장 때 사용한 희망 글꼴보다 실제 글꼴이 작아졌으면 남는 확장분을 회수한다.
+            //충돌 조정이 끝난 OCR 영역은 보존하고, 글꼴과 줄 수는 바꾸지 않는다.
+            Rectangle expanded = block.ViewRect;
+            int low = unexpandedRect.Width;
+            int high = expanded.Width;
+            while(low < high)
+            {
+                int middle = (low + high) / 2;
+                Rectangle candidate = new Rectangle(
+                    block.VerticalMode ? expanded.Right - middle : expanded.Left,
+                    expanded.Top, middle, expanded.Height);
+                if(FitsWithoutExtraLines(candidate))
+                {
+                    high = middle;
+                }
+                else
+                {
+                    low = middle + 1;
+                }
+            }
+            block.ViewRect = new Rectangle(block.VerticalMode ? expanded.Right - low : expanded.Left,
+                expanded.Top, low, expanded.Height);
+
+            low = unexpandedRect.Height;
+            high = expanded.Height;
+            while(low < high)
+            {
+                int middle = (low + high) / 2;
+                Rectangle candidate = new Rectangle(block.ViewRect.Left, expanded.Top, block.ViewRect.Width, middle);
+                if(FitsWithoutExtraLines(candidate))
+                {
+                    high = middle;
+                }
+                else
+                {
+                    low = middle + 1;
+                }
+            }
+            block.ViewRect = new Rectangle(block.ViewRect.Left, expanded.Top, block.ViewRect.Width, low);
         }
 
         private bool WrapsPastSourceLineCount(Graphics g, OverlayRenderBlock block, Font font, Rectangle contentRect, StringFormat format)
@@ -1179,6 +1317,20 @@ namespace MORT
         }
 
         private bool DoesTextFit(Graphics g, string text, Font font, Rectangle rect, StringFormat format, bool vertical)
+        {
+            _textFitCache ??= new Dictionary<OverlayFitKey, bool>();
+            var key = new OverlayFitKey(GetOverlayPathKey(g, text, font, rect, format), vertical, AdvencedOptionManager.OverlayUseFontOutline);
+            if(_textFitCache.TryGetValue(key, out bool cached)) return cached;
+            bool result = DoesTextFitCore(g, text, font, rect, format, vertical);
+            if(text != null && text.Length <= 2048)
+            {
+                if(_textFitCache.Count >= 512) _textFitCache.Clear();
+                _textFitCache[key] = result;
+            }
+            return result;
+        }
+
+        private bool DoesTextFitCore(Graphics g, string text, Font font, Rectangle rect, StringFormat format, bool vertical)
         {
             if(string.IsNullOrEmpty(text) || rect.Width <= 0 || rect.Height <= 0)
             {
@@ -1608,18 +1760,8 @@ namespace MORT
             outlineColor2 = colors.Outline2;
 
             // GraphicsPath로 텍스트 경로 생성
-            using(GraphicsPath path = new GraphicsPath())
+            using(GraphicsPath path = GetOverlayTextPath(g, text, font, rect, sf))
             {
-                float emSize = g.DpiY * font.SizeInPoints / 72f;
-                path.AddString(
-                    text,
-                    font.FontFamily,
-                    (int)font.Style,
-                    emSize,
-                    rect,
-                    sf
-                );
-
                 if(AdvencedOptionManager.OverlayUseFontOutline)
                 {
                     // 1. 바깥쪽 아웃라인(더 두껍게)
@@ -1651,7 +1793,7 @@ namespace MORT
             float EmSize,
             bool Vertical,
             StringFormatFlags FormatFlags,
-            StringAlignment Alignment);
+            StringAlignment Alignment, StringAlignment LineAlignment, StringTrimming Trimming, float DpiX, float DpiY);
 
         private readonly record struct TextWrapKey(
             string Text,
@@ -1662,9 +1804,9 @@ namespace MORT
             int MaxHeight,
             bool Vertical,
             StringFormatFlags FormatFlags,
-            StringAlignment Alignment);
+            StringAlignment Alignment, StringAlignment LineAlignment, StringTrimming Trimming, float DpiX, float DpiY);
 
-        //페인트 한 번 동안만 살아 있는 캐시. AddText 진입에서 만들고 끝나면 버린다.
+        //텍스트·서식·DPI별 측정 캐시. 삽입 시 항목 수를 제한한다.
         private Dictionary<TextMeasureKey, float> _fitSizeCache;
         private Dictionary<TextWrapKey, List<string>> _wrapCache;
 
@@ -1681,7 +1823,7 @@ namespace MORT
             bool useCache = _fitSizeCache != null;
             if(useCache)
             {
-                key = new TextMeasureKey(text, font.FontFamily.Name, font.Style, emSize, isVertical, sf.FormatFlags, sf.Alignment);
+                key = new TextMeasureKey(text, font.FontFamily.Name, font.Style, emSize, isVertical, sf.FormatFlags, sf.Alignment, sf.LineAlignment, sf.Trimming, g.DpiX, g.DpiY);
                 if(_fitSizeCache.TryGetValue(key, out float cached))
                 {
                     _measureCacheHit++;
@@ -1709,8 +1851,9 @@ namespace MORT
                 }
             }
 
-            if(useCache)
+            if(useCache && text.Length <= 2048)
             {
+                if(_fitSizeCache.Count >= 4096) _fitSizeCache.Clear();
                 _fitSizeCache[key] = result;
             }
 
@@ -1730,7 +1873,7 @@ namespace MORT
             if(useWrapCache)
             {
                 wrapKey = new TextWrapKey(text, font.FontFamily.Name, font.Style, emSize,
-                    maxWidth, maxHeight, isVertical, sf.FormatFlags, sf.Alignment);
+                    maxWidth, maxHeight, isVertical, sf.FormatFlags, sf.Alignment, sf.LineAlignment, sf.Trimming, g.DpiX, g.DpiY);
                 if(_wrapCache.TryGetValue(wrapKey, out List<string> cachedLines))
                 {
                     _measureCacheHit++;
@@ -1752,12 +1895,15 @@ namespace MORT
                     // 1부터 하나씩 재면 한 줄마다 글자 수만큼 측정하게 되고, 이 함수가
                     // 폰트 이분탐색 안에서 수십 번 반복되어 페인트 한 번이 통째로 느려진다.
                     // 결과는 같고 측정 횟수만 줄이도록 이분 탐색으로 찾는다.
+                    //UTF-16 중간이나 결합 문자·이모지 연결 중간에서 줄을 자르지 않는다.
+                    int[] elements = NeedsTextElementWrap(remaining) ? System.Globalization.StringInfo.ParseCombiningCharacters(remaining) : null;
                     int low = 0;
-                    int high = remaining.Length;
+                    int high = elements?.Length ?? remaining.Length;
                     while(low < high)
                     {
                         int middle = (low + high + 1) / 2;
-                        if(GetFitSize(g, remaining.Substring(0, middle), font, emSize, sf, isVertical)
+                        int end = elements == null ? middle : middle == elements.Length ? remaining.Length : elements[middle];
+                        if(GetFitSize(g, remaining.Substring(0, end), font, emSize, sf, isVertical)
                             > (isVertical ? maxHeight - fudge : maxWidth - fudge))
                         {
                             high = middle - 1;
@@ -1768,8 +1914,9 @@ namespace MORT
                         }
                     }
 
-                    int lastFit = low;
-                    if(lastFit == 0) lastFit = 1;
+                    int fittedElements = Math.Max(1, low);
+                    int lastFit = elements == null ? fittedElements
+                        : fittedElements == elements.Length ? remaining.Length : elements[fittedElements];
                     lines.Add(remaining.Substring(0, lastFit));
                     if(lastFit >= remaining.Length)
                         break;
@@ -1777,8 +1924,9 @@ namespace MORT
                 }
             }
 
-            if(useWrapCache)
+            if(useWrapCache && text.Length <= 2048)
             {
+                if(_wrapCache.Count >= 512) _wrapCache.Clear();
                 _wrapCache[wrapKey] = lines;
             }
 
@@ -1818,11 +1966,12 @@ namespace MORT
             {
                 if(this.InvokeRequired)
                 {
-                    Action action = () => DoUpdatePaint();
-                    this.BeginInvoke(action);
+                    RequestOverlayPaint();
                 }
                 else
                 {
+                    if(isLockPaint) { RequestOverlayPaint(); return; }
+                    Interlocked.Exchange(ref _paintPending, 0);
                     DoUpdatePaint();
                 }
             }
@@ -1844,10 +1993,9 @@ namespace MORT
 
             isLockPaint = true;
 
-            //측정 결과는 이 페인트 안에서만 재사용한다.
-            //폰트 이분탐색이 같은 문자열을 같은 크기로 반복해서 재기 때문에 중복이 대부분이다.
-            _fitSizeCache = new Dictionary<TextMeasureKey, float>();
-            _wrapCache = new Dictionary<TextWrapKey, List<string>>();
+            //같은 내용을 다시 표시할 때 측정 결과를 재사용한다.
+            _fitSizeCache ??= new Dictionary<TextMeasureKey, float>();
+            _wrapCache ??= new Dictionary<TextWrapKey, List<string>>();
             _measureCacheHit = 0;
             _measureCacheMiss = 0;
 
@@ -1887,11 +2035,7 @@ namespace MORT
                     bitmap = new Bitmap(this.Width, this.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 }
 
-                using(Graphics gF = Graphics.FromImage(bitmap))
-                using(SolidBrush brush = new SolidBrush(Color.FromArgb(0, 240, 248, 255)))
-                {
-                    gF.FillRectangle(brush, 0, 0, bitmap.Width, bitmap.Height);
-                }
+
 
                 Font textFont = FormManager.Instace.MyMainForm.MySettingManager.TextFont;
 
@@ -1989,6 +2133,7 @@ namespace MORT
                     ULW_ALPHA        // Use blend as the blend function
                     );
                 //SetWindowPos(this.Handle, HWND_TOPMOST, 0, 0, 0, 0, TOPMOST_FLAGS);
+                PresentWindowBlur();
 
                 if(measureTiming)
                 {
@@ -2011,8 +2156,7 @@ namespace MORT
                 //이 함수가 만드는 Bitmap / Graphics / 브러시는 위에서 직접 놓아주고
                 //GDI 핸들은 DeleteObject / DeleteDC 로 정리하므로 강제 수집이 필요 없다.
 
-                _fitSizeCache = null;
-                _wrapCache = null;
+
 
                 //화면 반영까지 끝난 뒤에 디버깅 스냅샷을 넘긴다.
                 //중간 return 으로 빠져나온 경우에도 모아둔 블록은 버리고 대기 상태를 풀어야 한다.
@@ -2084,6 +2228,9 @@ namespace MORT
 
             _dataList = new List<OCRDataManager.ResultData>();
             _overlayDataCache.Clear();
+            _windowBlurRects.Clear();
+            _windowBlur?.Hide();
+            ClearCaptureBlurImages();
             resultText = "";
             _lastDisplayRect = Rectangle.Empty;
             isLockPaint = false;
@@ -2294,7 +2441,7 @@ namespace MORT
             _isStart = true;
             _forceLock = false;
             alpha = 0;     //0이어야 함
-            this.BeginInvoke(new Action(UpdatePaint));
+            RequestOverlayPaint();
         }
 
         public void setVisibleBackground()
@@ -2304,7 +2451,7 @@ namespace MORT
             _forceLock = false;
             alpha = 190;
             _lastDisplayRect = Rectangle.Empty;
-            this.BeginInvoke(new Action(UpdatePaint));
+            RequestOverlayPaint();
         }
 
         public void setOverHitLayer()

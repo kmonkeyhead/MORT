@@ -295,6 +295,8 @@ namespace MORT
             public List<LineData> LineDataList = new List<LineData>();
             public List<TransData> TransDataList = new List<TransData>();
             public Rectangle ResultRect;
+            public MORT.Model.OverlayBlurFrame BlurFrame;
+            internal System.Drawing.Size OcrImageSize;
             public bool UseAutoColor { get; private set; }
             public List<(Color Font, Color BackGround)> AutoColor { get; private set; } = new();
 

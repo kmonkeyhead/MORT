@@ -319,7 +319,9 @@ namespace MORT.ScreenCapture
                                     memoryBuffer.GetBuffer(out data, out capacity);
 
                                     byte[] arr = new byte[softwareBitmap.PixelWidth * softwareBitmap.PixelHeight * 4];
-                                    Marshal.Copy((IntPtr)data, arr, 0, arr.Length);
+                                    for(int row = 0; row < softwareBitmap.PixelHeight; row++)
+                                        Marshal.Copy((IntPtr)data + desc.StartIndex + row * desc.Stride,
+                                            arr, row * softwareBitmap.PixelWidth * 4, softwareBitmap.PixelWidth * 4);
 
                                     array = arr;
                                     lastX = softwareBitmap.PixelWidth;

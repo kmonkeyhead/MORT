@@ -1,4 +1,19 @@
 {
+  "MORT/TransFormOver.RenderCache.cs": {
+    "category": "오버레이 렌더링 최적화",
+    "intent": "동일한 번역 내용을 다시 표시할 때 배치와 글자 경로 생성을 반복하지 않으면서 색상과 실시간 배경은 최신 상태로 유지한다.",
+    "operation": "전체 장면의 위치·텍스트·원문 글자 크기·그룹·서식·DPI·설정이 같을 때만 마지막 배치를 재사용한다. 측정과 줄바꿈은 항목 수를 제한하고, 경로는 개수와 포인트 수를 함께 제한해 네이티브 메모리가 계속 늘지 않게 한다. 경로 호출자는 복제본을 소유한다. 데이터 제거·핸들 파괴·Dispose에서 캐시를 정리한다. 비동기 갱신은 대기 플래그를 원자적으로 설정하여 한 UI 콜백으로 합치고, 동기 UpdatePaint는 기존 Prepare/Flush 순서를 보존한다. 이모지·결합 문자·한글 자모는 글자 묶음 경계에서 줄바꿈한다."
+  },
+  "MORT/Service/Overlay/Restoration/LegacyBackgroundRestoration.cs": {
+    "category": "오버레이 적응형 복원",
+    "intent": "원래 단어 주변의 색을 여덟 방향으로 연결하는 기존 적응형 출력과 강도별 결과를 유지한다.",
+    "operation": "원래 단어 사각형과 외곽 여유를 제외한 주변 색을 여덟 방향으로 연결한다. 작업 마스크·힌트·점수는 유효 OCR 영역과 padding + 8의 문맥 합집합 크기로 대여한다. 원본은 복사하지 않고 기존 stride와 영역 원점으로 참조한다. 합집합이 화면의 80% 이상이면 전체 범위를 유지한다. 원본 크기로 병렬 처리 여부를 정해 작은 작업 영역으로 줄었을 때 직렬 처리로 느려지는 회귀를 피한다. 색상 샘플·방향 순서·동점 판정과 수준 1~5의 결과를 유지하고 출력은 기존 전체 크기 PArgb 배열로 독립 소유한다."
+  },
+  "MORT/Service/Overlay/OverlayTextRestorationService.cs": {
+    "category": "오버레이 배경 복원",
+    "intent": "적응형 출력을 기존 방향 보간 구현으로 연결한다.",
+    "operation": "입력 버퍼·크기·채널·OCR 단어 영역·강도를 LegacyBackgroundRestoration.CreateFrame에 그대로 전달한다. 기본 강도는 2이며 방식 선택이나 별도 영상 처리 라이브러리를 사용하지 않는다."
+  },
   "MORT/AlphaDialog/AlphaColorPanel.cs": {
     "category": "색상 입력 UI",
     "intent": "알파 채널을 포함한 색상을 미리 보고 선택할 수 있는 사용자 정의 패널을 제공한다.",

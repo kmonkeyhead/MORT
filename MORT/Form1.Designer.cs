@@ -1,4 +1,4 @@
-﻿
+
 namespace MORT
 {
     partial class Form1
