@@ -130,6 +130,8 @@ namespace MORT
             lbOverlayBlurLevelInfo = new System.Windows.Forms.Label();
             lbOverlayRestoreLevel = new System.Windows.Forms.Label();
             udOverlayRestoreLevel = new System.Windows.Forms.NumericUpDown();
+            lbOverlayTargetFps = new System.Windows.Forms.Label();
+            udOverlayTargetFps = new System.Windows.Forms.NumericUpDown();
             lbOverlayRestoreLevelInfo = new System.Windows.Forms.Label();
             gbAutoColor = new System.Windows.Forms.GroupBox();
             cbAutoFontColor = new System.Windows.Forms.CheckBox();
@@ -235,6 +237,7 @@ namespace MORT
             gbOverlayOutputMode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)udOverlayBlurLevel).BeginInit();
             ((System.ComponentModel.ISupportInitialize)udOverlayRestoreLevel).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)udOverlayTargetFps).BeginInit();
             gbAutoColor.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)udSnapShotRemainTime).BeginInit();
             ((System.ComponentModel.ISupportInitialize)udMaxSFontize).BeginInit();
@@ -1373,7 +1376,7 @@ namespace MORT
             gbOverlay.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbOverlay.Name = "gbOverlay";
             gbOverlay.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            gbOverlay.Size = new System.Drawing.Size(1016, 1100);
+            gbOverlay.Size = new System.Drawing.Size(1016, 1190);
             gbOverlay.TabIndex = 67;
             gbOverlay.TabStop = false;
             gbOverlay.Text = "오버레이 번역창";
@@ -1398,9 +1401,11 @@ namespace MORT
             gbOverlayOutputMode.Controls.Add(lbOverlayRestoreLevel);
             gbOverlayOutputMode.Controls.Add(udOverlayRestoreLevel);
             gbOverlayOutputMode.Controls.Add(lbOverlayRestoreLevelInfo);
+            gbOverlayOutputMode.Controls.Add(lbOverlayTargetFps);
+            gbOverlayOutputMode.Controls.Add(udOverlayTargetFps);
             gbOverlayOutputMode.Location = new System.Drawing.Point(19, 620);
             gbOverlayOutputMode.Name = "gbOverlayOutputMode";
-            gbOverlayOutputMode.Size = new System.Drawing.Size(978, 450);
+            gbOverlayOutputMode.Size = new System.Drawing.Size(978, 540);
             gbOverlayOutputMode.TabIndex = 1;
             gbOverlayOutputMode.TabStop = false;
             gbOverlayOutputMode.Text = "출력 방식";
@@ -1494,6 +1499,20 @@ namespace MORT
             lbOverlayRestoreLevelInfo.Size = new System.Drawing.Size(920, 56);
             lbOverlayRestoreLevelInfo.Text = "1(약함) ~ 5(강함), 기본 2. 높일수록 원문 외곽선을 더 넓게 지웁니다.\r\n원문 흔적과 배경 손상을 보며 조절하세요.";
             //
+            // Adaptive background frame rate (OCR/translation speed remains independent).
+            lbOverlayTargetFps.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            lbOverlayTargetFps.Location = new System.Drawing.Point(35, 446);
+            lbOverlayTargetFps.Name = "lbOverlayTargetFps";
+            lbOverlayTargetFps.Size = new System.Drawing.Size(205, 30);
+            lbOverlayTargetFps.Text = "배경 갱신 목표 FPS";
+            udOverlayTargetFps.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            udOverlayTargetFps.Location = new System.Drawing.Point(250, 440);
+            udOverlayTargetFps.Name = "udOverlayTargetFps";
+            udOverlayTargetFps.Size = new System.Drawing.Size(85, 31);
+            udOverlayTargetFps.Minimum = 1;
+            udOverlayTargetFps.Maximum = 120;
+            udOverlayTargetFps.Value = 60;
+            udOverlayTargetFps.TabIndex = 6;
             // gbAutoColor
             // 
             gbAutoColor.Controls.Add(cbAutoFontColor);
@@ -2397,6 +2416,7 @@ namespace MORT
             gbOverlayGeneral.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)udOverlayBlurLevel).EndInit();
             ((System.ComponentModel.ISupportInitialize)udOverlayRestoreLevel).EndInit();
+            ((System.ComponentModel.ISupportInitialize)udOverlayTargetFps).EndInit();
             gbOverlayOutputMode.ResumeLayout(false);
             gbOverlayOutputMode.PerformLayout();
             gbOverlay.ResumeLayout(false);
@@ -2467,6 +2487,8 @@ namespace MORT
         private System.Windows.Forms.Label lbOverlayRestoreLevel;
         private System.Windows.Forms.NumericUpDown udOverlayRestoreLevel;
         private System.Windows.Forms.Label lbOverlayRestoreLevelInfo;
+        private System.Windows.Forms.Label lbOverlayTargetFps;
+        private System.Windows.Forms.NumericUpDown udOverlayTargetFps;
         private System.Windows.Forms.GroupBox gbOverlayOutputMode;
         private System.Windows.Forms.RadioButton rbOverlayOutputDefault;
         private System.Windows.Forms.RadioButton rbOverlayOutputBlur;

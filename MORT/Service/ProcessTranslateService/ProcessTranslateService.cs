@@ -23,6 +23,7 @@ namespace MORT.Service.ProcessTranslateService
     {
         //번역 쓰레드
         private Thread thread;
+        private bool _liveAdaptiveRequested;
         public bool IdleState => !thread?.IsAlive ?? true || isEndFlag;
         public bool ProcessingState => thread != null && thread.IsAlive;
 
@@ -261,7 +262,7 @@ namespace MORT.Service.ProcessTranslateService
                 var image = imgDataList[index];
                 ocrResultData.OcrImageSize = new Size(image.x, image.y);
                 var backgroundMode = AdvencedOptionManager.OverlayOutputMode;
-                if(backgroundMode == OverlayBlurMode.Restore)
+                if(backgroundMode == OverlayBlurMode.Restore && !_liveAdaptiveRequested)
                 {
                     var words = ocrResultData.TransDataList.SelectMany(block => block.lineDataList)
                         .SelectMany(line => line.wordRectList.Count > 0 ? line.wordRectList : new List<Rectangle> { line.lineRect })
@@ -453,6 +454,7 @@ namespace MORT.Service.ProcessTranslateService
             var token = _cts.Token;
 
             bool isOnce = initialization.IsOnce;
+            _liveAdaptiveRequested = !isOnce && _settingManager.NowSkin == Skin.over && TransFormOver.isActiveGDI;
             bool useGoogleOcr = initialization.UseGoogleOcr;
             bool requireOriginalScreen = initialization.RequireOriginalScreen;
 
@@ -913,7 +915,8 @@ namespace MORT.Service.ProcessTranslateService
                                 //바뀌는 경우(OCR 영역 이동, 대상 창 이동)가 있어 완전히 멈출 수는 없다.
                                 //그래서 매번이 아니라 일정 간격으로만 다시 그린다.
                                 int idleDiff = Math.Abs(System.Environment.TickCount - lastIdleRepaintTick);
-                                if (idleDiff >= IdleRepaintIntervalMs)
+                                if (idleDiff >= IdleRepaintIntervalMs || (_settingManager.NowSkin == Skin.over
+                                    && AdvencedOptionManager.OverlayOutputMode == OverlayBlurMode.Restore))
                                 {
                                     lastIdleRepaintTick = System.Environment.TickCount;
 

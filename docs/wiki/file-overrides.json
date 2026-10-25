@@ -1,4 +1,29 @@
 {
+  "MORT/Model/OverlayAdaptiveScene.cs": {
+    "category": "오버레이 적응형 모델",
+    "intent": "배경 갱신 입력과 완성 결과를 OCR 결과 객체에서 분리한다.",
+    "operation": "UI가 복제한 원문 영역·화면 좌표·강도·캡처 소스를 장면 참조로 식별한다. 장면과 영역별 패치를 결과 하나에 묶어 이전 장면의 늦은 완료가 새 배경을 덮지 못하게 한다."
+  },
+  "MORT/Service/Overlay/OverlayAdaptiveRefreshService.cs": {
+    "category": "오버레이 적응형 갱신",
+    "intent": "번역 대기 중에도 최신 화면으로 적응형 배경만 갱신한다.",
+    "operation": "전용 작업 하나가 설정된 1~120 FPS(기본 60)를 목표로 최신 캡처와 복원 패치를 만든다. 장면은 UI에서 복제한 OCR 영역·좌표·강도·캡처 소스로 구성한다. 결과 큐 없이 최신 결과 하나만 게시하고, 장면이 바뀌거나 정지하면 이전 완료 결과는 버린다. 화면 캡처 버퍼는 재사용하며 WGC는 OCR 소비 상태와 분리된 최신 프레임을 읽는다. 캡처 실패 시 과거 패치를 유지하지 않고 기본 배경으로 돌아간다."
+  },
+  "MORT/Service/Overlay/OverlayFrameClock.cs": {
+    "category": "오버레이 적응형 갱신",
+    "intent": "일반 타이머의 대기 오차를 줄여 60Hz 목표를 지원한다.",
+    "operation": "전용 worker에서 Windows 고해상도 waitable timer와 취소 이벤트를 함께 기다린다. 지원되지 않으면 일반 대기로 돌아가며 시스템 타이머 해상도나 CPU spin을 사용하지 않는다."
+  },
+  "MORT/TransFormOver.Adaptive.cs": {
+    "category": "오버레이 적응형 갱신",
+    "intent": "OCR 결과와 독립 배경 작업 사이의 좌표·수명 경계를 관리한다.",
+    "operation": "실시간 적응형에서만 현재 원문 단어 사각형을 원본 화면 좌표로 복제한다. 동일한 영역·강도·캡처 소스면 기존 장면을 유지하고, 같은 문장이라도 단어 위치가 달라지면 마스크를 교체한다. 1회 번역은 고정 프레임을 사용하며 정지·숨김·설정 변경 시 작업을 중단한다."
+  },
+  "MORT/Model/OverlayCaptureFrame.cs": {
+    "category": "오버레이 캡처 모델",
+    "intent": "OCR 요청 상태를 변경하지 않고 최신 WGC 픽셀과 좌표를 함께 전달한다.",
+    "operation": "게시 후 수정하지 않는 BGRA 배열·크기·화면 좌표를 단일 참조로 공유하여 서로 다른 프레임의 픽셀과 좌표가 섞이지 않게 한다."
+  },
   "MORT/TransFormOver.RenderCache.cs": {
     "category": "오버레이 렌더링 최적화",
     "intent": "동일한 번역 내용을 다시 표시할 때 배치와 글자 경로 생성을 반복하지 않으면서 색상과 실시간 배경은 최신 상태로 유지한다.",
@@ -7,7 +32,7 @@
   "MORT/Service/Overlay/Restoration/LegacyBackgroundRestoration.cs": {
     "category": "오버레이 적응형 복원",
     "intent": "원래 단어 주변의 색을 여덟 방향으로 연결하는 기존 적응형 출력과 강도별 결과를 유지한다.",
-    "operation": "원래 단어 사각형과 외곽 여유를 제외한 주변 색을 여덟 방향으로 연결한다. 작업 마스크·힌트·점수는 유효 OCR 영역과 padding + 8의 문맥 합집합 크기로 대여한다. 원본은 복사하지 않고 기존 stride와 영역 원점으로 참조한다. 합집합이 화면의 80% 이상이면 전체 범위를 유지한다. 원본 크기로 병렬 처리 여부를 정해 작은 작업 영역으로 줄었을 때 직렬 처리로 느려지는 회귀를 피한다. 색상 샘플·방향 순서·동점 판정과 수준 1~5의 결과를 유지하고 출력은 기존 전체 크기 PArgb 배열로 독립 소유한다."
+    "operation": "원래 단어 사각형과 외곽 여유를 제외한 주변 색을 여덟 방향으로 연결한다. 작업 마스크·힌트·점수는 유효 OCR 영역과 padding + 8의 문맥 합집합 크기로 대여한다. 원본은 복사하지 않고 기존 stride와 영역 원점으로 참조한다. 합집합이 화면의 80% 이상이면 전체 범위를 유지한다. 원본 크기로 병렬 처리 여부를 정해 작은 작업 영역으로 줄었을 때 직렬 처리로 느려지는 회귀를 피한다. 색상 샘플·방향 순서·동점 판정과 수준 1~5의 결과를 유지하고 CreateFrame 출력은 기존 전체 크기 PArgb 배열로 독립 소유한다. 실시간 CreatePatch는 같은 연산 결과를 작업 영역 크기 배열로 반환하며 원본 영역·크기를 함께 전달한다."
   },
   "MORT/Service/Overlay/OverlayTextRestorationService.cs": {
     "category": "오버레이 배경 복원",
@@ -198,5 +223,9 @@
     "category": "원격 텍스트 다운로드",
     "intent": "사용 중단된 WebClient를 대신해 버전 확인·설정 검색에서 작은 텍스트 파일을 받는 공통 진입점을 제공한다. 호출하는 쪽이 동기 흐름이라 동기 API를 유지한다.",
     "operation": "공유 HttpClient의 Send로 요청하고 2xx가 아니면 예외를 던진다. 본문을 MemoryStream으로 모두 받은 뒤 돌려주므로 호출 측은 기존 OpenRead + StreamReader 구조를 그대로 쓴다."
+  },
+  "MORT/Service/Overlay/OverlayPaintScheduler.cs": {
+    "intent": "연속 번역/적응형 갱신 중에도 MORT 입력 메시지가 처리되게 한다.",
+    "operation": "작업 스레드는 dirty 플래그만 설정하고 UI WM_TIMER에서 한 번씩 소비한다. BeginInvoke 콜백 큐를 계속 채우지 않으며 종료 시 타이머와 대기 요청을 해제한다. 목표 FPS는 배경 작업 기준이고 실제 표시는 UI 처리량 및 타이머 정밀도에 제한된다."
   }
 }

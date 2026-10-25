@@ -12,5 +12,9 @@ namespace MORT.Service.Overlay
         {
             return LegacyBackgroundRestoration.CreateFrame(source, width, height, channels, wordRects, restorationLevel);
         }
+        public OverlayBlurFrame CreatePatch(byte[] source, int width, int height, int channels, IReadOnlyList<Rectangle> wordRects, int restorationLevel = 2)
+        {
+            return LegacyBackgroundRestoration.CreateFrame(source, width, height, channels, wordRects, restorationLevel, compactOutput: true);
+        }
     }
 }

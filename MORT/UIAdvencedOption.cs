@@ -60,7 +60,8 @@ namespace MORT
                 (lbOverlayRestoreLevel, "Adv Overlay Restore Level"),
                 (lbOverlayRestoreLevelInfo, "Adv Overlay Restore Level Info"),
                 (lbOverlayBlurLevel, "Adv Overlay Blur Level"),
-                (lbOverlayBlurLevelInfo, "Adv Overlay Blur Level Info")
+                (lbOverlayBlurLevelInfo, "Adv Overlay Blur Level Info"),
+                (lbOverlayTargetFps, "Adv Overlay Target FPS")
             })
             {
                 string text = LocalizeString(item.Key);
@@ -84,6 +85,7 @@ namespace MORT
             cbOverlayUseBackgroundAlpha.Enabled = rbOverlayOutputDefault.Checked;
             lbOverlayBlurLevel.Enabled = udOverlayBlurLevel.Enabled = lbOverlayBlurLevelInfo.Enabled = rbOverlayOutputBlur.Checked;
             lbOverlayRestoreLevel.Enabled = udOverlayRestoreLevel.Enabled = lbOverlayRestoreLevelInfo.Enabled = rbOverlayOutputRestore.Checked;
+            lbOverlayTargetFps.Enabled = udOverlayTargetFps.Enabled = rbOverlayOutputRestore.Checked;
         }
 
         private void Init()
@@ -164,6 +166,7 @@ namespace MORT
             rbOverlayOutputRestore.Checked = AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.Restore;
             udOverlayRestoreLevel.Value = AdvencedOptionManager.OverlayRestoreLevel;
             udOverlayBlurLevel.Value = AdvencedOptionManager.OverlayBlurLevel;
+            udOverlayTargetFps.Value = AdvencedOptionManager.OverlayTargetFps;
             UpdateOverlayOutputControls();
             cbOverlayAutoSize.Checked = AdvencedOptionManager.IsAutoFontSize;
             cbOverlayAutoMerge.Checked = AdvencedOptionManager.UseAutoMerge;
@@ -467,6 +470,7 @@ namespace MORT
                 : rbOverlayOutputRestore.Checked ? Model.OverlayBlurMode.Restore : Model.OverlayBlurMode.None);
             AdvencedOptionManager.SetOverlayRestoreLevel((int)udOverlayRestoreLevel.Value);
             AdvencedOptionManager.SetOverlayBlurLevel((int)udOverlayBlurLevel.Value);
+            AdvencedOptionManager.SetOverlayTargetFps((int)udOverlayTargetFps.Value);
             AdvencedOptionManager.SetOverLay(
                 cbOverlayAutoSize.Checked,
                 (int)udMinFontSize.Value, (int)udMaxSFontize.Value,

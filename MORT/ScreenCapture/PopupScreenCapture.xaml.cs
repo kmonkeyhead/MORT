@@ -56,6 +56,7 @@ namespace MORT.ScreenCapture
         private string _borderForceEnable = "노란색 테두리 활성화 (비활성화는 윈도우11에서만 가능)";
 
         private ScreenCapture sample;
+        internal ScreenCapture AdaptiveCaptureSource => sample;
         private bool _enableYellowBoard;
 
         private async Task PrepareCaptureAsync()

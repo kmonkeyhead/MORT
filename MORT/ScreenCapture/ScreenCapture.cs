@@ -10,7 +10,23 @@ namespace MORT.ScreenCapture
         private IDirect3DDevice device;
         private SharpDX.Direct3D11.Device d3dDevice;
 
-        private ScreenCaptureProcesser capture;
+        private volatile ScreenCaptureProcesser capture;
+        private bool _adaptiveCapture;
+        private int _adaptiveTargetFps = 60;
+
+        internal void SetAdaptiveCapture(bool enabled, int targetFps = 60)
+        {
+            _adaptiveCapture = enabled;
+            _adaptiveTargetFps = Math.Clamp(targetFps, 1, 120);
+            var current = capture;
+            if(current != null)
+            {
+                current.AdaptiveTargetFps = _adaptiveTargetFps;
+                current.AdaptiveCapture = enabled;
+            }
+        }
+
+        internal MORT.Model.OverlayCaptureFrame? LatestAdaptiveFrame => capture?.LatestAdaptiveFrame;
 
         public ScreenCapture()
         {
@@ -31,6 +47,8 @@ namespace MORT.ScreenCapture
             StopCapture();
 
             capture = new ScreenCaptureProcesser(d3dDevice, device, item, hWnd);
+            capture.AdaptiveTargetFps = _adaptiveTargetFps;
+            capture.AdaptiveCapture = _adaptiveCapture;
             capture.SetRequireBoard(enableYellowBoard);
             capture.StartCapture();
 
@@ -76,8 +94,9 @@ namespace MORT.ScreenCapture
 
         public void StopCapture()
         {
-            capture?.Dispose();
+            var current = capture;
             capture = null;
+            current?.Dispose();
         }
 
     }

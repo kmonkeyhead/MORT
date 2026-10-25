@@ -10,7 +10,7 @@ namespace MORT.Service.Overlay.Restoration
     //모든 OCR 글자를 제외한 주변 샘플로 배경을 연결한다. 복원 중인 픽셀은 참조하지 않는다.
     internal static class LegacyBackgroundRestoration
     {
-        public static OverlayBlurFrame CreateFrame(byte[] source, int width, int height, int channels, IReadOnlyList<Rectangle> wordRects, int restorationLevel = 2)
+        public static OverlayBlurFrame CreateFrame(byte[] source, int width, int height, int channels, IReadOnlyList<Rectangle> wordRects, int restorationLevel = 2, bool compactOutput = false)
         {
             if(source == null || width <= 0 || height <= 0 || channels < 3
                 || (long)width * height > int.MaxValue / 4
@@ -28,6 +28,7 @@ namespace MORT.Service.Overlay.Restoration
                 Rectangle probe = Rectangle.Intersect(Rectangle.Inflate(clipped, padding + 8, padding + 8), sourceBounds);
                 work = work.IsEmpty ? probe : Rectangle.Union(work, probe);
             }
+            if(work.IsEmpty && compactOutput) return null;
             if(work.IsEmpty)
                 return new OverlayBlurFrame(new byte[width * height * 4], width, height) { Mode = OverlayBlurMode.Restore };
             //화면 대부분을 쓰면 좌표 목록을 만들지 않고 기존 전체 범위를 사용한다.
@@ -81,7 +82,10 @@ namespace MORT.Service.Overlay.Restoration
                         }
                     }
                 }
-                byte[] pixels = new byte[sourceWidth * sourceHeight * 4];
+                int outputWidth = compactOutput ? width : sourceWidth;
+                int outputHeight = compactOutput ? height : sourceHeight;
+                Point outputOrigin = compactOutput ? Point.Empty : work.Location;
+                byte[] pixels = new byte[outputWidth * outputHeight * 4];
                 background = ArrayPool<byte>.Shared.Rent(pixelCount * 4);
                 Array.Clear(background, 0, pixelCount * 4);
                 FindBackgroundHints(source, channels, width, height, mask, wordRects, background, restorationLevel, sourceWidth, work.Location);
@@ -91,11 +95,11 @@ namespace MORT.Service.Overlay.Restoration
 
                 //여덟 방향 중 양 끝 배경색이 잘 이어지는 방향을 선택해 대각선 경계의 번짐을 줄인다.
                 foreach(var direction in new (int X, int Y)[] { (1, 0), (0, 1), (1, 1), (1, -1), (2, 1), (1, 2), (2, -1), (1, -2) })
-                    FillDirection(source, channels, width, height, mask, background, pixels, scores, direction.X, direction.Y, sourceWidth, work.Location, (long)sourceWidth * sourceHeight >= 65536);
+                    FillDirection(source, channels, width, height, mask, background, pixels, scores, direction.X, direction.Y, sourceWidth, work.Location, (long)sourceWidth * sourceHeight >= 65536, outputWidth, outputOrigin);
                 for(int y = active.Top; y < active.Bottom; y++)
                 {
                     int end = y * width + active.Right;
-                    int outputDelta = ((y + work.Y) * sourceWidth + work.X - y * width) * 4;
+                    int outputDelta = ((y + outputOrigin.Y) * outputWidth + outputOrigin.X - y * width) * 4;
                     for(int i = y * width + active.Left; i < end; i++)
                     {
                         if(mask[i] == 0) continue;
@@ -105,7 +109,12 @@ namespace MORT.Service.Overlay.Restoration
                         pixels[output + 3] = (byte)alpha;
                     }
                 }
-                return new OverlayBlurFrame(pixels, sourceWidth, sourceHeight) { Mode = OverlayBlurMode.Restore };
+                return new OverlayBlurFrame(pixels, outputWidth, outputHeight)
+                {
+                    Mode = OverlayBlurMode.Restore,
+                    SourceRect = compactOutput ? work : Rectangle.Empty,
+                    SourceSize = new System.Drawing.Size(sourceWidth, sourceHeight)
+                };
             }
             finally
             {
@@ -116,7 +125,7 @@ namespace MORT.Service.Overlay.Restoration
         }
 
         private static void FillDirection(byte[] source, int channels, int width, int height, byte[] mask, byte[] background,
-            byte[] pixels, float[] scores, int dx, int dy, int sourceWidth, Point origin, bool parallel)
+            byte[] pixels, float[] scores, int dx, int dy, int sourceWidth, Point origin, bool parallel, int outputWidth, Point outputOrigin)
         {
             bool Inside(int x, int y) => (uint)x < (uint)width && (uint)y < (uint)height;
             float stepLength = MathF.Sqrt(dx * dx + dy * dy);
@@ -125,7 +134,7 @@ namespace MORT.Service.Overlay.Restoration
             int edgeStarts = edgeRows * width;
             int startCount = edgeStarts + (height - edgeRows) * sideColumns;
             int pixelStep = dy * width + dx;
-            int outputStep = (dy * sourceWidth + dx) * 4;
+            int outputStep = (dy * outputWidth + dx) * 4;
             void FillRay(int start)
             {
                 int startX, startY;
@@ -153,7 +162,7 @@ namespace MORT.Service.Overlay.Restoration
                     float contrast = Math.Max(Math.Abs(first.R - last.R), Math.Max(Math.Abs(first.G - last.G), Math.Abs(first.B - last.B)));
                     float score = contrast + count * stepLength * 0.08f + (hasBefore && hasAfter ? 0 : 300);
                     int firstPixel = runY * width + runX;
-                    int firstOutput = ((runY + origin.Y) * sourceWidth + runX + origin.X) * 4;
+                    int firstOutput = ((runY + outputOrigin.Y) * outputWidth + runX + outputOrigin.X) * 4;
                     for(int i = 0, pixel = firstPixel, output = firstOutput; i < count; i++, pixel += pixelStep, output += outputStep)
                     {
                         float t = (i + 1f) / (count + 1f);

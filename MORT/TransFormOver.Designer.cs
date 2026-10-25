@@ -15,6 +15,9 @@
         {
             if(disposing)
             {
+                DisposeAdaptiveBackground();
+                _paintScheduler?.Dispose();
+                _paintScheduler = null;
                 ClearOverlayRenderCaches();
             }
             if (disposing && (components != null))
