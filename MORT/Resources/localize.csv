@@ -1189,3 +1189,53 @@ Köprü penceresinden indirin."
 ,Adv Chrome Bridge Engine Auto,자동,Auto,自動,自动,Otomatis,Авто,Automático,Авто,Otomatik
 ,Adv Chrome Bridge Engine Llm,LLM,LLM,LLM,LLM,LLM,LLM,LLM,LLM,LLM
 ,Adv Chrome Bridge Engine Translator,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API,Translator API
+"","Adv Overlay General","일반","General","一般","常规","Umum","Общие","Geral","Загальні","Genel"
+"","Adv Overlay Output Mode","출력 방식","Output method","表示方式","显示方式","Metode tampilan","Способ отображения","Método de exibição","Спосіб відображення","Görüntüleme yöntemi"
+"","Adv Overlay Output Default","기본 - 빠름: 색상에 맞춰 배경색을 넣어 번역문을 표시합니다.","Default — Fast: Display the translation over a matching background color.","標準 - 高速：色に合わせた背景色を付けて訳文を表示します。","默认 - 快速：使用匹配的背景色显示译文。","Bawaan - Cepat: Tampilkan terjemahan dengan warna latar yang sesuai.","Обычный — быстро: перевод отображается на фоне подходящего цвета.","Padrão - Rápido: Exibe a tradução sobre uma cor de fundo correspondente.","Звичайний — швидко: переклад відображається на тлі відповідного кольору.","Varsayılan - Hızlı: Çeviriyi uyumlu bir arka plan rengi üzerinde gösterir."
+"","Adv Overlay Output Blur","블러 - 중간: 텍스트 영역에 실시간 블러를 추가해 번역문을 잘 보이게 합니다.","Blur — Medium: Apply live blur to text areas to improve translation readability.","ぼかし - 中速：文字領域にリアルタイムのぼかしを加え、訳文を読みやすくします。","模糊 - 中等：实时模糊文字区域，使译文更清晰易读。","Buram - Sedang: Buramkan area teks secara langsung agar terjemahan lebih mudah dibaca.","Размытие — средняя скорость: размытие областей текста в реальном времени улучшает читаемость перевода.","Desfoque - Médio: Desfoca as áreas de texto em tempo real para facilitar a leitura da tradução.","Розмиття — середня швидкість: розмиття ділянок тексту в реальному часі покращує читабельність перекладу.","Bulanıklaştırma - Orta: Çevirinin okunabilirliğini artırmak için metin alanlarını gerçek zamanlı bulanıklaştırır."
+"","Adv Overlay Output Restore","어댑티브(적응형) - 느림: 캡처한 화면에서 주변 배경을 추정해 원문 글자 영역을 메운 뒤
+번역문을 표시합니다.","Adaptive — Slow: Estimate the surrounding background in the captured image, fill the original text areas,
+then display the translation.","適応型 - 低速：キャプチャ画像の周囲の背景を推定して原文の文字領域を埋めた後、
+訳文を表示します。","自适应 - 较慢：估算截取画面中的周围背景，填补原文文字区域后，
+显示译文。","Adaptif - Lambat: Perkirakan latar sekitar pada gambar tangkapan, isi area teks asli,
+lalu tampilkan terjemahan.","Адаптивный — медленно: фон вокруг исходного текста на снимке оценивается и заполняет его области,
+после чего отображается перевод.","Adaptativo - Lento: Estima o fundo ao redor na imagem capturada, preenche as áreas do texto original
+e exibe a tradução.","Адаптивний — повільно: тло навколо вихідного тексту на знімку оцінюється й заповнює його ділянки,
+після чого відображається переклад.","Uyarlamalı - Yavaş: Yakalanan görüntüde çevredeki arka planı tahmin ederek özgün metin alanlarını doldurur,
+ardından çeviriyi gösterir."
+"","Adv Overlay Restore Level","적응형 강도","Adaptive strength","適応型の強度","自适应强度","Kekuatan adaptif","Сила адаптивной обработки","Intensidade adaptativa","Сила адаптивної обробки","Uyarlamalı işlem gücü"
+"","Adv Overlay Restore Level Info","1(약함) ~ 5(강함), 기본 2. 높일수록 원문 외곽선을 더 넓게 지웁니다.
+원문 흔적과 배경 손상을 보며 조절하세요.","1 (weak) to 5 (strong), default 2. Higher values erase a wider area around the original text.
+Adjust while checking for remaining text and background damage.","1（弱）～5（強）、既定は2。高くするほど原文の縁取りを広く消去します。
+原文の残りや背景の損傷を見ながら調整してください。","1（弱）至5（强），默认2。数值越高，原文周围的擦除范围越大。
+请根据文字残留和背景受损情况调整。","1 (lemah) hingga 5 (kuat), bawaan 2. Nilai lebih tinggi menghapus area yang lebih luas di sekitar teks asli.
+Sesuaikan sambil memeriksa sisa teks dan kerusakan latar.","От 1 (слабо) до 5 (сильно), по умолчанию 2. Большие значения расширяют область удаления вокруг исходного текста.
+Настраивайте с учётом остатков текста и повреждения фона.","De 1 (fraco) a 5 (forte), padrão 2. Valores maiores apagam uma área mais ampla ao redor do texto original.
+Ajuste observando resíduos de texto e danos ao fundo.","Від 1 (слабко) до 5 (сильно), типово 2. Вищі значення розширюють ділянку видалення навколо вихідного тексту.
+Налаштовуйте з огляду на залишки тексту та пошкодження тла.","1 (zayıf) ile 5 (güçlü), varsayılan 2. Yüksek değerler özgün metnin çevresinde daha geniş bir alanı siler.
+Kalan metni ve arka plan bozulmasını kontrol ederek ayarlayın."
+"","Adv Overlay Blur Level","블러 수준","Blur level","ぼかしレベル","模糊级别","Tingkat keburaman","Уровень размытия","Nível de desfoque","Рівень розмиття","Bulanıklaştırma düzeyi"
+"","Adv Overlay Blur Level Info","1(약함) ~ 5(강함), 기본 5. 낮추면 원본이 더 비쳐 보입니다.
+흐림 반경이 아닌 블러 적용 비율을 조절합니다.","1 (weak) to 5 (strong), default 5. Lower values let more of the original show through.
+Controls the blur blend amount, not the blur radius.","1（弱）～5（強）、既定は5。低くすると原文が透けて見えやすくなります。
+ぼかし半径ではなく、ぼかしの適用比率を調整します。","1（弱）至5（强），默认5。数值越低，原始画面越容易透出。
+调整的是模糊混合比例，而非模糊半径。","1 (lemah) hingga 5 (kuat), bawaan 5. Nilai lebih rendah membuat gambar asli lebih terlihat.
+Mengatur proporsi campuran efek buram, bukan radiusnya.","От 1 (слабо) до 5 (сильно), по умолчанию 5. При меньших значениях оригинал виден сильнее.
+Регулируется доля размытия, а не его радиус.","De 1 (fraco) a 5 (forte), padrão 5. Valores menores deixam o original mais visível.
+Ajusta a proporção de mistura do desfoque, não seu raio.","Від 1 (слабко) до 5 (сильно), типово 5. За нижчих значень оригінал більше просвічує.
+Регулює частку розмиття, а не його радіус.","1 (zayıf) ile 5 (güçlü), varsayılan 5. Düşük değerlerde özgün görüntü daha çok görünür.
+Bulanıklaştırma yarıçapını değil, karışım oranını ayarlar."
+"","Adv Overlay Blur Unavailable","실시간 창 블러를 초기화하지 못했습니다. Windows 11 이상이 필요합니다. 기본 배경으로 표시합니다.","Could not initialize live window blur. Windows 11 or later is required. The default background will be used.","ウィンドウのリアルタイムぼかしを初期化できませんでした。Windows 11以降が必要です。標準の背景を表示します。","无法初始化窗口实时模糊。需要Windows 11或更高版本。将使用默认背景。","Tidak dapat menginisialisasi efek buram jendela langsung. Diperlukan Windows 11 atau lebih baru. Latar bawaan akan digunakan.","Не удалось включить размытие окна в реальном времени. Требуется Windows 11 или новее. Будет использован обычный фон.","Não foi possível iniciar o desfoque da janela em tempo real. É necessário o Windows 11 ou posterior. O fundo padrão será usado.","Не вдалося ввімкнути розмиття вікна в реальному часі. Потрібна Windows 11 або новіша версія. Буде використано звичайне тло.","Gerçek zamanlı pencere bulanıklaştırması başlatılamadı. Windows 11 veya üzeri gerekir. Varsayılan arka plan kullanılacak."
+"","Debug Overlay Adaptive Method","오버레이 어댑티브(적응형) 방식","Overlay adaptive method","オーバーレイの適応型方式","叠加窗口自适应方式","Metode adaptif overlay","Адаптивная обработка оверлея","Método adaptativo da sobreposição","Адаптивна обробка накладання","Yer paylaşımı uyarlamalı yöntemi"
+"","Debug Overlay Adaptive Method Legacy","1 - 기존 방식 (방향 보간)","1 - Legacy (directional interpolation)","1 - 従来方式（方向補間）","1 - 原有方式（方向插值）","1 - Lama (interpolasi arah)","1 — Прежний (интерполяция по направлениям)","1 - Anterior (interpolação direcional)","1 — Попередній (інтерполяція за напрямками)","1 - Önceki (yönlü enterpolasyon)"
+"","Debug Overlay Adaptive Method New","2 - 새 방식 (Navier–Stokes)","2 - New (Navier–Stokes)","2 - 新方式（Navier–Stokes）","2 - 新方式（Navier–Stokes）","2 - Baru (Navier–Stokes)","2 — Новый (Навье–Стокс)","2 - Novo (Navier–Stokes)","2 — Новий (Нав’є–Стокс)","2 - Yeni (Navier–Stokes)"
+"","Debug Overlay Adaptive Method Info","출력 방식 ‘어댑티브(적응형)’에서 다음 OCR부터 적용됩니다.
+현재 실행 중에만 유지되며 재시작하면 1번으로 돌아갑니다.","Applies to Adaptive output starting with the next OCR pass.
+Session only; resets to method 1 when the app restarts.","「適応型」表示で次のOCRから適用されます。
+現在のセッションのみ有効で、再起動すると方式1に戻ります。","仅对“自适应”显示生效，从下一次OCR开始应用。
+仅在当前运行期间保留，重启后恢复为方式1。","Berlaku untuk tampilan Adaptif mulai OCR berikutnya.
+Hanya untuk sesi ini; kembali ke metode 1 saat aplikasi dimulai ulang.","Применяется к адаптивному отображению со следующего распознавания.
+Действует только в текущем сеансе; после перезапуска выбирается способ 1.","Aplica-se à exibição Adaptativa a partir do próximo OCR.
+Válido apenas nesta sessão; volta ao método 1 ao reiniciar o aplicativo.","Застосовується до адаптивного відображення з наступного розпізнавання.
+Діє лише в поточному сеансі; після перезапуску вибирається спосіб 1.","Bir sonraki OCR işleminden itibaren Uyarlamalı çıktıya uygulanır.
+Yalnızca bu oturum için geçerlidir; uygulama yeniden başlatılınca yöntem 1'e döner."

@@ -26,6 +26,7 @@ namespace MORT.Service.ProcessTranslateService
             bool useAttachedCapture,
             bool requireOriginalScreen)
         {
+            requireOriginalScreen |= AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.Restore;
             if(useAttachedCapture)
             {
                 CreateModelsFromCapture(
@@ -161,7 +162,7 @@ namespace MORT.Service.ProcessTranslateService
                     continue;
                 }
 
-                ImgData imgData = CopyImageData(data, x, y, channels, index);
+                ImgData imgData = CopyImageData(data, x, y, channels, index, isGdiCapture: true);
                 imgDataList.Add(imgData);
                 if(requireOriginalScreen)
                 {
@@ -170,11 +171,15 @@ namespace MORT.Service.ProcessTranslateService
             }
         }
 
-        private static ImgData CopyImageData(IntPtr source, int width, int height, int channels, int index)
+        private static ImgData CopyImageData(IntPtr source, int width, int height, int channels, int index, bool isGdiCapture = false)
         {
             var data = new byte[width * height * channels];
             Marshal.Copy(source, data, 0, data.Length);
             Marshal.FreeHGlobal(source);
+            if(isGdiCapture)
+            {
+                NormalizeGdiCaptureAlpha(data, channels);
+            }
             return new ImgData
             {
                 channels = channels,
@@ -228,7 +233,7 @@ namespace MORT.Service.ProcessTranslateService
                 ref positionX,
                 ref positionY,
                 true);
-            CopyOriginalImage(imgData, original, originalX, originalY, originalChannels);
+            CopyOriginalImage(imgData, original, originalX, originalY, originalChannels, isGdiCapture: true);
         }
 
         private static void CopyOriginalImage(
@@ -236,7 +241,8 @@ namespace MORT.Service.ProcessTranslateService
             IntPtr source,
             int width,
             int height,
-            int channels)
+            int channels,
+            bool isGdiCapture = false)
         {
             if(source == IntPtr.Zero)
             {
@@ -246,10 +252,30 @@ namespace MORT.Service.ProcessTranslateService
             var originalData = new byte[width * height * channels];
             Marshal.Copy(source, originalData, 0, originalData.Length);
             Marshal.FreeHGlobal(source);
+            if(isGdiCapture)
+            {
+                NormalizeGdiCaptureAlpha(originalData, channels);
+            }
             imgData.originalX = width;
             imgData.originalY = height;
             imgData.originalChannels = channels;
             imgData.originalData = originalData;
+        }
+
+        private static void NormalizeGdiCaptureAlpha(byte[] pixels, int channels)
+        {
+            //GetDIBits의 32비트 BI_RGB는 BGRA가 아닌 BGRX다. 활성 창/화면 캡처의
+            //예약 바이트를 알파로 읽으면 정상 RGB도 투명 픽셀로 제외된다.
+            //WGC 및 이미지 입력의 실제 알파는 이 변환을 거치지 않는다.
+            if(channels != 4)
+            {
+                return;
+            }
+
+            for(int index = 3; index < pixels.Length; index += 4)
+            {
+                pixels[index] = 255;
+            }
         }
     }
 }

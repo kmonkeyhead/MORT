@@ -123,6 +123,7 @@ namespace MORT.Service.Debug
                     MinAutoFontSize = AdvencedOptionManager.MinAutoFontSize,
                     MaxAutoFontSize = AdvencedOptionManager.MaxAutoFontSize,
                     KeepSourceDirection = AdvencedOptionManager.OverlayKeepSourceDirection,
+                    BlurMode = AdvencedOptionManager.OverlayOutputMode.ToString(),
                     UseFontOutline = AdvencedOptionManager.OverlayUseFontOutline,
                     AutoColor = AdvencedOptionManager.OverlayAutoColor,
                     AutoBackgroundColor = AdvencedOptionManager.OverlayAutoBackgroundColor,

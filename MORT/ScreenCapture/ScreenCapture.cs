@@ -49,22 +49,24 @@ namespace MORT.ScreenCapture
 
         public void StartDataCapture()
         {
-            capture.isStartCapture = true;
+            var current = capture;
+            if(current != null) current.isStartCapture = true;
         }
 
         public bool GetData(ref byte[] array, ref int x, ref int y, ref int positionX, ref int positionY)
         {
             bool isSuccess = false;
 
-            if(capture == null)
+            var current = capture;
+            if(current == null)
             {
                 return false;
             }
 
-            if (capture.AvailableGetData)
+            if (current.AvailableGetData)
             {
                 isSuccess = true;
-                capture.GetLastData(ref x, ref y, ref positionX, ref positionY, ref array);
+                current.GetLastData(ref x, ref y, ref positionX, ref positionY, ref array);
 
             }
 
@@ -75,6 +77,8 @@ namespace MORT.ScreenCapture
         public void StopCapture()
         {
             capture?.Dispose();
+            capture = null;
         }
+
     }
 }

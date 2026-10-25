@@ -1,4 +1,4 @@
-﻿using MORT.SettingData;
+using MORT.SettingData;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -106,6 +106,9 @@ namespace MORT
         public const string KeyOverlayAutoFontColor = "@OverlayAutoFontColor ";
         public const string KeyOverlayUseFontOutline = "@OverlayUseFontOutline ";
         public const string KeyOverlayUseBackgroundAlpha = "@OverlayUseBackgroundAlpha ";
+        public const string KeyOverlayOutputMode = "@OverlayOutputMode ";
+        public const string KeyOverlayRestoreLevel = "@OverlayRestoreLevel ";
+        public const string KeyOverlayBlurLevel = "@OverlayBlurLevel ";
         public const string KEY_FONT_AUTO_SIZE = "@OVERLAY_FONT_AUTO_SIZE ";
         public const string KEY_FONT_AUTO_MIN_SIZE = "@OVERLAY_FONT_AUTO_MIN_SIZE ";
         public const string KEY_FONT_AUTO_MAX_SIZE = "@OVERLAY_FONT_AUTO_MAX_SIZE ";
@@ -187,6 +190,9 @@ namespace MORT
             public ISettingData<bool> OverlayAutoFontColor;
             public ISettingData<bool> OverlayUseFontOutline;
             public ISettingData<bool> OverlayUseBackgroundAlpha;
+            public ISettingData<int> OverlayOutputMode;
+            public ISettingData<int> OverlayRestoreLevel;
+            public ISettingData<int> OverlayBlurLevel;
             public ISettingData<bool> EnableAdvencedHideTransform;
 
             public ISettingData<string> BasicFont;
@@ -405,6 +411,39 @@ namespace MORT
         public static bool OverlayAutoFontColor => data.OverlayAutoFontColor.Value;
         public static bool OverlayUseFontOutline => data.OverlayUseFontOutline.Value;
         public static bool OverlayUseBackgroundAlpha => data.OverlayUseBackgroundAlpha.Value;
+        //기존 진단 값(0/1/3)을 보존한다. 누락되거나 지원하지 않는 값은 기본 출력이다.
+        public static Model.OverlayBlurMode OverlayOutputMode => NormalizeOverlayOutputMode(data.OverlayOutputMode?.Value ?? 0);
+        public static int OverlayRestoreLevel
+        {
+            get
+            {
+                int level = data.OverlayRestoreLevel?.Value ?? 2;
+                //정수 파싱 실패나 아직 초기화하지 않은 설정의 0도 기본 강도로 처리한다.
+                return level == 0 ? 2 : Math.Clamp(level, 1, 5);
+            }
+        }
+        public static int OverlayBlurLevel => Math.Clamp(data.OverlayBlurLevel?.Value ?? 5, 1, 5);
+
+        public static void SetOverlayBlurLevel(int level)
+        {
+            data.OverlayBlurLevel.Value = Math.Clamp(level, 1, 5);
+        }
+
+        public static void SetOverlayRestoreLevel(int level)
+        {
+            data.OverlayRestoreLevel.Value = Math.Clamp(level, 1, 5);
+        }
+
+        private static Model.OverlayBlurMode NormalizeOverlayOutputMode(int value)
+        {
+            return value == (int)Model.OverlayBlurMode.Window ? Model.OverlayBlurMode.Window
+                : value == (int)Model.OverlayBlurMode.Restore ? Model.OverlayBlurMode.Restore : Model.OverlayBlurMode.None;
+        }
+
+        public static void SetOverlayOutputMode(Model.OverlayBlurMode mode)
+        {
+            data.OverlayOutputMode.Value = (int)NormalizeOverlayOutputMode((int)mode);
+        }
         public static bool UseAutoMerge => data.UseAutoMerge.Value;
         public static bool OverlayKeepSourceDirection => data.OverlayKeepSourceDirection.Value;
         public static bool IsAutoFontSize
@@ -724,6 +763,9 @@ namespace MORT
             data.OverlayAutoFontColor = SettingDataFactory.Create<bool>(KeyOverlayAutoFontColor, data.ParseList, true);
             data.OverlayUseFontOutline = SettingDataFactory.Create<bool>(KeyOverlayUseFontOutline, data.ParseList, false);
             data.OverlayUseBackgroundAlpha = SettingDataFactory.Create<bool>(KeyOverlayUseBackgroundAlpha, data.ParseList, false);
+            data.OverlayOutputMode = SettingDataFactory.Create<int>(KeyOverlayOutputMode, data.ParseList, 0);
+            data.OverlayRestoreLevel = SettingDataFactory.Create<int>(KeyOverlayRestoreLevel, data.ParseList, 2);
+            data.OverlayBlurLevel = SettingDataFactory.Create<int>(KeyOverlayBlurLevel, data.ParseList, 5);
             data.UseAutoSizeFont = SettingDataFactory.Create<bool>(KEY_FONT_AUTO_SIZE, data.ParseList, false);
             data.MinAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MIN_SIZE, data.ParseList, 10);
             data.MaxAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MAX_SIZE, data.ParseList, 50);

@@ -152,6 +152,7 @@ namespace MORT.Model.Debug
 
     public record OcrDebugOverlayInfo
     {
+        public string BlurMode { get; init; } = "None";
         public OcrDebugPaintTiming Timing { get; init; }
         public OcrDebugRect FormRect { get; init; }
         public bool IsAutoFontSize { get; init; }

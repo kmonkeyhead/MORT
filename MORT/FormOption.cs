@@ -1086,6 +1086,13 @@ namespace MORT
                 ApplyTopMostOptionWhenTranslate(AdvencedOptionManager.UseTopMostOptionWhenTranslate);
                 ApplyBasicFont();
                 ApplyAutoMergeText();
+                if(FormManager.Instace.MyOverTransForm?.RefreshOverlayOutput() == false)
+                {
+                    string message = LocalizeManager.LocalizeManager.GetLocalizeString("Adv Overlay Blur Unavailable");
+                    if(string.IsNullOrWhiteSpace(message) || message == "Adv Overlay Blur Unavailable")
+                        message = "실시간 창 블러를 초기화하지 못했습니다. Windows 11 이상이 필요합니다. 기본 배경으로 표시합니다.";
+                    MessageBox.Show(message);
+                }
                 ShowResultFont();
                 ApplyTranslateMemory();
 
