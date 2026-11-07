@@ -73,15 +73,27 @@ namespace MORT
         {
             var drawn = new HashSet<int>();
             if(!_isStart || AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.Restore) return drawn;
+            //한 페인트 안에서는 모든 영역이 같은 완성 결과를 사용한다.
+            var live = _adaptiveRefresh?.Latest;
             //영역별 패치를 먼저 한 번만 그린다. 뒤쪽 블록의 배경이 앞쪽 번역문을 덮으면 안 된다.
             foreach(var block in blocks)
             {
                 OverlayBlurFrame frame = block.TargetData.BlurFrame;
-                var live = _adaptiveRefresh?.Latest;
-                if(live != null && ReferenceEquals(live.Scene, _adaptiveScene))
-                    live.Frames.TryGetValue(block.TargetData.Index, out frame);
+                Rectangle imageRect = block.CaptureImageRect;
+                if(_allowLiveAdaptive)
+                {
+                    //새 장면을 처리 중이어도 마지막 완성 배경을 쓴다. 스냅샷 배경과 섞지 않는다.
+                    frame = null;
+                    var area = live?.Scene.Areas.FirstOrDefault(area => area.Index == block.TargetData.Index);
+                    if(area != null && live.Frames.TryGetValue(area.Index, out frame))
+                    {
+                        //이전 패치를 새 캡처 크기로 늘리지 않고 원래 화면 위치에 유지한다.
+                        imageRect = area.ScreenRect;
+                        imageRect.Offset(-Location.X, -Location.Y);
+                    }
+                }
                 if(frame == null || frame.Mode != OverlayBlurMode.Restore
-                    || block.CaptureImageRect.Width <= 0 || block.CaptureImageRect.Height <= 0
+                    || imageRect.Width <= 0 || imageRect.Height <= 0
                     || !drawn.Add(block.TargetData.Index)) continue;
                 Bitmap image = GetCaptureBackgroundImage(block.TargetData.Index, frame);
                 GraphicsState saved = graphics.Save();
@@ -90,7 +102,7 @@ namespace MORT
                     graphics.SetClip(block.CaptureRect, CombineMode.Intersect);
                     graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
                     graphics.PixelOffsetMode = PixelOffsetMode.Half;
-                    RectangleF destination = block.CaptureImageRect;
+                    RectangleF destination = imageRect;
                     if(frame.SourceRect.Width > 0 && frame.SourceRect.Height > 0 && frame.SourceSize.Width > 0 && frame.SourceSize.Height > 0)
                     {
                         float sx = destination.Width / frame.SourceSize.Width, sy = destination.Height / frame.SourceSize.Height;
@@ -215,7 +227,7 @@ namespace MORT
         protected override void OnLocationChanged(EventArgs e)
         {
             base.OnLocationChanged(e);
-            StopAdaptiveBackground();
+            //다음 페인트에서 새 좌표를 게시한다. 그때까지 완성 배경의 화면 좌표를 유지한다.
             if(IsHandleCreated) RequestOverlayPaint();
 
             if(IsHandleCreated && _windowBlurRects != null) PresentWindowBlur();
