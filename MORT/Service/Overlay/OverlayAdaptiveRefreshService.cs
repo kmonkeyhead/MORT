@@ -49,7 +49,10 @@ namespace MORT.Service.Overlay
                 }
                 scene?.Capture?.SetAdaptiveCapture(true, Math.Clamp(scene.TargetFps, 1, 120));
                 _requestPaint = requestPaint;
-                Volatile.Write(ref _latest, null);
+                //마스크/영역 갱신 중에는 마지막 완성 배경을 유지한다. 수명이나 캡처 소스가 바뀌면 해제한다.
+                if(scene == null || _scene == null || !ReferenceEquals(_scene.Capture, scene.Capture)
+                    || _scene.DesktopBounds != scene.DesktopBounds)
+                    Volatile.Write(ref _latest, null);
                 Volatile.Write(ref _scene, scene);
                 if(scene != null) _worker ??= Task.Factory.StartNew(Run, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                 if(_wake.CurrentCount == 0) _wake.Release();
@@ -95,7 +98,9 @@ namespace MORT.Service.Overlay
                             Action? notify = null;
                             lock(_gate)
                             {
-                                if(!_disposed && ReferenceEquals(scene, _scene))
+                                //일부 영역의 캡처가 준비되지 않았으면 이전 완성 결과 전체를 유지한다.
+                                if(!_disposed && ReferenceEquals(scene, _scene)
+                                    && frames.Count > 0 && frames.Count == scene.Areas.Length)
                                 {
                                     Volatile.Write(ref _latest, new OverlayAdaptiveOutput(scene, frames));
                                     Interlocked.Increment(ref CompletedFrames);
@@ -111,17 +116,7 @@ namespace MORT.Service.Overlay
                     }
                     catch(Exception ex) when(ex is not OperationCanceledException)
                     {
-                        //실패한 캡처는 재사용하지 않는다. 정지/설정 변경 시 UI를 기다리지 않는다.
-                        Action? notify = null;
-                        lock(_gate)
-                        {
-                            if(!_disposed && ReferenceEquals(scene, _scene))
-                            {
-                                Volatile.Write(ref _latest, new OverlayAdaptiveOutput(scene, new()));
-                                notify = _requestPaint;
-                            }
-                        }
-                        notify?.Invoke();
+                        //실패한 입력을 게시하지 않는다. 마지막 완성 배경은 다음 성공까지 그대로 둔다.
                         if(Environment.TickCount64 - lastError > 1000)
                         {
                             lastError = Environment.TickCount64;

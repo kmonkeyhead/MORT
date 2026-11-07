@@ -665,12 +665,15 @@ namespace MORT
                         g.DrawRectangle(debugPen, block.SourceRect);
                     }
                 }
-                else if(_isStart && Form1.IsDebugShowWordArea)
+                else if(_isStart && AdvencedOptionManager.OverlayOutputMode != MORT.Model.OverlayBlurMode.Restore
+                    && Form1.IsDebugShowWordArea)
                 {
                     using var debugBrush = new SolidBrush(Color.FromArgb(90, 0, 0, 0));
                     g.FillRectangle(debugBrush, block.SourceRect);
                 }
-                else if(_isStart && FormManager.Instace.MyMainForm.MySettingManager.NowIsUseBackColor)
+                //적응형의 첫 완성 배경이 없으면 투명하게 둔다. 일반 배경색으로 대체하지 않는다.
+                else if(_isStart && AdvencedOptionManager.OverlayOutputMode != MORT.Model.OverlayBlurMode.Restore
+                    && FormManager.Instace.MyMainForm.MySettingManager.NowIsUseBackColor)
                 {
                     drawBackground = true;
                     Color background = GetOverlayBackgroundColor(FormManager.Instace.MyMainForm.MySettingManager.BackgroundColor);
