@@ -1,4 +1,9 @@
 {
+  "MORT/TransAPI/HdTransAPI.cs": {
+    "category": "번역 API",
+    "intent": "배포된 x64 hdTrans 엔진을 직접 호출해 오프라인 일본어→한국어 번역을 제공한다.",
+    "operation": "실행 폴더의 ExternDll/hdTransEngine.dll을 지연 로드하고 UTF-8 C API를 호출한다. 초기화·번역·종료를 같은 잠금으로 보호하며 반환 메모리는 엔진 함수로 해제한다. 실패는 오류 문자열과 isError로 전달하고 초기화 실패 후 다시 로드할 수 있다."
+  },
   "MORT/Model/OverlayAdaptiveScene.cs": {
     "category": "오버레이 적응형 모델",
     "intent": "배경 갱신 입력과 완성 결과를 OCR 결과 객체에서 분리한다.",
@@ -133,11 +138,6 @@
     "category": "시작 UI",
     "intent": "애플리케이션 초기화 동안 로고와 버전 정보를 보여주는 시작용 폼이다.",
     "operation": "폼 표시 후 초기화 진행과 닫기 타이밍을 메인 시작 흐름에 맞추며 사용자 입력 기능은 최소화한다."
-  },
-  "MORT/PipeServer/PipeServer.cs": {
-    "category": "EzTrans IPC 서버",
-    "intent": "메인 x64 프로세스와 EzTrans를 호출하는 별도 클라이언트 사이의 Named Pipe 요청·응답과 프로세스 수명을 관리한다.",
-    "operation": "PipeClient 프로세스를 시작하고 서버 파이프 연결을 기다린 뒤 번역 문자열을 전송하고 응답을 읽으며 연결 오류 시 상태를 정리한다."
   },
   "MORT/QuickSetting/UIQuickSetting.cs": {
     "category": "빠른 설정 UI",

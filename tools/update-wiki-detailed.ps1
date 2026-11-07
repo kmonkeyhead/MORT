@@ -146,12 +146,6 @@ function Get-FileExplanation([string]$Path, [string[]]$TypeNames, [string[]]$Met
             $result.operation = "OAuth 토큰을 준비해 시트 범위를 읽고 원문-번역 매핑을 메인 앱에 반환한다."
             break
         }
-        "^PipeClient/" {
-            $result.category = "EzTrans IPC 클라이언트"
-            $result.intent = "$typeText 타입으로 메인 앱과 분리된 프로세스에서 EzTrans 요청을 받고 네이티브 번역 결과를 돌려준다."
-            $result.operation = "Named Pipe 연결을 열고 요청 문자열을 읽어 EzTrans에 전달한 뒤 응답을 같은 파이프로 기록한다."
-            break
-        }
         "^Updater/" {
             $result.category = "업데이트"
             $result.intent = "$typeText 타입으로 메인 앱 종료 이후 업데이트 파일 다운로드, 교체, 재실행 과정을 담당한다."
@@ -181,7 +175,7 @@ $fileOverrides = Get-Content -LiteralPath $fileOverridesPath -Raw -Encoding UTF8
 $excluded = "[\\/](bin|obj|\.git|packages)[\\/]"
 $sourceFiles = @(
     Get-ChildItem -LiteralPath $RepositoryRoot -Recurse -File -Filter "*.cs" |
-        Where-Object { $_.FullName -notmatch $excluded } |
+        Where-Object { $_.FullName -notmatch $excluded -and (Get-RelativePath $RepositoryRoot $_.FullName) -notlike 'PipeClient/*' } |
         Sort-Object FullName
 )
 

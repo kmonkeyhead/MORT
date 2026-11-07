@@ -117,7 +117,7 @@ namespace MORT
             lbSheetID.LocalizeLabel("Sheet ID");
             lbSheetSecret.LocalizeLabel("Sheet Secret");
             button_RemoveAllGoogleToekn.LocalizeLabel("Clear Sheet Toekn");
-            lbEzTransInfo.LocalizeLabel("EzTrans Info");
+            lbHdTransInfo.LocalizeLabel("HdTrans Info");
             lbDeepLInfo.LocalizeLabel("DeepL_Information");
             btnCheckDeeplState.LocalizeLabel("DeepL_CheckState");
             lbDeepLStatus.LocalizeLabel("DeepL_RequireApply");

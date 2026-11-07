@@ -1,5 +1,25 @@
 [
   {
+    "name": "hdTrans 오프라인 일본어 번역",
+    "intent": "배포된 x64 엔진으로 일본어를 한국어로 번역한다.",
+    "entry": "번역 방식의 hdTrans 선택 → TransManager.GetTransLinesAsync → HdTransAPI.GetResult",
+    "implementation": [
+      "번역기 목록, 고급 단축키 이름·설명, 전환 알림, 안내와 엔진 오류는 localize.csv의 HdTrans 관련 키로 표시한다. 사용자의 명시적 요청으로 CSV에 항목을 추가해 ko 열은 하드트랜스, en 열은 hdTrans로 기록했다. 다른 언어 열은 기존 영어 표시를 유지한다. 한국어 판별 분기나 제품명 치환을 쓰지 않는다. DLL 경로·네이티브 함수명·enum·설정 키는 표시 이름과 별개인 기존 식별자다.",
+      "2026-11-07에 공식 Windows 배포판 v0.9.3(사전 0.9.3+5fa3c580a6fe)으로 갱신했다. ZIP SHA-256은 07034dc25c4be3cc35aa26ddd61ae6b6b20547c0837129e50a079a8af362af0a이며 GitHub 릴리스 asset digest와 대조했다. v0.6.0의 hdTrans 폴더 대신 hdtrans-data를 사용한다. 기존 설치를 갱신할 때는 hdTrans/user의 실제 사용자 파일을 hdtrans-data/user로 옮겨야 한다.",
+      "사용자 요청으로 ezTrans를 제거하고 기존 enum 슬롯 8을 hdTrans로 대체했다. customApi=9, chromeBridge=10은 유지하며 뒤에 추가했던 hdTrans=11 항목은 없앴다. 기존 ezTrans 문자열 설정은 hdTrans로 읽고 새 저장은 hdTrans 이름을 쓴다. 번역 목록에는 hdTrans가 한 번만 표시된다.",
+      "ezTrans 패널, API, MORT Named Pipe 서버와 실행 분기를 제거했다. PipeClient 소스는 보관하되 솔루션과 위키 스캔에서 제외한다. 빠른 설정의 일본어 번역과 기존 ezTrans 단축키 슬롯은 hdTrans를 선택한다. 옛 @HOTKEY_0_EzTrans 키는 새 HdTrans 키가 없을 때만 읽고 이후 HdTrans로 저장한다.",
+      "HdTransAPI를 DI singleton으로 등록하고 번역 시작 전 공통 초기화 루틴에서 실행 폴더 기준 ExternDll/hdTransEngine.dll을 절대 경로로 로드한다. hdTrans_Initialize(NULL)은 DLL 옆 hdtrans-data/dicts.hdsnap과 hdtrans-data/user의 설정을 읽는다.",
+      "각 OCR 영역을 별도로 번역하고 MORT가 구분 토큰을 붙인다. 사용자 번역을 우선하며 이전 결과 캐시는 사용하지 않아 다음 엔진 호출에서 사용자 사전 변경을 반영할 수 있다. 동일 OCR 결과 자체를 생략하는 기존 처리는 유지한다.",
+      "UTF-8 바이트 길이와 size_t를 사용하며 반환 버퍼는 finally에서 hdTrans_FreeMem으로 해제한다. 초기화, 번역, 종료는 같은 잠금으로 직렬화한다. 중지는 영역 사이에서 확인하며 이미 실행 중인 네이티브 호출은 완료를 기다린다.",
+      "배포 파일은 MORT 저장소 밖의 별도 HdTrans 폴더에서 수동 관리한다. MORT 소스의 ExternDll은 제거하고 Git에서 제외하며 빌드·게시 복사 항목도 없다. 사용자가 빌드 또는 게시 후 MORT.exe 옆 ExternDll에 x64 hdTransEngine.dll과 hdtrans-data/dicts.hdsnap을 직접 배치한다. dicts.txt는 버전 확인용이며 사용자 설정·사전은 필요할 때만 수동 추가한다. 단일 실행 파일 게시에서도 같은 외부 배치를 사용한다."
+    ],
+    "operation": ["번역 방식에서 hdTrans를 선택하고 적용한다.", "일본어 OCR 결과를 영역별로 번역한다. 원문/목표 언어 설정과 무관하게 일본어→한국어로 동작한다.", "앱 종료 시 TransManager.Dispose가 엔진 종료와 DLL 해제를 수행한다."],
+    "state": "설정 적용만으로는 엔진을 로드하지 않으며 번역 시작 시 초기화를 확인한다. 번역 중에는 재사용한다. 초기화 실패 시 DLL을 해제하므로 파일 복구 후 다시 시도할 수 있다.",
+    "failures": "DLL 누락, 아키텍처 불일치, 사전 초기화 실패는 번역 시작 공통 루틴에서 현재 하드트랜스를 사용할 수 없습니다. 팝업을 표시하고 CanStart=false로 OCR 작업 시작을 막는다. 클립보드 등 직접 번역 요청도 초기화를 검사하여 번역 대신 같은 안내를 반환한다. 상세 원인은 로그에 남긴다. 네이티브 호출 강제 중단은 지원하지 않는다.",
+    "example": "今日は本を読みます。 → 오늘은 책을 읽습니다. 기본 파일은 ExternDll/hdTransEngine.dll 및 ExternDll/hdtrans-data/dicts.hdsnap이며 사용자 사전은 ExternDll/hdtrans-data/user/userdict.txt에 UTF-8로 둔다.",
+    "files": ["MORT/TransAPI/HdTransAPI.cs", "MORT/Manager/TransManager.cs", "MORT/SettingManager.cs", "MORT/Service/TranslateTyp/TranslateTypListService.cs", "MORT/Service/TranslateLanguage/TranslateLanguageService.cs", "MORT/Program.cs", "MORT/Form1.cs", "MORT/Form1.Designer.cs", "MORT/FormLocalize.cs", "MORT/MORT.csproj"]
+  },
+  {
     "name": "OneOCR spatial merge and collision-safe overlay",
     "intent": "Keep separate speech bubbles, names, and sentence boundaries independent while fitting translated text inside non-overlapping owned regions.",
     "entry": "OCRDataManager.ResultData.InitLine and TransFormOver.AddText",
@@ -113,12 +133,12 @@
   },
   {
     "name": "번역 제공자 선택, 분할, 캐시",
-    "intent": "온라인 API, 웹 자동화, 로컬 DB, EzTrans를 하나의 진입점에서 선택하되 제공자별 인증·언어 코드·취소 특성을 잃지 않는다.",
+    "intent": "온라인 API, 웹 자동화, 로컬 DB, hdTrans를 하나의 진입점에서 선택하되 제공자별 인증·언어 코드·취소 특성을 잃지 않는다.",
     "entry": "TransManager.StartTrans",
     "implementation": [
       "번역기별 언어 코드 표는 TransManager에서 TranslateLanguageService로 옮겼다. 번역 언어를 한 쌍으로 합치면서 코드 변환이 설정·UI·번역기 초기화에 모두 걸리게 되어, 매니저 안에 두면 UI를 채우는 일까지 매니저가 계속 하게 된다.",
       "TransManager는 TransType과 언어 코드 매핑을 기준으로 제공자를 선택한다. 사용자 번역 사전과 이전 결과 파일을 먼저 확인해 동일 문장 호출을 줄인다.",
-      "GetTransLinesAsync는 다중 문자열을 제공자 특성에 맞게 묶거나 나눈다. Gemini는 프롬프트와 응답 한도를 고려한 분할 경로를 사용하며 db와 EzTrans는 네트워크 API와 다른 방식으로 처리한다.",
+      "GetTransLinesAsync는 다중 문자열을 제공자 특성에 맞게 묶거나 나눈다. Gemini는 프롬프트와 응답 한도를 고려한 분할 경로를 사용하며 db와 hdTrans는 네트워크 API와 다른 방식으로 처리한다.",
       "각 TransAPI 클래스는 인증, 요청 형식, 응답 파싱을 소유한다. Manager는 선택과 공통 캐시를 담당하고 제공자 세부 구현을 한 형식으로 억지로 통합하지 않는다.",
       "Google Basic은 현재 Google 웹 번역의 MkEWBc batchexecute를 먼저 호출하고, 실패하면 기존 gtx, 두 정상 품질 경로가 모두 실패하면 dict-chrome-ex 저품질 경로를 사용한다. 저품질 상태는 번역 패널에 계속 표시하며, 번역 결과의 [저품질] 접두사는 디버그 탭의 '번역 결과에 [저품질] 표시하기'를 켠 경우에만 추가한다."
     ],
@@ -126,7 +146,7 @@
     "state": "제공자별 API 키, Naver 키 순환 상태, Gemini 모델/명령, DeepL WebView, 취소 토큰, 이전 결과 사전이 유지된다.",
     "failures": "빈 결과, 인증 실패, 한도 초과, 취소를 같은 문자열 오류로 합치면 재시도 정책이 틀어진다. 제공자별 오류 플래그를 공통 결과로 넘길 때 의미를 보존한다.",
     "example": "Papago Web 장애 수정은 PapagoWebTranslateAPI의 요청/파싱만 확인하는 것으로 끝나지 않는다. TransManager가 오류 결과를 캐시에 저장하지 않는지와 UI 재시도 흐름도 확인한다.",
-    "files": ["MORT/Manager/TransManager.cs", "MORT/TransAPI/GoogleBasicTranslateAPI.cs", "MORT/TransAPI/NaverTranslateAPI.cs", "MORT/TransAPI/PapagoWebTranslateAPI.cs", "MORT/TransAPI/DeepLAPITranslateAPI.cs", "MORT/TransAPI/DeepLTranslateAPI.cs", "MORT/TransAPI/GeminiTranslatorAPI.cs", "MORT/TransAPI/CustomAPI.cs", "MORT/TransAPI/EzTransAPI.cs"]
+    "files": ["MORT/Manager/TransManager.cs", "MORT/TransAPI/GoogleBasicTranslateAPI.cs", "MORT/TransAPI/NaverTranslateAPI.cs", "MORT/TransAPI/PapagoWebTranslateAPI.cs", "MORT/TransAPI/DeepLAPITranslateAPI.cs", "MORT/TransAPI/DeepLTranslateAPI.cs", "MORT/TransAPI/GeminiTranslatorAPI.cs", "MORT/TransAPI/CustomAPI.cs", "MORT/TransAPI/HdTransAPI.cs"]
   },
   {
     "name": "번역 언어 통합 설정",
@@ -134,7 +154,7 @@
     "entry": "MORT/Service/TranslateLanguage/TranslateLanguageService.cs 와 SettingManager.TransLanguageFrom / TransLanguageTo",
     "implementation": [
       "언어 표는 TranslateLanguageService 한 곳에만 있다. 언어 하나가 키(en, ja, zh-CN …)와 OCR 코드, 파파고 코드, 구글 코드, DeepL 코드를 함께 들고 있고, 같은 언어라도 번역기마다 코드가 다르다. 중국어 간체는 파파고가 zh-CN, DeepL이 ZH-HANS 다. 이 표는 예전 TransManager.InitTransCode 에 있던 것을 값 그대로 옮겼다. 코드 값을 바꾸면 기존 사용자의 번역 언어가 조용히 달라진다.",
-      "번역기와 코드 묶음의 연결은 GetFamily 하나가 정한다. naver·papago_web은 파파고 코드, deepl·deeplApi는 DeepL 코드, google·google_url·gemini·chromeBridge·customApi는 구글 코드를 쓴다. db와 EzTrans는 번역 언어를 쓰지 않는다. 번역기가 늘어나면 여기 한 줄만 는다.",
+      "번역기와 코드 묶음의 연결은 GetFamily 하나가 정한다. naver·papago_web은 파파고 코드, deepl·deeplApi는 DeepL 코드, google·google_url·gemini·chromeBridge·customApi는 구글 코드를 쓴다. db와 hdTrans는 번역 언어를 쓰지 않는다. 번역기가 늘어나면 여기 한 줄만 는다.",
       "SettingManager는 이제 통합 키 두 개만 저장하고, NaverTransCode·GoogleTransCode·DeepLTransCode 같은 기존 속성은 그 키에서 만들어 내는 읽기 전용 속성이 됐다. 덕분에 TransAPI와 FormOption의 호출부는 그대로 두고도 값의 출처만 하나로 모을 수 있었다. 설정 파일에는 #TRANS_LANGUAGE_FROM/TO 를 새로 쓰고, 예전 키(#NAVER_TRANS_CODE 등)도 변환한 값으로 같이 적는다. 옛 버전으로 되돌아가도 언어가 초기화되지 않게 하기 위해서다. 읽을 때는 통합 키가 없을 때만 예전 키를 본다.",
       "예전 설정을 옮길 때 세 벌 중 어느 것을 믿을지는 저장된 번역 타입이 정한다. 사용자가 실제로 쓰던 번역기의 언어만이 맞는 값이고, 나머지 두 벌은 손대지 않아 기본값 그대로인 경우가 대부분이다. 셋을 섞거나 아무거나 고르면 쓰지도 않던 언어로 바뀐다. DeepL을 쓰며 ZH-HANT → ko 로 두었던 설정이 zh-TW → ko 로 옮겨지는 것을 확인했다.",
       "번역기가 지원하지 않는 언어도 목록에서 지우지 않고 고를 수 있게 두되, 고른 뒤에 안내 문구로 알린다. 예전처럼 번역기마다 목록을 걸러 두면 번역기를 바꿀 때 골라 둔 언어가 말없이 바뀐다. 실제 코드 변환에서도 빈 문자열 대신 구글 코드로 대신하는데, 빈 코드를 넘기면 번역기가 아무 말 없이 엉뚱하게 동작하기 때문이다.",
@@ -261,7 +281,7 @@
     "state": "현재/원격 버전, 다운로드 진행률, 교체 대상 경로, 파이프 연결, EzTrans DLL 로드 상태가 별도 프로세스에 걸쳐 유지된다.",
     "failures": "업데이트 폴더에 오래된 산출물이 섞이거나 네이티브 DLL 아키텍처가 맞지 않으면 C# 빌드는 성공해도 실행이 실패한다.",
     "example": "업데이트 관련 수정은 Updater 단독 성공뿐 아니라 MORT가 종료 대기와 임시 파일 정리를 올바르게 수행하는지 확인한다.",
-    "files": ["MORT/VersionCheck/VersionCheckLogic.cs", "Updater/Program.cs", "Updater/Updater.cs", "MORT/PipeServer/PipeServer.cs", "PipeClient/Program.cs", "PipeClient/PipeClient.cs", "PipeClient/PipeEzTransAPI.cs", "MORT/TransAPI/EzTransAPI.cs"]
+    "files": ["MORT/VersionCheck/VersionCheckLogic.cs", "Updater/Program.cs", "Updater/Updater.cs", "MORT/PipeServer/PipeServer.cs", "PipeClient/Program.cs", "PipeClient/PipeClient.cs", "PipeClient/PipeEzTransAPI.cs", "MORT/TransAPI/HdTransAPI.cs"]
   },
   {
     "name": "이미지 인식 결과 디버깅 스냅샷",

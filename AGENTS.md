@@ -18,7 +18,7 @@ MORT는 2013년부터 이어진 장기 유지보수 프로젝트로, **옛날 �
 - `TransManager`처럼 DI로 등록되어 있지만 `_instance`도 같이 유지하는 하이브리드 패턴도 OK
 
 ### 3. 호환성 묶인 구조 보존 (절대 변경 금지)
-- `SettingManager.TransType` enum 순서 (`google_url`, `db`, `papago_web`, `naver`, `google`, `deepl`, `deeplApi`, `gemini`, `ezTrans`, `customApi`)
+- `SettingManager.TransType` enum 순서 (`google_url`, `db`, `papago_web`, `naver`, `google`, `deepl`, `deeplApi`, `gemini`, `hdTrans`, `customApi`, `chromeBridge`). 사용자 요청으로 기존 ezTrans 슬롯 8을 hdTrans로 대체했으며 옛 ezTrans 문자열 설정은 hdTrans로 읽는다.
 - `SettingManager.OcrType` enum 순서 (`Tesseract=0`, `Window=1`, `OneOcr=2`, `Google=3`, `EasyOcr=4`)
 - `SettingManager.Skin` enum 순서 (`dark`, `layer`, `over`)
 - `@KEY ` 프리픽스 기반 텍스트 키-값 설정 포맷
@@ -47,25 +47,28 @@ MORT는 2013년부터 이어진 장기 유지보수 프로젝트로, **옛날 �
 ### 6. 로컬라이즈 CSV 직접 수정 금지
 - `Resources/localize.csv`는 구글 스프레드 시트에서 관리한다
 - 코드 작업 중 `Resources/localize.csv`를 직접 수정하지 않는다
+- 사용자가 번역 문구 변경을 요청하면 CSV 수정 요청으로 취급하며, 특정 언어만 변경하라는 명시가 없는 한 모든 지원 언어(ko/en/ja/zh-CN/id/ru/pt/uk/tr)를 같은 의미로 함께 수정한다. 한 언어만 수정하고 완료 처리하지 않는다.
 
 ## 프로젝트 구조 요약
 
-### 솔루션 (5개 프로젝트)
+### 솔루션 (4개 프로젝트)
 1. **MORT** — 메인 WinForms 앱 (.NET 9, x64)
 2. **CloudVision** — Google Cloud Vision OCR 래퍼
 3. **GSTrans** — Google Sheets 번역기
-4. **PipeClient** — EzTrans 연동용 IPC
-5. **Updater** — 업데이트 모듈 (AnyCPU)
+4. **Updater** — 업데이트 모듈 (AnyCPU)
+
+PipeClient는 ezTrans 제거에 따라 솔루션에서 제외되었다. 보관된 소스는 현재 빌드에 포함하지 않는다.
 
 ### 핵심 디렉토리
 - **진입점**: `Program.cs` → DI 구성 → `Form1`
 - **Manager**: `OcrManager`(싱글톤), `TransManager`(DI+싱글톤 하이브리드), `FormManager`(싱글톤), `OCRDataManager`
 - **Service**: `Service/Gemini/`, `Service/CustomApi/`, `Service/TranslateTyp/`, `Service/PythonService/`, `Service/ProcessTranslateService/`
-- **번역 API**: `TransAPI/` (Google, Naver, Papago Web, DeepL, DeepL API, Gemini, EzTrans, CustomAPI)
+- **번역 API**: `TransAPI/` (Google, Naver, Papago Web, DeepL, DeepL API, Gemini, hdTrans, CustomAPI)
 - **OCR API**: `OcrApi/OneOcr/`, `OcrApi/WindowOcr/`, `OcrApi/EasyOcr/` (+ Tesseract는 `MORT_CORE.DLL`)
 - **로컬라이즈**: `LocalizeManager/`, `Resources/localize.csv` (ko/en/ja/zh-CN/id/ru/pt/uk/tr)
 
 ### 외부 의존성
+- 하드트랜스 DLL·사전은 저장소 밖의 별도 `HdTrans` 폴더에서 관리하며, 빌드/게시 후 실행 폴더의 `ExternDll`에 수동 배치한다. `MORT/ExternDll`은 Git에서 제외하고 자동 복사 항목을 추가하지 않는다.
 - `MORT_CORE.DLL`, `nhocr.DLL` — 별도 C++ 프로젝트, 빌드 후 릴리즈 폴더에 압축해제 필요
 - `Google.GenAI` 패키지는 있지만 Gemini는 직접 REST 호출 사용
 

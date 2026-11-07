@@ -26,6 +26,13 @@ namespace MORT.Service.ProcessTranslateService
                 && AdvencedOptionManager.OverlayAutoColor;
             bool useGoogleOcr = false;
 
+            if(_settingManager.NowTransType == TransType.hdTrans
+                && (TransManager.Instace == null || !TransManager.Instace.TryInitializeHdTrans()))
+            {
+                FormManager.ShowPopupMessage(LocalizeString("HdTrans Name"), TransAPI.HdTransAPI.UnavailableMessage);
+                return new TranslationProcessInitializationResult(false, isOnce, false, requireOriginalScreen);
+            }
+
             if(_settingManager.OCRType == OcrType.Google)
             {
                 if(!isOnce)

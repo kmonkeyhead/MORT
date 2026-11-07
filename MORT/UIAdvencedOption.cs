@@ -1,4 +1,4 @@
-﻿using MORT.CustomControl;
+using MORT.CustomControl;
 using MORT.LocalizeManager;
 using MORT.Model.CustomApi;
 using MORT.Service.CustomApi;
@@ -110,7 +110,7 @@ namespace MORT
             AddHotKey(LocalizeString("Adv HotKey PaPago"), LocalizeString("Adv HotKey PaPago Info"), KeyInputLabel.KeyType.NaverTranslate, ctNaverTrans);
             AddHotKey(LocalizeString("Adv HotKey BasicTrans"), LocalizeString("Adv HotKey BasicTrans Info"), KeyInputLabel.KeyType.GoogleTranslate, ctGoogleTrans);
             AddHotKey(LocalizeString("Adv HotKey Google Sheet"), LocalizeString("Adv HotKey Google Sheet Info"), KeyInputLabel.KeyType.GoogleSheetTranslate, ctGoogleSheet);
-            AddHotKey(LocalizeString("Adv HotKey EzTrans"), LocalizeString("Adv HotKey EzTrans Info"), KeyInputLabel.KeyType.EzTrans, ctEzTrans);
+            AddHotKey(LocalizeString("Adv HotKey HdTrans"), LocalizeString("Adv HotKey HdTrans Info"), KeyInputLabel.KeyType.HdTrans, ctHdTrans);
             AddHotKey(LocalizeString("Adv HotKey DeepL"), LocalizeString("Adv HotKey DeepL Info"), KeyInputLabel.KeyType.DeepL, ctDeepL);
             AddHotKey(LocalizeString("Adv HotKey PapagoWeb"), LocalizeString("Adv HotKey PapagoWeb Info"), KeyInputLabel.KeyType.PapagoWeb, ctPapagoWeb);
 

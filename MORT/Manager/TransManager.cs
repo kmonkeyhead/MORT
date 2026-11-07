@@ -91,29 +91,27 @@ namespace MORT
         private readonly CustomAPI _customAPI;
         private DeepLAPITranslateAPI _deeplapiranslateAPI = new DeepLAPITranslateAPI();
         private DeepLTranslateAPI _deepLTranslateAPI = new DeepLTranslateAPI();
-        private PipeServer.PipeServer _ezTransPipeServer = new PipeServer.PipeServer();
         private PapagoWebTranslateAPI _papagoWebAPI = new PapagoWebTranslateAPI();
         private readonly ChromeBridgeTranslateAPI _chromeBridgeAPI;
+        private readonly HdTransAPI _hdTransAPI;
         private readonly GeminiTranslatorAPI _geminiTranslatorAPI;
 
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public TransManager(GeminiTranslatorAPI geminiTranslatorAPI, CustomAPI customAPI, ChromeBridgeTranslateAPI chromeBridgeAPI)
+        public TransManager(GeminiTranslatorAPI geminiTranslatorAPI, CustomAPI customAPI, ChromeBridgeTranslateAPI chromeBridgeAPI, HdTransAPI hdTransAPI)
         {
             _customAPI = customAPI;
             _geminiTranslatorAPI = geminiTranslatorAPI;
             _chromeBridgeAPI = chromeBridgeAPI;
-        }
-
-        public bool InitEzTrans()
-        {
-            return _ezTransPipeServer.InitPipe();
+            _hdTransAPI = hdTransAPI;
         }
 
         public void InitCustomApi(string url, string source, string target, string presetName)
         {
             _customAPI.Init(url, source, target, presetName);
         }
+
+        public bool TryInitializeHdTrans() => _hdTransAPI.TryInitialize();
 
         public void InitChromeBridge(string source, string target, string mode)
         {
@@ -542,7 +540,7 @@ namespace MORT
                 string spliteToken = textList.Count > 1 ? Util.GetSpliteToken(transType) : "";
                 List<string> ocrTexts = new();
 
-                if (transType == SettingManager.TransType.db || transType == SettingManager.TransType.ezTrans)
+                if (transType == SettingManager.TransType.db || transType == SettingManager.TransType.hdTrans)
                 {
                     isUseMemoryDic = false;
                 }
@@ -705,21 +703,20 @@ namespace MORT
                        
                     }
                 }
-                else if (transType == SettingManager.TransType.ezTrans)
+                else if (transType == SettingManager.TransType.hdTrans)
                 {
+                    //클립보드 등 시작 전 검사 루틴을 거치지 않는 요청도 초기화 실패 시 번역하지 않는다.
+                    if (!TryInitializeHdTrans()) return HdTransAPI.UnavailableMessage;
+                    //영역별 호출로 구분 토큰을 보존하고 사용자 사전 변경이 캐시에 가리지 않게 한다.
                     foreach (var obj in textDic)
                     {
-                        if (_ezTransPipeServer.InitResponse)
+                        _cts.Token.ThrowIfCancellationRequested();
+                        obj.Value.result = GetUserTransResult(obj.Value.text);
+                        if (obj.Value.result == null)
                         {
-                            obj.Value.result = GetUserTransResult(obj.Value.text);
-                            if (obj.Value.result == null)
-                            {
-                                obj.Value.result = await _ezTransPipeServer.DoTransAsync(obj.Value.text);
-                            }
-                        }
-                        else
-                        {
-                            obj.Value.result = "이지트랜스를 사용할 수 없습니다.";
+                            obj.Value.result = _hdTransAPI.GetResult(obj.Value.text, ref isError);
+                            if (isError) return obj.Value.result;
+                            obj.Value.result = obj.Value.result.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
                         }
                     }
                 }
@@ -1030,10 +1027,7 @@ namespace MORT
 
         public void Dispose()
         {
-            if (_ezTransPipeServer != null)
-            {
-                _ezTransPipeServer.Close();
-            }
+            _hdTransAPI.Dispose();
         }
     }
 }

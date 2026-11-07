@@ -152,8 +152,8 @@ namespace MORT
             lbSheetID = new System.Windows.Forms.Label();
             googleSheet_textBox = new System.Windows.Forms.TextBox();
             lbGoogleSheetAddress = new System.Windows.Forms.Label();
-            pnEzTrans = new System.Windows.Forms.Panel();
-            lbEzTransInfo = new System.Windows.Forms.Label();
+            pnHdTrans = new System.Windows.Forms.Panel();
+            lbHdTransInfo = new System.Windows.Forms.Label();
             pnPapagoWeb = new System.Windows.Forms.Panel();
             lbPapagoWebInfo = new System.Windows.Forms.Label();
             pnGoogleBasic = new System.Windows.Forms.Panel();
@@ -346,7 +346,7 @@ namespace MORT
             pnGemini.SuspendLayout();
             Naver_Panel.SuspendLayout();
             Google_Panel.SuspendLayout();
-            pnEzTrans.SuspendLayout();
+            pnHdTrans.SuspendLayout();
             pnPapagoWeb.SuspendLayout();
             pnGoogleBasic.SuspendLayout();
             pnCustomApi.SuspendLayout();
@@ -1365,7 +1365,7 @@ namespace MORT
             pnTranslate.Controls.Add(lbTransTypeTitle);
             pnTranslate.Controls.Add(Naver_Panel);
             pnTranslate.Controls.Add(Google_Panel);
-            pnTranslate.Controls.Add(pnEzTrans);
+            pnTranslate.Controls.Add(pnHdTrans);
             pnTranslate.Controls.Add(pnPapagoWeb);
             pnTranslate.Controls.Add(pnGoogleBasic);
             pnTranslate.Controls.Add(pnCustomApi);
@@ -1476,7 +1476,7 @@ namespace MORT
             _cbTranslateType.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
             _cbTranslateType.FormattingEnabled = true;
             _cbTranslateType.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-            _cbTranslateType.Items.AddRange(new object[] { "TRANSLATE GOOGLE", "TRANSLATE DB", "TRANSLATE PAPAGO WEB", "TRANSLATE NAVER", "TRANSLATE GOOGLE SHEET", "TRANSLATE DEEPL", "TRANSLATE DEEPLAPI", "TRANSLATE GEMINI API", "TRANSLATE EZTRANS", "TRANSLATE CUSTOM API" });
+            _cbTranslateType.Items.AddRange(new object[] { "TRANSLATE GOOGLE", "TRANSLATE DB", "TRANSLATE PAPAGO WEB", "TRANSLATE NAVER", "TRANSLATE GOOGLE SHEET", "TRANSLATE DEEPL", "TRANSLATE DEEPLAPI", "TRANSLATE GEMINI API", "TRANSLATE HDTRANS", "TRANSLATE CUSTOM API" });
             _cbTranslateType.Location = new System.Drawing.Point(105, 30);
             _cbTranslateType.Name = "_cbTranslateType";
             _cbTranslateType.Size = new System.Drawing.Size(212, 25);
@@ -1681,26 +1681,26 @@ namespace MORT
             lbGoogleSheetAddress.TabIndex = 17;
             lbGoogleSheetAddress.Text = "시트 주소";
             // 
-            // pnEzTrans
-            // 
-            pnEzTrans.Controls.Add(lbEzTransInfo);
-            pnEzTrans.Location = new System.Drawing.Point(7, 61);
-            pnEzTrans.Name = "pnEzTrans";
-            pnEzTrans.Size = new System.Drawing.Size(483, 94);
-            pnEzTrans.TabIndex = 54;
-            // 
-            // lbEzTransInfo
-            // 
-            lbEzTransInfo.AutoSize = true;
-            lbEzTransInfo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
-            lbEzTransInfo.ForeColor = System.Drawing.Color.White;
-            lbEzTransInfo.Location = new System.Drawing.Point(79, 21);
-            lbEzTransInfo.Name = "lbEzTransInfo";
-            lbEzTransInfo.Size = new System.Drawing.Size(314, 51);
-            lbEzTransInfo.TabIndex = 17;
-            lbEzTransInfo.Text = "일본어 전용\r\nezTrans XP가 설치 되어 있어야 합니다.\r\n자세한 사용법은 번역 설정 도움말을 확인해 주세요.";
-            lbEzTransInfo.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            // 
+            // pnHdTrans
+            //
+            pnHdTrans.Controls.Add(lbHdTransInfo);
+            pnHdTrans.Location = new System.Drawing.Point(7, 61);
+            pnHdTrans.Name = "pnHdTrans";
+            pnHdTrans.Size = new System.Drawing.Size(483, 94);
+            pnHdTrans.TabIndex = 57;
+            pnHdTrans.Visible = false;
+            //
+            // lbHdTransInfo
+            //
+            lbHdTransInfo.Dock = System.Windows.Forms.DockStyle.Fill;
+            lbHdTransInfo.Font = new System.Drawing.Font("맑은 고딕", 9.75F, System.Drawing.FontStyle.Bold);
+            lbHdTransInfo.ForeColor = System.Drawing.Color.White;
+            lbHdTransInfo.Name = "lbHdTransInfo";
+            lbHdTransInfo.Size = new System.Drawing.Size(483, 94);
+            lbHdTransInfo.TabIndex = 0;
+            lbHdTransInfo.Text = "일본어 → 한국어 오프라인 번역\r\nAPI 키 없이 사용할 수 있습니다.";
+            lbHdTransInfo.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            //
             // pnPapagoWeb
             // 
             pnPapagoWeb.Controls.Add(lbPapagoWebInfo);
@@ -3900,8 +3900,7 @@ namespace MORT
             Naver_Panel.PerformLayout();
             Google_Panel.ResumeLayout(false);
             Google_Panel.PerformLayout();
-            pnEzTrans.ResumeLayout(false);
-            pnEzTrans.PerformLayout();
+            pnHdTrans.ResumeLayout(false);
             pnPapagoWeb.ResumeLayout(false);
             pnGoogleBasic.ResumeLayout(false);
             pnCustomApi.ResumeLayout(false);
@@ -4222,8 +4221,8 @@ namespace MORT
         private System.Windows.Forms.Panel panel21;
         private System.Windows.Forms.Button btAdvencedOption;
         private System.Windows.Forms.Label lbAdvencedConfig;
-        private System.Windows.Forms.Panel pnEzTrans;
-        private System.Windows.Forms.Label lbEzTransInfo;
+        private System.Windows.Forms.Panel pnHdTrans;
+        private System.Windows.Forms.Label lbHdTransInfo;
         private System.Windows.Forms.TabPage tpQuickSetting;
         private System.Windows.Forms.Panel panel28;
         private System.Windows.Forms.Panel panel31;

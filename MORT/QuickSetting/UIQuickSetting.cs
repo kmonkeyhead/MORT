@@ -88,18 +88,8 @@ namespace MORT
             }
             else if(settingData.languageType == OcrLanguageType.Japen)
             {
-                //1. 이지트랜스 사용여부 체크 -> 되면 이지 트랜스
-                //2. 안 되면 구글 기본 번역기
-                bool isEzTrans = TransManager.Instace.InitEzTrans();
-
-                if(isEzTrans)
-                {
-                    transType = SettingManager.TransType.ezTrans;
-                }
-                else
-                {
-                    transType = SettingManager.TransType.google_url;
-                }
+                //일본어는 함께 배포하는 오프라인 엔진을 사용한다.
+                transType = SettingManager.TransType.hdTrans;
             }
 
             settingData.transType = transType;

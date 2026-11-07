@@ -50,8 +50,8 @@
     {
       "name": "번역 선택과 결과 재사용",
       "intent": "번역 제공자별 차이를 유지하면서 사용자 번역, 이전 결과 캐시, 분할 번역을 공통 진입점에서 조정한다.",
-      "how": "ProcessTranslateService → TransManager.StartTrans → 번역 종류별 API/DB/EzTrans 분기 → 결과 캐시 → 출력 폼 반영",
-      "examples": ["Gemini는 긴 입력을 분할하는 별도 판단이 있다.", "db와 ezTrans는 네트워크 번역기와 같은 경로로 억지로 통일하지 않는다."],
+      "how": "ProcessTranslateService → TransManager.StartTrans → 번역 종류별 API/DB/hdTrans 분기 → 제공자별 결과 재사용 → 출력 폼 반영",
+      "examples": ["Gemini는 긴 입력을 분할하는 별도 판단이 있다.", "db와 hdTrans는 네트워크 번역기와 같은 경로로 억지로 통일하지 않는다.", "hdTrans는 ExternDll의 x64 DLL을 영역별로 호출하고 사용자 번역을 우선한다. 사용자 사전 갱신을 위해 이전 번역 캐시를 우회하며 일본어→한국어로 고정한다."],
       "evidence": ["MORT/Manager/TransManager.cs", "MORT/TransAPI"]
     },
     {

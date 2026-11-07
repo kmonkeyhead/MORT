@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -9,7 +9,7 @@ namespace MORT
         public enum KeyType
         {
             None, Translate, OpenDic, QuickOCR, SnapShot, TranslateOnce, Hide,
-            OpenSetting, LayerTransparency, DBTranslate, NaverTranslate, GoogleTranslate, GoogleSheetTranslate, EzTrans, DeepL, PapagoWeb,
+            OpenSetting, LayerTransparency, DBTranslate, NaverTranslate, GoogleTranslate, GoogleSheetTranslate, HdTrans, DeepL, PapagoWeb,
             OcrAreaFollowMouse
         }
         public KeyType keyType = KeyType.None;

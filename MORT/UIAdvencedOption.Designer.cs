@@ -180,7 +180,7 @@ namespace MORT
             gbHotKeyTrans = new System.Windows.Forms.GroupBox();
             ctPapagoWeb = new MORT.CustomControl.CtHotKey();
             ctDeepL = new MORT.CustomControl.CtHotKey();
-            ctEzTrans = new MORT.CustomControl.CtHotKey();
+            ctHdTrans = new MORT.CustomControl.CtHotKey();
             ctDb = new MORT.CustomControl.CtHotKey();
             ctGoogleSheet = new MORT.CustomControl.CtHotKey();
             ctNaverTrans = new MORT.CustomControl.CtHotKey();
@@ -2079,7 +2079,7 @@ namespace MORT
             // 
             gbHotKeyTrans.Controls.Add(ctPapagoWeb);
             gbHotKeyTrans.Controls.Add(ctDeepL);
-            gbHotKeyTrans.Controls.Add(ctEzTrans);
+            gbHotKeyTrans.Controls.Add(ctHdTrans);
             gbHotKeyTrans.Controls.Add(ctDb);
             gbHotKeyTrans.Controls.Add(ctGoogleSheet);
             gbHotKeyTrans.Controls.Add(ctNaverTrans);
@@ -2109,13 +2109,13 @@ namespace MORT
             ctDeepL.Size = new System.Drawing.Size(743, 105);
             ctDeepL.TabIndex = 10;
             // 
-            // ctEzTrans
+            // ctHdTrans
             // 
-            ctEzTrans.Location = new System.Drawing.Point(9, 515);
-            ctEzTrans.Margin = new System.Windows.Forms.Padding(4, 7, 4, 7);
-            ctEzTrans.Name = "ctEzTrans";
-            ctEzTrans.Size = new System.Drawing.Size(743, 105);
-            ctEzTrans.TabIndex = 9;
+            ctHdTrans.Location = new System.Drawing.Point(9, 515);
+            ctHdTrans.Margin = new System.Windows.Forms.Padding(4, 7, 4, 7);
+            ctHdTrans.Name = "ctHdTrans";
+            ctHdTrans.Size = new System.Drawing.Size(743, 105);
+            ctHdTrans.TabIndex = 9;
             // 
             // ctDb
             // 
@@ -2571,7 +2571,7 @@ namespace MORT
         private System.Windows.Forms.GroupBox gbHotKeyTrans;
         private CustomControl.CtHotKey ctPapagoWeb;
         private CustomControl.CtHotKey ctDeepL;
-        private CustomControl.CtHotKey ctEzTrans;
+        private CustomControl.CtHotKey ctHdTrans;
         private CustomControl.CtHotKey ctDb;
         private CustomControl.CtHotKey ctGoogleSheet;
         private CustomControl.CtHotKey ctNaverTrans;
