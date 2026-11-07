@@ -1368,8 +1368,8 @@ namespace MORT
                         case KeyInputLabel.KeyType.NaverTranslate:
                             ApplyTransTypeFromHotKey(SettingManager.TransType.naver, LocalizeString("Switching Papago"));
                             break;
-                        case KeyInputLabel.KeyType.EzTrans:
-                            ApplyTransTypeFromHotKey(SettingManager.TransType.ezTrans, LocalizeString("Switching ezTrans"));
+                        case KeyInputLabel.KeyType.HdTrans:
+                            ApplyTransTypeFromHotKey(SettingManager.TransType.hdTrans, LocalizeString("Switching hdTrans"));
                             break;
                         case KeyInputLabel.KeyType.DeepL:
                             ApplyTransTypeFromHotKey(SettingManager.TransType.deepl, LocalizeString("Switching DeepL"));
@@ -3278,7 +3278,7 @@ namespace MORT
             Google_Panel.Visible = false;
             pnGoogleBasic.Visible = false;
             pnDeepl.Visible = false;
-            pnEzTrans.Visible = false;
+            pnHdTrans.Visible = false;
             pnCustomApi.Visible = false;
             pnPapagoWeb.Visible = false;
             pnDeepLAPI.Visible = false;
@@ -3313,8 +3313,8 @@ namespace MORT
                     pnGoogleBasic.Visible = true;
                     break;
 
-                case SettingManager.TransType.ezTrans:
-                    pnEzTrans.Visible = true;
+                case SettingManager.TransType.hdTrans:
+                    pnHdTrans.Visible = true;
                     break;
 
                 case SettingManager.TransType.customApi:

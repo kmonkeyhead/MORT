@@ -1,4 +1,4 @@
-﻿using MORT.Service.TranslateLanguage;
+using MORT.Service.TranslateLanguage;
 using R3;
 using System;
 using System.Collections.Generic;
@@ -115,7 +115,7 @@ namespace MORT
             deepl,
             deeplApi,
             gemini,
-            ezTrans,
+            hdTrans,
             customApi,
             chromeBridge
         }; //앞 소문자 바꾸며 안 됨! -> 기존 버전과 호환성. 새 항목은 반드시 맨 뒤에만 추가한다.
@@ -1465,7 +1465,8 @@ namespace MORT
                             }
                             else if (resultString.CompareTo("ezTrans") == 0)
                             {
-                                nowTransType = TransType.ezTrans;
+                                //기존 ezTrans 설정은 같은 enum 위치의 hdTrans로 이전한다.
+                                nowTransType = TransType.hdTrans;
                             }
                             else if (resultString.CompareTo("customApi") == 0)
                             {
@@ -1482,6 +1483,10 @@ namespace MORT
                             else if (resultString.CompareTo("chromeBridge") == 0)
                             {
                                 nowTransType = TransType.chromeBridge;
+                            }
+                            else if (resultString.CompareTo("hdTrans") == 0)
+                            {
+                                nowTransType = TransType.hdTrans;
                             }
                         }
                     }
@@ -1947,7 +1952,7 @@ namespace MORT
                 toCode = loadedDeepLResultCode;
             }
 
-            //DB나 EzTrans처럼 번역 언어를 쓰지 않는 타입이면 구글 쪽을 가져온다. 가장 많이 쓰던 값이다.
+            //DB나 hdTrans처럼 번역 언어를 쓰지 않는 타입이면 구글 쪽을 가져온다. 가장 많이 쓰던 값이다.
             TranslateLanguageModel from = service.FindByEngineCode(fromCode, family);
             TranslateLanguageModel to = service.FindByEngineCode(toCode, family);
 

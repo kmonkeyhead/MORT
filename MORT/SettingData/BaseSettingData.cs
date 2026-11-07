@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -302,14 +302,14 @@ namespace MORT.SettingData
                 LoadHotkey(i, KeyInputLabel.KeyType.OpenSetting, fileData, KEY_HOTKEY_EXTRA_VALUE);
             }
 
-            //DBTranslate, NaverTranslate, GoogleTranslate, GoogleSheetTranslate, EzTrans
+            //DBTranslate, NaverTranslate, GoogleTranslate, GoogleSheetTranslate, HdTrans
             LoadHotkey(0, KeyInputLabel.KeyType.LayerTransparency, fileData);
 
             LoadHotkey(0, KeyInputLabel.KeyType.DBTranslate, fileData);
             LoadHotkey(0, KeyInputLabel.KeyType.NaverTranslate, fileData);
             LoadHotkey(0, KeyInputLabel.KeyType.GoogleTranslate, fileData);
             LoadHotkey(0, KeyInputLabel.KeyType.GoogleSheetTranslate, fileData);
-            LoadHotkey(0, KeyInputLabel.KeyType.EzTrans, fileData);
+            LoadHotkey(0, KeyInputLabel.KeyType.HdTrans, fileData);
             LoadHotkey(0, KeyInputLabel.KeyType.DeepL, fileData);
         }
 
@@ -340,6 +340,11 @@ namespace MORT.SettingData
         {
             string hotKey = string.Format(KEY_HOTKEY_FORMAT, index, keyType);
             string keyResult = Util.GetNextLine(fileData, hotKey);
+            //옛 ezTrans 단축키를 hdTrans에 이어받는다. 새 키가 있으면 새 값을 우선한다.
+            if (keyType == KeyInputLabel.KeyType.HdTrans && !fileData.Contains(hotKey))
+            {
+                keyResult = Util.GetNextLine(fileData, string.Format(KEY_HOTKEY_FORMAT, index, "EzTrans"));
+            }
 
             string extraFileKey = "";
             string extraFileResult = "";

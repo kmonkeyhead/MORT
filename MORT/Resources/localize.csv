@@ -1239,3 +1239,23 @@ Hanya untuk sesi ini; kembali ke metode 1 saat aplikasi dimulai ulang.","При�
 Válido apenas nesta sessão; volta ao método 1 ao reiniciar o aplicativo.","Застосовується до адаптивного відображення з наступного розпізнавання.
 Діє лише в поточному сеансі; після перезапуску вибирається спосіб 1.","Bir sonraki OCR işleminden itibaren Uyarlamalı çıktıya uygulanır.
 Yalnızca bu oturum için geçerlidir; uygulama yeniden başlatılınca yöntem 1'e döner."
+
+"","TRANSLATE HDTRANS","하드트랜스 (일본어 → 한국어)","hdTrans (Japanese → Korean)","hdTrans (Japanese → Korean)","hdTrans (Japanese → Korean)","hdTrans (Japanese → Korean)","hdTrans (Japanese → Korean)","hdTrans (Japanese → Korean)","hdTrans (Japanese → Korean)","hdTrans (Japanese → Korean)"
+"","HdTrans Name","하드트랜스","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans"
+"","HdTrans Info","하드트랜스 일본어 → 한국어 오프라인 번역
+API 키 없이 사용할 수 있습니다.","hdTrans offline Japanese → Korean translation
+No API key is required.","hdTrans offline Japanese → Korean translation
+No API key is required.","hdTrans offline Japanese → Korean translation
+No API key is required.","hdTrans offline Japanese → Korean translation
+No API key is required.","hdTrans offline Japanese → Korean translation
+No API key is required.","hdTrans offline Japanese → Korean translation
+No API key is required.","hdTrans offline Japanese → Korean translation
+No API key is required.","hdTrans offline Japanese → Korean translation
+No API key is required."
+"","Switching hdTrans","번역방식 - 하드트랜스로 변경되었습니다","Translation method changed to hdTrans","Translation method changed to hdTrans","Translation method changed to hdTrans","Translation method changed to hdTrans","Translation method changed to hdTrans","Translation method changed to hdTrans","Translation method changed to hdTrans","Translation method changed to hdTrans"
+"","Adv HotKey HdTrans","하드트랜스","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans","hdTrans"
+"","Adv HotKey HdTrans Info","하드트랜스를 이용해 번역합니다","Translate using hdTrans.","Translate using hdTrans.","Translate using hdTrans.","Translate using hdTrans.","Translate using hdTrans.","Translate using hdTrans.","Translate using hdTrans.","Translate using hdTrans."
+"","HdTrans Translation Failed","하드트랜스 번역에 실패했습니다 ({0}).","hdTrans translation failed ({0}).","hdTrans translation failed ({0}).","hdTrans translation failed ({0}).","hdTrans translation failed ({0}).","hdTrans translation failed ({0}).","hdTrans translation failed ({0}).","hdTrans translation failed ({0}).","hdTrans translation failed ({0})."
+"","HdTrans Engine Missing","하드트랜스 엔진 파일을 찾을 수 없습니다: ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64).","Missing ExternDll/hdTransEngine.dll (x64)."
+"","HdTrans Initialize Failed","하드트랜스를 초기화할 수 없습니다. ExternDll/hdtrans-data/dicts.hdsnap과 사용자 설정을 확인해 주세요.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings.","Cannot initialize hdTrans. Check ExternDll/hdtrans-data/dicts.hdsnap and user settings."
+"","HdTrans Unavailable","현재 하드트랜스를 사용할 수 없습니다.","hdTrans is currently unavailable.","現在、hdTransを使用できません。","目前无法使用hdTrans。","hdTrans saat ini tidak tersedia.","hdTrans сейчас недоступен.","O hdTrans está indisponível no momento.","hdTrans наразі недоступний.","hdTrans şu anda kullanılamıyor."

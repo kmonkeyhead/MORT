@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32328.378
@@ -6,8 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GSTrans", "GSTrans\GSTrans.csproj", "{5507B6D0-DE3F-4F1A-A733-5F5803D6F534}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MORT", "MORT\MORT.csproj", "{26B85EFA-2610-4BEF-9F70-8B65807E6CFE}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PipeClient", "PipeClient\PipeClient.csproj", "{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudVision", "CloudVision\CloudVision.csproj", "{54B0F7B3-3D49-44D6-A887-DBAB5D7A104F}"
 EndProject
@@ -37,14 +35,6 @@ Global
 		{26B85EFA-2610-4BEF-9F70-8B65807E6CFE}.Release|Any CPU.Build.0 = Release|x64
 		{26B85EFA-2610-4BEF-9F70-8B65807E6CFE}.Release|x64.ActiveCfg = Release|x64
 		{26B85EFA-2610-4BEF-9F70-8B65807E6CFE}.Release|x64.Build.0 = Release|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Debug|Any CPU.Build.0 = Debug|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Debug|x64.ActiveCfg = Debug|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Debug|x64.Build.0 = Debug|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Release|Any CPU.ActiveCfg = Release|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Release|Any CPU.Build.0 = Release|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Release|x64.ActiveCfg = Release|x64
-		{0CF1C0E9-9196-44E3-92EF-EB5ED82CACC3}.Release|x64.Build.0 = Release|x64
 		{54B0F7B3-3D49-44D6-A887-DBAB5D7A104F}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{54B0F7B3-3D49-44D6-A887-DBAB5D7A104F}.Debug|Any CPU.Build.0 = Debug|x64
 		{54B0F7B3-3D49-44D6-A887-DBAB5D7A104F}.Debug|x64.ActiveCfg = Debug|x64

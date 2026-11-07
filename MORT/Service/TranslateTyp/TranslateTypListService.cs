@@ -105,9 +105,9 @@ public class TranslateTypListService
 
         _modelList.Add(new TranslateTypeModel(
                 9,
-            "TRANSLATE EZTRANS",
-            LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE EZTRANS"),
-            SettingManager.TransType.ezTrans));
+            "TRANSLATE HDTRANS",
+            LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE HDTRANS"),
+            SettingManager.TransType.hdTrans));
 
         _modelList.Add(new TranslateTypeModel(
                 10,

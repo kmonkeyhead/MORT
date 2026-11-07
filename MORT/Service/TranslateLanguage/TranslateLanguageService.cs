@@ -11,7 +11,7 @@ namespace MORT.Service.TranslateLanguage
     /// </summary>
     public enum TranslateEngineFamily
     {
-        /// <summary>번역 언어를 쓰지 않는 번역기(DB, EzTrans).</summary>
+        /// <summary>번역 언어를 쓰지 않는 번역기(DB, hdTrans).</summary>
         None,
         Naver,
         Google,
@@ -229,7 +229,7 @@ namespace MORT.Service.TranslateLanguage
                     return TranslateEngineFamily.Google;
 
                 default:
-                    //DB와 EzTrans는 번역 언어를 쓰지 않는다.
+                    //DB, hdTrans는 번역 언어를 쓰지 않는다.
                     return TranslateEngineFamily.None;
             }
         }

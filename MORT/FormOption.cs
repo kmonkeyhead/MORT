@@ -752,10 +752,6 @@ namespace MORT
                 Logo.SetTopmost(false);
                 TransManager.Instace.InitGtrans(googleSheet_textBox.Text, textBox_GoogleClientID.Text, textBox_GoogleSecretKey.Text, MySettingManager.GoogleTransCode, MySettingManager.GoogleResultCode);
             }
-            else if(MySettingManager.NowTransType == SettingManager.TransType.ezTrans)
-            {
-                TransManager.Instace.InitEzTrans();
-            }
             else if(MySettingManager.NowTransType == SettingManager.TransType.deepl)
             {
                 TransManager.Instace.InitDeepL(MySettingManager.DeepLTransCode, MySettingManager.DeepLResultCode, GlobalDefine.DeeplFrontUrl, GlobalDefine.DeeplFormat,
