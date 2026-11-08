@@ -7,7 +7,7 @@
   "MORT/Model/OverlayAdaptiveScene.cs": {
     "category": "오버레이 적응형 모델",
     "intent": "배경 갱신 입력과 완성 결과를 OCR 결과 객체에서 분리한다.",
-    "operation": "UI가 복제한 원문 영역·화면 좌표·강도·캡처 소스를 장면 참조로 식별한다. 장면과 영역별 패치를 결과 하나에 묶어 이전 장면의 늦은 완료가 새 배경을 덮지 못하게 한다."
+    "operation": "번역 요청 전에 OCR 단어 좌표를 영역별로 복제한다. UI가 이 좌표를 화면에 맞춰 강도·캡처 소스와 함께 장면으로 만들고, 작업은 그 장면과 영역별 패치를 결과 하나에 묶는다."
   },
   "MORT/Service/Overlay/OverlayAdaptiveRefreshService.cs": {
     "category": "오버레이 적응형 갱신",
@@ -17,7 +17,7 @@
   "MORT/TransFormOver.Blur.cs": {
     "category": "오버레이 배경 출력",
     "intent": "실시간 블러와 적응형 복원 배경을 번역문보다 먼저 그린다.",
-    "operation": "적응형은 페인트 시작 시 완성 결과 참조를 한 번 읽어 모든 영역에 사용한다. 새 마스크·영역을 처리하는 동안 이전 패치의 화면 좌표와 원본 크기를 유지하고 현재 캡처 영역 안으로 자른다. 첫 완성 결과가 없으면 배경을 그리지 않으며, 1회 번역은 OCR 결과에 저장된 고정 복원 프레임을 쓴다. 창 위치 변화는 다음 페인트에서 새 장면을 게시하고, 숨김·핸들 파괴·출력 모드 갱신은 적응형 작업과 보관 결과를 해제한다."
+    "operation": "적응형은 번역문이 그려질 영역에만 배경을 그린다. 페인트마다 완성 결과 참조를 한 번 읽고 현재 번역문에 대응하는 마스크와 화면 좌표가 모두 일치하는 패치를 사용한다. 준비된 패치가 없으면 투명하게 표시한다. 1회 번역은 OCR 결과에 저장된 고정 복원 프레임을 쓴다. 숨김·핸들 파괴·출력 모드 갱신은 적응형 작업과 보관 결과를 해제한다."
   },
   "MORT/Service/Overlay/OverlayFrameClock.cs": {
     "category": "오버레이 적응형 갱신",
@@ -27,7 +27,7 @@
   "MORT/TransFormOver.Adaptive.cs": {
     "category": "오버레이 적응형 갱신",
     "intent": "OCR 결과와 독립 배경 작업 사이의 좌표·수명 경계를 관리한다.",
-    "operation": "실시간 적응형에서만 현재 원문 단어 사각형을 원본 화면 좌표로 복제한다. 동일한 영역·강도·캡처 소스면 기존 장면을 유지하고, 같은 문장이라도 단어 위치가 달라지면 마스크를 교체한다. 1회 번역은 고정 프레임을 사용하며 정지·숨김·설정 변경 시 작업을 중단한다."
+    "operation": "실시간 적응형은 번역 전 OCR 좌표를 따로 받는다. 번역문이 없으면 그 좌표로 내부 복원을 진행하고, 번역문이 있으면 그 번역문의 OCR 좌표를 사용한다. 동일한 영역·강도·캡처 소스면 기존 장면을 유지한다. 정지·숨김·설정 변경 시 작업을 중단한다."
   },
   "MORT/Model/OverlayCaptureFrame.cs": {
     "category": "오버레이 캡처 모델",
@@ -207,7 +207,7 @@
   "MORT/Service/ProcessTranslateService/ProcessTranslateService.cs": {
     "category": "OCR 번역 실행 조정",
     "intent": "OCR 엔진 분기, 번역 호출, 결과 반영과 반복 실행을 조정하되 실행 초기화와 이미지 버퍼 생성 구현은 전용 서비스에 위임한다.",
-    "operation": "UI와 번역 스레드의 교착을 피하기 위해 작업 스레드 생성 전에 TranslationProcessInitializationService에서 실행 문맥과 번역창 Prepare 결과를 받고, 각 OCR 분기에서는 TranslationImageModelService가 만든 ImgData를 소비한 뒤 번역 결과를 현재 번역창에 반영한다."
+    "operation": "작업 스레드 생성 전에 TranslationProcessInitializationService가 번역창을 준비한다. 실시간 적응형에서는 모든 캡처 영역의 OCR 마스크를 먼저 복제해 게시하고 번역을 시작한다. 번역 결과는 별도로 UI에 게시하며, 각 콜백은 현재 실행에 속하는지 확인한다."
   },
   "MORT/Service/ProcessTranslateService/TranslationProcessInitializationService.cs": {
     "category": "번역 실행 초기화",

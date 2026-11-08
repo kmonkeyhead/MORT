@@ -1579,7 +1579,7 @@ namespace MORT
             cbOverlayKeepSourceDirection.Name = "cbOverlayKeepSourceDirection";
             cbOverlayKeepSourceDirection.Size = new System.Drawing.Size(352, 29);
             cbOverlayKeepSourceDirection.TabIndex = 12;
-            cbOverlayKeepSourceDirection.Text = "원문 방향 유지 (기본: 번역문 가로쓰기)";
+            cbOverlayKeepSourceDirection.Text = "원문 방향 유지 (활성화시 원문의 방향대로 번역문 출력)";
             cbOverlayKeepSourceDirection.UseVisualStyleBackColor = true;
             // 
             // cbOverlayAutoMerge

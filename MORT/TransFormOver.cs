@@ -287,7 +287,7 @@ namespace MORT
             {
                 currentIndexSet.Add(data.Index);
 
-                Rectangle areaRect = GetAreaRect(data);
+                Rectangle areaRect = GetAreaRect(data.Index, data.SnapShot);
                 string ocrText = data.GetOCR();
                 string transText = data.TransString;
 
@@ -321,14 +321,37 @@ namespace MORT
             return stableList;
         }
 
-        private Rectangle GetAreaRect(OCRDataManager.ResultData data)
+        private Rectangle GetAreaRect(int index, bool snapshot)
         {
-            if(data.SnapShot)
+            if(snapshot)
             {
                 return FormManager.Instace.MyMainForm.MySettingManager.LastSnapShotRect;
             }
 
-            return FormManager.Instace.MyMainForm.GetOcrAreaProcessRect(data.Index);
+            return FormManager.Instace.MyMainForm.GetOcrAreaProcessRect(index);
+        }
+
+        private Rectangle GetCaptureScreenRect(int index, bool snapshot, Point captureOrigin)
+        {
+            try
+            {
+                Rectangle areaRect = GetAreaRect(index, snapshot);
+                if(areaRect == Rectangle.Empty) return Rectangle.Empty;
+
+                int originX = areaRect.X - FormManager.BorderWidth / 2;
+                int originY = areaRect.Y - FormManager.BorderHeight / 2;
+                if(_attchedCapture)
+                {
+                    originX = Math.Max(originX, captureOrigin.X);
+                    originY = Math.Max(originY, captureOrigin.Y);
+                }
+                return new Rectangle(originX, originY, areaRect.Width, areaRect.Height);
+            }
+            catch(Exception ex)
+            {
+                Util.ShowLog(ex.Message);
+                return Rectangle.Empty;
+            }
         }
 
 
@@ -437,6 +460,7 @@ namespace MORT
             {
                 SetWindowDisplayAffinity(this.Handle, WDA_EXCLUDEFROMCAPTURE);
             }
+            RequestOverlayPaint();
         }
 
         public void SetAdjustPosition(int x, int y)
@@ -546,7 +570,8 @@ namespace MORT
         {
             if(!isActiveGDI || _dataList == null)
             {
-                StopAdaptiveBackground();
+                UpdateAdaptiveScene();
+                ClearCaptureBlurImages();
                 if(_dataList == null) ClearOverlayRenderCaches();
                 _windowBlurRects.Clear();
                 _windowBlur?.Hide();
@@ -554,7 +579,6 @@ namespace MORT
             }
 
             bool windowBlur = BeginWindowBlur();
-            TrimCaptureBlurImages();
 
             Color outlineColor1 = FormManager.Instace.MyMainForm.MySettingManager.OutLineColor1;
             Color outlineColor2 = FormManager.Instace.MyMainForm.MySettingManager.OutLineColor2;
@@ -566,7 +590,6 @@ namespace MORT
             using Font overlayBaseFont = new Font(textFont.FontFamily, textFont.SizeInPoints, overlayFontStyle, GraphicsUnit.Point);
 
             List<OverlayRenderBlock> blocks = BuildRenderBlocks();
-            UpdateAdaptiveScene(blocks);
             var layoutContext = GetLayoutContext(g, overlayBaseFont, sf);
             var layoutInputs = blocks.Count <= 256 ? GetLayoutInputs(blocks) : null;
             bool reuseLayout = layoutInputs != null && _layoutInputs != null && _layoutResults != null
@@ -577,7 +600,15 @@ namespace MORT
                 for(int i = 0; i < blocks.Count; i++) blocks[i].ViewRect = _layoutResults[i].View;
             }
             else ResolveBlockCollisions(blocks);
-            HashSet<int> restoredAreas = DrawRestoredBackgrounds(g, blocks);
+            var displayedBlocks = blocks.Where(block =>
+            {
+                Rectangle content = GetContentRect(block.ViewRect);
+                return content.Width > 0 && content.Height > 0 && !string.IsNullOrWhiteSpace(block.TransData.trans);
+            }).ToList();
+            UpdateAdaptiveScene(displayedBlocks);
+            var restoredAreas = DrawLiveRestoredBackgrounds(g, displayedBlocks.Count > 0);
+            DrawSnapshotRestoredBackgrounds(g, displayedBlocks, restoredAreas);
+            TrimCaptureBlurImages(restoredAreas);
             var textPass = new List<(OverlayRenderBlock Block, float FontSize)>();
 
             //디버깅 : 실제로 그린 값 그대로를 모아 스냅샷에 넘긴다.
@@ -654,7 +685,7 @@ namespace MORT
                 }
                 else if(_isStart && AdvencedOptionManager.OverlayOutputMode == MORT.Model.OverlayBlurMode.Restore)
                 {
-                    blurBackground = restoredAreas.Contains(block.TargetData.Index);
+                    blurBackground = !string.IsNullOrWhiteSpace(block.TransData.trans) && restoredAreas.Contains(block.TargetData.Index);
                 }
                 if(blurBackground)
                 {
@@ -791,38 +822,11 @@ namespace MORT
 
             foreach(var targetData in _dataList)
             {
-                Rectangle areaRect;
-                try
-                {
-                    areaRect = targetData.SnapShot
-                        ? FormManager.Instace.MyMainForm.MySettingManager.LastSnapShotRect
-                        : FormManager.Instace.MyMainForm.GetOcrAreaProcessRect(targetData.Index);
-                }
-                catch(Exception ex)
-                {
-                    Util.ShowLog(ex.Message);
-                    continue;
-                }
-
-                if(areaRect == Rectangle.Empty)
-                {
-                    continue;
-                }
-
-                int originX = areaRect.X - FormManager.BorderWidth / 2;
-                int originY = areaRect.Y - FormManager.BorderHeight / 2;
-                if(_attchedCapture)
-                {
-                    originX = Math.Max(originX, clientPositionX);
-                    originY = Math.Max(originY, clientPositionY);
-                }
-                Rectangle captureRect = new Rectangle(
-                    originX - Location.X,
-                    originY - Location.Y,
-                    areaRect.Width,
-                    areaRect.Height);
-                Rectangle captureImageRect = captureRect;
-                captureRect = Rectangle.Intersect(ClientRectangle, captureRect);
+                Rectangle captureImageRect = GetCaptureScreenRect(targetData.Index, targetData.SnapShot,
+                    new Point(clientPositionX, clientPositionY));
+                if(captureImageRect == Rectangle.Empty) continue;
+                captureImageRect.Offset(-Location.X, -Location.Y);
+                Rectangle captureRect = Rectangle.Intersect(ClientRectangle, captureImageRect);
 
                 for(int colorIndex = 0; colorIndex < targetData.TransDataList.Count; colorIndex++)
                 {
@@ -833,10 +837,10 @@ namespace MORT
                         continue;
                     }
                     Rectangle screenRect = Rectangle.FromLTRB(
-                        originX + (int)Math.Floor(source.Left / zoom) - Location.X,
-                        originY + (int)Math.Floor(source.Top / zoom) - Location.Y,
-                        originX + (int)Math.Ceiling(source.Right / zoom) - Location.X,
-                        originY + (int)Math.Ceiling(source.Bottom / zoom) - Location.Y);
+                        captureImageRect.X + (int)Math.Floor(source.Left / zoom),
+                        captureImageRect.Y + (int)Math.Floor(source.Top / zoom),
+                        captureImageRect.X + (int)Math.Ceiling(source.Right / zoom),
+                        captureImageRect.Y + (int)Math.Ceiling(source.Bottom / zoom));
                     screenRect = Rectangle.Intersect(captureRect, screenRect);
                     if(screenRect.Width <= 0 || screenRect.Height <= 0)
                     {
@@ -2236,7 +2240,7 @@ namespace MORT
                 return;
             }
 
-            StopAdaptiveBackground();
+            ClearAdaptiveMasks();
             _dataList = new List<OCRDataManager.ResultData>();
             _overlayDataCache.Clear();
             _windowBlurRects.Clear();
@@ -2267,7 +2271,7 @@ namespace MORT
         public void StopTrans()
         {
             TranslateStatusType = TranslateStatusType.Stop;
-            StopAdaptiveBackground();
+            ClearAdaptiveMasks();
         }
 
         public void ApplyTopMost()

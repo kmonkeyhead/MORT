@@ -13,12 +13,29 @@ namespace MORT
     {
         private OverlayAdaptiveRefreshService? _adaptiveRefresh;
         private OverlayAdaptiveScene? _adaptiveScene;
+        private OverlayAdaptiveMask[] _adaptiveMasks = Array.Empty<OverlayAdaptiveMask>();
+        private Point _adaptiveCaptureOrigin;
         private bool _allowLiveAdaptive;
 
         internal void SetAdaptiveLiveEnabled(bool enabled)
         {
             _allowLiveAdaptive = enabled;
-            if(!enabled) StopAdaptiveBackground();
+            if(!enabled) ClearAdaptiveMasks();
+        }
+
+        internal void UpdateAdaptiveMasks(OverlayAdaptiveMask[] masks, Point captureOrigin)
+        {
+            if(!_allowLiveAdaptive || TranslateStatusType != TranslateStatusType.Translate || isDestroyFormFlag
+                || AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.Restore) return;
+            _adaptiveMasks = masks;
+            _adaptiveCaptureOrigin = captureOrigin;
+            RequestOverlayPaint();
+        }
+
+        private void ClearAdaptiveMasks()
+        {
+            _adaptiveMasks = Array.Empty<OverlayAdaptiveMask>();
+            StopAdaptiveBackground();
         }
 
         private void StopAdaptiveBackground()
@@ -29,14 +46,15 @@ namespace MORT
 
         private void DisposeAdaptiveBackground()
         {
+            _adaptiveMasks = Array.Empty<OverlayAdaptiveMask>();
             _adaptiveScene = null;
             _adaptiveRefresh?.Dispose();
             _adaptiveRefresh = null;
         }
 
-        private void UpdateAdaptiveScene(List<OverlayRenderBlock> blocks)
+        private void UpdateAdaptiveScene(List<OverlayRenderBlock>? displayedBlocks = null)
         {
-            if(!_allowLiveAdaptive || !_isStart || !Visible || !IsHandleCreated || _forceLock
+            if(!_allowLiveAdaptive || !isActiveGDI || !_isStart || !Visible || !IsHandleCreated || _forceLock
                 || TranslateStatusType != TranslateStatusType.Translate
                 || AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.Restore)
             {
@@ -46,25 +64,38 @@ namespace MORT
             var capture = _attchedCapture ? FormManager.Instace.screenCaptureUI?.AdaptiveCaptureSource : null;
             if(_attchedCapture && capture == null) { StopAdaptiveBackground(); return; }
             var areas = new List<OverlayAdaptiveArea>();
-            foreach(var group in blocks.GroupBy(block => block.TargetData.Index))
+            double zoom = Math.Max(0.01, FormManager.Instace.MyMainForm.MySettingManager.ImgZoomSize);
+            void AddArea(int index, Size size, Rectangle[] mask, Rectangle screen)
             {
-                var first = group.First();
-                Rectangle screen = first.CaptureImageRect;
-                screen.Offset(Location);
-                if(screen.Width <= 0 || screen.Height <= 0 || (long)screen.Width * screen.Height > int.MaxValue / 4) continue;
-                var size = first.TargetData.OcrImageSize;
-                double zoom = Math.Max(0.01, FormManager.Instace.MyMainForm.MySettingManager.ImgZoomSize);
+                if(screen.Width <= 0 || screen.Height <= 0 || !Bounds.IntersectsWith(screen)
+                    || (long)screen.Width * screen.Height > int.MaxValue / 4) return;
                 double scaleX = size.Width > 0 ? screen.Width / (double)size.Width : 1 / zoom;
                 double scaleY = size.Height > 0 ? screen.Height / (double)size.Height : 1 / zoom;
                 var bounds = new Rectangle(Point.Empty, screen.Size);
-                var words = group.SelectMany(block => block.TransData.lineDataList)
-                    .SelectMany(line => line.wordRectList.Count > 0 ? line.wordRectList : new List<Rectangle> { line.lineRect })
-                    .Where(rect => rect.Width > 0 && rect.Height > 0)
+                var words = mask
                     .Select(rect => Rectangle.Intersect(bounds, Rectangle.FromLTRB(
                         (int)Math.Floor(rect.Left * scaleX), (int)Math.Floor(rect.Top * scaleY),
                         (int)Math.Ceiling(rect.Right * scaleX), (int)Math.Ceiling(rect.Bottom * scaleY))))
                     .Where(rect => rect.Width > 0 && rect.Height > 0).Distinct().ToArray();
-                if(words.Length > 0) areas.Add(new OverlayAdaptiveArea(group.Key, screen, words));
+                if(words.Length > 0) areas.Add(new OverlayAdaptiveArea(index, screen, words));
+            }
+
+            if(displayedBlocks is { Count: > 0 })
+            {
+                //이전 번역문이 표시되는 동안에는 그 번역문에 대응하는 원문만 복원한다.
+                foreach(var group in displayedBlocks.GroupBy(block => block.TargetData.Index))
+                {
+                    var first = group.First();
+                    Rectangle screen = first.CaptureImageRect;
+                    screen.Offset(Location);
+                    var words = OverlayAdaptiveMask.GetWords(group.SelectMany(block => block.TransData.lineDataList));
+                    AddArea(group.Key, first.TargetData.OcrImageSize, words, screen);
+                }
+            }
+            else
+            {
+                foreach(var mask in _adaptiveMasks)
+                    AddArea(mask.Index, mask.ImageSize, mask.Words, GetCaptureScreenRect(mask.Index, false, _adaptiveCaptureOrigin));
             }
             if(areas.Count == 0) { StopAdaptiveBackground(); return; }
             var scene = new OverlayAdaptiveScene(areas.ToArray(), AdvencedOptionManager.OverlayRestoreLevel, capture, SystemInformation.VirtualScreen, AdvencedOptionManager.OverlayTargetFps);
@@ -81,11 +112,13 @@ namespace MORT
                 || !ReferenceEquals(first.Capture, second.Capture) || first.Areas.Length != second.Areas.Length) return false;
             for(int i = 0; i < first.Areas.Length; i++)
             {
-                var a = first.Areas[i]; var b = second.Areas[i];
-                if(a.Index != b.Index || a.ScreenRect != b.ScreenRect || !a.Words.SequenceEqual(b.Words)) return false;
+                if(!SameAdaptiveArea(first.Areas[i], second.Areas[i])) return false;
             }
             return true;
         }
+
+        private static bool SameAdaptiveArea(OverlayAdaptiveArea first, OverlayAdaptiveArea second) =>
+            first.Index == second.Index && first.ScreenRect == second.ScreenRect && first.Words.SequenceEqual(second.Words);
 
         //같은 문장이라도 글자 위치가 바뀌면 복원 마스크도 교체해야 한다.
         private static bool SameAdaptiveGeometry(OCRDataManager.ResultData first, OCRDataManager.ResultData second)

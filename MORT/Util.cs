@@ -360,7 +360,9 @@ namespace MORT
             }
 
 
-            string[] tokens = { newToken };
+            // 번역 API마다 구분 토큰 뒤의 줄바꿈 형식이 다르다.
+            string separator = newToken[..^Environment.NewLine.Length];
+            string[] tokens = { separator + "\r\n", separator + "\n" };
             lines = result.Split(tokens, System.StringSplitOptions.RemoveEmptyEntries);
             List<string> resultLines = new List<string>(lines.Length);
             if(isUseAdvenced)
