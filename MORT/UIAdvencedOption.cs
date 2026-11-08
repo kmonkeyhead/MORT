@@ -58,9 +58,7 @@ namespace MORT
                 (rbOverlayOutputBlur, "Adv Overlay Output Blur"),
                 (rbOverlayOutputRestore, "Adv Overlay Output Restore"),
                 (lbOverlayRestoreLevel, "Adv Overlay Restore Level"),
-                (lbOverlayRestoreLevelInfo, "Adv Overlay Restore Level Info"),
                 (lbOverlayBlurLevel, "Adv Overlay Blur Level"),
-                (lbOverlayBlurLevelInfo, "Adv Overlay Blur Level Info"),
                 (lbOverlayTargetFps, "Adv Overlay Target FPS")
             })
             {
@@ -83,8 +81,8 @@ namespace MORT
         private void UpdateOverlayOutputControls()
         {
             cbOverlayUseBackgroundAlpha.Enabled = rbOverlayOutputDefault.Checked;
-            lbOverlayBlurLevel.Enabled = udOverlayBlurLevel.Enabled = lbOverlayBlurLevelInfo.Enabled = rbOverlayOutputBlur.Checked;
-            lbOverlayRestoreLevel.Enabled = udOverlayRestoreLevel.Enabled = lbOverlayRestoreLevelInfo.Enabled = rbOverlayOutputRestore.Checked;
+            lbOverlayBlurLevel.Enabled = udOverlayBlurLevel.Enabled = rbOverlayOutputBlur.Checked;
+            lbOverlayRestoreLevel.Enabled = udOverlayRestoreLevel.Enabled = rbOverlayOutputRestore.Checked;
             lbOverlayTargetFps.Enabled = udOverlayTargetFps.Enabled = rbOverlayOutputRestore.Checked;
         }
 

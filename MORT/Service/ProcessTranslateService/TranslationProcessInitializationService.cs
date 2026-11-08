@@ -23,7 +23,7 @@ namespace MORT.Service.ProcessTranslateService
 
             bool isOnce = ocrMethodType != OcrMethodType.Normal;
             bool requireOriginalScreen = _settingManager.NowSkin == Skin.over
-                && AdvencedOptionManager.OverlayAutoColor;
+                && (AdvencedOptionManager.OverlayAutoColor || AdvencedOptionManager.OverlayOutputMode == OverlayBlurMode.Restore);
             bool useGoogleOcr = false;
 
             if(_settingManager.NowTransType == TransType.hdTrans

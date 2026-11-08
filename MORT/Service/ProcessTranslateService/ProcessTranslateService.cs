@@ -262,7 +262,7 @@ namespace MORT.Service.ProcessTranslateService
                 var image = imgDataList[index];
                 ocrResultData.OcrImageSize = new Size(image.x, image.y);
                 var backgroundMode = AdvencedOptionManager.OverlayOutputMode;
-                if(backgroundMode == OverlayBlurMode.Restore && !_liveAdaptiveRequested)
+                if(_settingManager.NowSkin == Skin.over && backgroundMode == OverlayBlurMode.Restore && !_liveAdaptiveRequested)
                 {
                     var words = ocrResultData.TransDataList.SelectMany(block => block.lineDataList)
                         .SelectMany(line => line.wordRectList.Count > 0 ? line.wordRectList : new List<Rectangle> { line.lineRect })

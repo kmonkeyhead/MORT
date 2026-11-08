@@ -413,8 +413,8 @@ namespace MORT
         public static bool OverlayAutoFontColor => data.OverlayAutoFontColor.Value;
         public static bool OverlayUseFontOutline => data.OverlayUseFontOutline.Value;
         public static bool OverlayUseBackgroundAlpha => data.OverlayUseBackgroundAlpha.Value;
-        //기존 진단 값(0/1/3)을 보존한다. 누락되거나 지원하지 않는 값은 기본 출력이다.
-        public static Model.OverlayBlurMode OverlayOutputMode => NormalizeOverlayOutputMode(data.OverlayOutputMode?.Value ?? 0);
+        //기존 진단 값(0/1/3)을 보존한다. 누락된 설정은 적용형, 지원하지 않는 값은 기본 출력이다.
+        public static Model.OverlayBlurMode OverlayOutputMode => NormalizeOverlayOutputMode(data.OverlayOutputMode?.Value ?? (int)Model.OverlayBlurMode.Restore);
         public static int OverlayTargetFps
         {
             get
@@ -774,7 +774,7 @@ namespace MORT
             data.OverlayAutoFontColor = SettingDataFactory.Create<bool>(KeyOverlayAutoFontColor, data.ParseList, true);
             data.OverlayUseFontOutline = SettingDataFactory.Create<bool>(KeyOverlayUseFontOutline, data.ParseList, false);
             data.OverlayUseBackgroundAlpha = SettingDataFactory.Create<bool>(KeyOverlayUseBackgroundAlpha, data.ParseList, false);
-            data.OverlayOutputMode = SettingDataFactory.Create<int>(KeyOverlayOutputMode, data.ParseList, 0);
+            data.OverlayOutputMode = SettingDataFactory.Create<int>(KeyOverlayOutputMode, data.ParseList, (int)Model.OverlayBlurMode.Restore);
             data.OverlayRestoreLevel = SettingDataFactory.Create<int>(KeyOverlayRestoreLevel, data.ParseList, 2);
             data.OverlayBlurLevel = SettingDataFactory.Create<int>(KeyOverlayBlurLevel, data.ParseList, 5);
             data.OverlayTargetFps = SettingDataFactory.Create<int>(KeyOverlayTargetFps, data.ParseList, 60);

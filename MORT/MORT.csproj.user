@@ -109,7 +109,16 @@
     <Compile Update="TransFormLayer.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="TransFormOver.Adaptive.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TransFormOver.Blur.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="TransFormOver.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TransFormOver.RenderCache.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="UIAdvencedOption.cs">

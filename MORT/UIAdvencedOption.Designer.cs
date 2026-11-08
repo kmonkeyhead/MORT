@@ -127,12 +127,10 @@ namespace MORT
             rbOverlayOutputRestore = new System.Windows.Forms.RadioButton();
             lbOverlayBlurLevel = new System.Windows.Forms.Label();
             udOverlayBlurLevel = new System.Windows.Forms.NumericUpDown();
-            lbOverlayBlurLevelInfo = new System.Windows.Forms.Label();
             lbOverlayRestoreLevel = new System.Windows.Forms.Label();
             udOverlayRestoreLevel = new System.Windows.Forms.NumericUpDown();
             lbOverlayTargetFps = new System.Windows.Forms.Label();
             udOverlayTargetFps = new System.Windows.Forms.NumericUpDown();
-            lbOverlayRestoreLevelInfo = new System.Windows.Forms.Label();
             gbAutoColor = new System.Windows.Forms.GroupBox();
             cbAutoFontColor = new System.Windows.Forms.CheckBox();
             cbAutoBackgroundColor = new System.Windows.Forms.CheckBox();
@@ -1164,7 +1162,7 @@ namespace MORT
             gbMemory.Controls.Add(lbMemoryCount);
             gbMemory.Controls.Add(udMemoryCount);
             gbMemory.Controls.Add(cbEnableMemory);
-            gbMemory.Location = new System.Drawing.Point(29, 1750);
+            gbMemory.Location = new System.Drawing.Point(29, 1641);
             gbMemory.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbMemory.Name = "gbMemory";
             gbMemory.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1245,7 +1243,7 @@ namespace MORT
             // 
             gbTransformLayer.Controls.Add(cbLayerAlignmentRight);
             gbTransformLayer.Controls.Add(cbLayerAlignmentBottom);
-            gbTransformLayer.Location = new System.Drawing.Point(29, 1364);
+            gbTransformLayer.Location = new System.Drawing.Point(29, 1255);
             gbTransformLayer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbTransformLayer.Name = "gbTransformLayer";
             gbTransformLayer.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1281,7 +1279,7 @@ namespace MORT
             // gbDark
             // 
             gbDark.Controls.Add(btnFont);
-            gbDark.Location = new System.Drawing.Point(29, 1219);
+            gbDark.Location = new System.Drawing.Point(29, 1110);
             gbDark.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbDark.Name = "gbDark";
             gbDark.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1310,7 +1308,7 @@ namespace MORT
             gbTransformGeneral.Controls.Add(cbAdvencedHideTransform);
             gbTransformGeneral.Controls.Add(cbTopMost);
             gbTransformGeneral.Controls.Add(cbIgonreEmpty);
-            gbTransformGeneral.Location = new System.Drawing.Point(29, 1545);
+            gbTransformGeneral.Location = new System.Drawing.Point(29, 1436);
             gbTransformGeneral.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbTransformGeneral.Name = "gbTransformGeneral";
             gbTransformGeneral.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1376,7 +1374,7 @@ namespace MORT
             gbOverlay.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbOverlay.Name = "gbOverlay";
             gbOverlay.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            gbOverlay.Size = new System.Drawing.Size(1016, 1190);
+            gbOverlay.Size = new System.Drawing.Size(1016, 1050);
             gbOverlay.TabIndex = 67;
             gbOverlay.TabStop = false;
             gbOverlay.Text = "오버레이 번역창";
@@ -1397,29 +1395,25 @@ namespace MORT
             gbOverlayOutputMode.Controls.Add(rbOverlayOutputRestore);
             gbOverlayOutputMode.Controls.Add(lbOverlayBlurLevel);
             gbOverlayOutputMode.Controls.Add(udOverlayBlurLevel);
-            gbOverlayOutputMode.Controls.Add(lbOverlayBlurLevelInfo);
             gbOverlayOutputMode.Controls.Add(lbOverlayRestoreLevel);
             gbOverlayOutputMode.Controls.Add(udOverlayRestoreLevel);
-            gbOverlayOutputMode.Controls.Add(lbOverlayRestoreLevelInfo);
             gbOverlayOutputMode.Controls.Add(lbOverlayTargetFps);
             gbOverlayOutputMode.Controls.Add(udOverlayTargetFps);
             gbOverlayOutputMode.Location = new System.Drawing.Point(19, 620);
             gbOverlayOutputMode.Name = "gbOverlayOutputMode";
-            gbOverlayOutputMode.Size = new System.Drawing.Size(978, 540);
+            gbOverlayOutputMode.Size = new System.Drawing.Size(978, 400);
             gbOverlayOutputMode.TabIndex = 1;
             gbOverlayOutputMode.TabStop = false;
             gbOverlayOutputMode.Text = "출력 방식";
             //
             // rbOverlayOutputDefault
             //
-            rbOverlayOutputDefault.Checked = true;
             rbOverlayOutputDefault.Font = new System.Drawing.Font("맑은 고딕", 9F);
             rbOverlayOutputDefault.Location = new System.Drawing.Point(12, 28);
             rbOverlayOutputDefault.Name = "rbOverlayOutputDefault";
             rbOverlayOutputDefault.Size = new System.Drawing.Size(950, 42);
             rbOverlayOutputDefault.TabIndex = 0;
-            rbOverlayOutputDefault.TabStop = true;
-            rbOverlayOutputDefault.Text = "기본 - 빠름: 색상에 맞춰 배경색을 넣어 번역문을 표시합니다.";
+            rbOverlayOutputDefault.Text = "기본 - 색상에 맞춰 배경색을 정함, 속도 빠름";
             rbOverlayOutputDefault.UseVisualStyleBackColor = true;
             rbOverlayOutputDefault.CheckedChanged += OverlayOutputMode_CheckedChanged;
             //
@@ -1430,18 +1424,20 @@ namespace MORT
             rbOverlayOutputBlur.Name = "rbOverlayOutputBlur";
             rbOverlayOutputBlur.Size = new System.Drawing.Size(950, 42);
             rbOverlayOutputBlur.TabIndex = 2;
-            rbOverlayOutputBlur.Text = "블러 - 중간: 텍스트 영역에 실시간 블러를 추가해 번역문을 잘 보이게 합니다.";
+            rbOverlayOutputBlur.Text = "블러 - 텍스트 영역에 블러를 추가해 번역문 강조, 속도 중간";
             rbOverlayOutputBlur.UseVisualStyleBackColor = true;
             rbOverlayOutputBlur.CheckedChanged += OverlayOutputMode_CheckedChanged;
             //
             // rbOverlayOutputRestore
             //
+            rbOverlayOutputRestore.Checked = true;
+            rbOverlayOutputRestore.TabStop = true;
             rbOverlayOutputRestore.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            rbOverlayOutputRestore.Location = new System.Drawing.Point(12, 264);
+            rbOverlayOutputRestore.Location = new System.Drawing.Point(12, 210);
             rbOverlayOutputRestore.Name = "rbOverlayOutputRestore";
             rbOverlayOutputRestore.Size = new System.Drawing.Size(950, 62);
             rbOverlayOutputRestore.TabIndex = 4;
-            rbOverlayOutputRestore.Text = "어댑티브(적응형) - 느림: 캡처한 화면에서 주변 배경을 추정해 원문 글자 영역을 메운 뒤\r\n번역문을 표시합니다.";
+            rbOverlayOutputRestore.Text = "적용형 - 텍스트 영역의 원문을 제거해 번역문만 보이도록 함, 속도 느림";
             rbOverlayOutputRestore.UseVisualStyleBackColor = true;
             rbOverlayOutputRestore.CheckedChanged += OverlayOutputMode_CheckedChanged;
             //
@@ -1464,18 +1460,10 @@ namespace MORT
             udOverlayBlurLevel.Value = 5;
             udOverlayBlurLevel.TabIndex = 3;
             //
-            // lbOverlayBlurLevelInfo
-            //
-            lbOverlayBlurLevelInfo.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            lbOverlayBlurLevelInfo.Location = new System.Drawing.Point(35, 208);
-            lbOverlayBlurLevelInfo.Name = "lbOverlayBlurLevelInfo";
-            lbOverlayBlurLevelInfo.Size = new System.Drawing.Size(920, 50);
-            lbOverlayBlurLevelInfo.Text = "1(약함) ~ 5(강함), 기본 5. 낮추면 원본이 더 비쳐 보입니다.\r\n흐림 반경이 아닌 블러 적용 비율을 조절합니다.";
-            //
             // lbOverlayRestoreLevel
             //
             lbOverlayRestoreLevel.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            lbOverlayRestoreLevel.Location = new System.Drawing.Point(35, 346);
+            lbOverlayRestoreLevel.Location = new System.Drawing.Point(35, 292);
             lbOverlayRestoreLevel.Name = "lbOverlayRestoreLevel";
             lbOverlayRestoreLevel.Size = new System.Drawing.Size(120, 30);
             lbOverlayRestoreLevel.Text = "적응형 강도";
@@ -1483,7 +1471,7 @@ namespace MORT
             // udOverlayRestoreLevel
             //
             udOverlayRestoreLevel.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            udOverlayRestoreLevel.Location = new System.Drawing.Point(160, 340);
+            udOverlayRestoreLevel.Location = new System.Drawing.Point(160, 286);
             udOverlayRestoreLevel.Name = "udOverlayRestoreLevel";
             udOverlayRestoreLevel.Size = new System.Drawing.Size(85, 31);
             udOverlayRestoreLevel.Minimum = 1;
@@ -1491,22 +1479,15 @@ namespace MORT
             udOverlayRestoreLevel.Value = 2;
             udOverlayRestoreLevel.TabIndex = 5;
             //
-            // lbOverlayRestoreLevelInfo
-            //
-            lbOverlayRestoreLevelInfo.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            lbOverlayRestoreLevelInfo.Location = new System.Drawing.Point(35, 382);
-            lbOverlayRestoreLevelInfo.Name = "lbOverlayRestoreLevelInfo";
-            lbOverlayRestoreLevelInfo.Size = new System.Drawing.Size(920, 56);
-            lbOverlayRestoreLevelInfo.Text = "1(약함) ~ 5(강함), 기본 2. 높일수록 원문 외곽선을 더 넓게 지웁니다.\r\n원문 흔적과 배경 손상을 보며 조절하세요.";
             //
             // Adaptive background frame rate (OCR/translation speed remains independent).
             lbOverlayTargetFps.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            lbOverlayTargetFps.Location = new System.Drawing.Point(35, 446);
+            lbOverlayTargetFps.Location = new System.Drawing.Point(35, 340);
             lbOverlayTargetFps.Name = "lbOverlayTargetFps";
             lbOverlayTargetFps.Size = new System.Drawing.Size(205, 30);
             lbOverlayTargetFps.Text = "배경 갱신 목표 FPS";
             udOverlayTargetFps.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            udOverlayTargetFps.Location = new System.Drawing.Point(250, 440);
+            udOverlayTargetFps.Location = new System.Drawing.Point(250, 334);
             udOverlayTargetFps.Name = "udOverlayTargetFps";
             udOverlayTargetFps.Size = new System.Drawing.Size(85, 31);
             udOverlayTargetFps.Minimum = 1;
@@ -2483,10 +2464,8 @@ namespace MORT
         private System.Windows.Forms.GroupBox gbOverlayGeneral;
         private System.Windows.Forms.Label lbOverlayBlurLevel;
         private System.Windows.Forms.NumericUpDown udOverlayBlurLevel;
-        private System.Windows.Forms.Label lbOverlayBlurLevelInfo;
         private System.Windows.Forms.Label lbOverlayRestoreLevel;
         private System.Windows.Forms.NumericUpDown udOverlayRestoreLevel;
-        private System.Windows.Forms.Label lbOverlayRestoreLevelInfo;
         private System.Windows.Forms.Label lbOverlayTargetFps;
         private System.Windows.Forms.NumericUpDown udOverlayTargetFps;
         private System.Windows.Forms.GroupBox gbOverlayOutputMode;

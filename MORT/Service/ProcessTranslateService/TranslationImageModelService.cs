@@ -26,7 +26,6 @@ namespace MORT.Service.ProcessTranslateService
             bool useAttachedCapture,
             bool requireOriginalScreen)
         {
-            requireOriginalScreen |= AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.Restore;
             if(useAttachedCapture)
             {
                 CreateModelsFromCapture(
