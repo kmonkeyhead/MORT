@@ -768,7 +768,7 @@ namespace MORT
         private static void LoadTranslationFormSetting()
         {
             data.UseAutoMerge = SettingDataFactory.Create<bool>(KeyOverlayAutoMerge, data.ParseList, false);
-            data.OverlayKeepSourceDirection = SettingDataFactory.Create<bool>(KeyOverlayKeepSourceDirection, data.ParseList, false);
+            data.OverlayKeepSourceDirection = SettingDataFactory.Create<bool>(KeyOverlayKeepSourceDirection, data.ParseList, true);
             data.OverlayAutoColor = SettingDataFactory.Create<bool>(KeyOverlayAutoColor, data.ParseList, true);
             data.OverlayAutoBackgroundColor = SettingDataFactory.Create<bool>(KeyOverlayAutoBackgroundColor, data.ParseList, true);
             data.OverlayAutoFontColor = SettingDataFactory.Create<bool>(KeyOverlayAutoFontColor, data.ParseList, true);

@@ -69,51 +69,64 @@ namespace MORT
             }
         }
 
-        private HashSet<int> DrawRestoredBackgrounds(Graphics graphics, List<OverlayRenderBlock> blocks)
+        private HashSet<int> DrawLiveRestoredBackgrounds(Graphics graphics, bool hasDisplayedText)
         {
             var drawn = new HashSet<int>();
-            if(!_isStart || AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.Restore) return drawn;
+            if(!hasDisplayedText) return drawn;
             //한 페인트 안에서는 모든 영역이 같은 완성 결과를 사용한다.
             var live = _adaptiveRefresh?.Latest;
+            if(_adaptiveScene == null || live == null) return drawn;
+
+            Point offset = new Point(-Location.X, -Location.Y);
+            foreach(var area in _adaptiveScene.Areas)
+            {
+                if(!live.Frames.TryGetValue(area.Index, out var frame)) continue;
+                var completedArea = live.Scene.Areas.First(oldArea => oldArea.Index == area.Index);
+                if(!SameAdaptiveArea(area, completedArea)) continue;
+                Rectangle imageRect = area.ScreenRect;
+                imageRect.Offset(offset);
+                Rectangle clip = Rectangle.Intersect(ClientRectangle, imageRect);
+                if(clip.Width <= 0 || clip.Height <= 0) continue;
+                DrawRestoredBackground(graphics, area.Index, frame, imageRect, clip);
+                drawn.Add(area.Index);
+            }
+            return drawn;
+        }
+
+        private void DrawSnapshotRestoredBackgrounds(Graphics graphics, List<OverlayRenderBlock> blocks, HashSet<int> drawn)
+        {
+            if(_allowLiveAdaptive || !_isStart || AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.Restore) return;
             //영역별 패치를 먼저 한 번만 그린다. 뒤쪽 블록의 배경이 앞쪽 번역문을 덮으면 안 된다.
             foreach(var block in blocks)
             {
                 OverlayBlurFrame frame = block.TargetData.BlurFrame;
                 Rectangle imageRect = block.CaptureImageRect;
-                if(_allowLiveAdaptive)
-                {
-                    //새 장면을 처리 중이어도 마지막 완성 배경을 쓴다. 스냅샷 배경과 섞지 않는다.
-                    frame = null;
-                    var area = live?.Scene.Areas.FirstOrDefault(area => area.Index == block.TargetData.Index);
-                    if(area != null && live.Frames.TryGetValue(area.Index, out frame))
-                    {
-                        //이전 패치를 새 캡처 크기로 늘리지 않고 원래 화면 위치에 유지한다.
-                        imageRect = area.ScreenRect;
-                        imageRect.Offset(-Location.X, -Location.Y);
-                    }
-                }
                 if(frame == null || frame.Mode != OverlayBlurMode.Restore
                     || imageRect.Width <= 0 || imageRect.Height <= 0
                     || !drawn.Add(block.TargetData.Index)) continue;
-                Bitmap image = GetCaptureBackgroundImage(block.TargetData.Index, frame);
-                GraphicsState saved = graphics.Save();
-                try
-                {
-                    graphics.SetClip(block.CaptureRect, CombineMode.Intersect);
-                    graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                    graphics.PixelOffsetMode = PixelOffsetMode.Half;
-                    RectangleF destination = imageRect;
-                    if(frame.SourceRect.Width > 0 && frame.SourceRect.Height > 0 && frame.SourceSize.Width > 0 && frame.SourceSize.Height > 0)
-                    {
-                        float sx = destination.Width / frame.SourceSize.Width, sy = destination.Height / frame.SourceSize.Height;
-                        destination = new RectangleF(destination.X + frame.SourceRect.X * sx, destination.Y + frame.SourceRect.Y * sy,
-                            frame.SourceRect.Width * sx, frame.SourceRect.Height * sy);
-                    }
-                    graphics.DrawImage(image, destination, new RectangleF(0, 0, frame.Width, frame.Height), GraphicsUnit.Pixel);
-                }
-                finally { graphics.Restore(saved); }
+                DrawRestoredBackground(graphics, block.TargetData.Index, frame, imageRect, block.CaptureRect);
             }
-            return drawn;
+        }
+
+        private void DrawRestoredBackground(Graphics graphics, int index, OverlayBlurFrame frame, Rectangle imageRect, Rectangle clip)
+        {
+            Bitmap image = GetCaptureBackgroundImage(index, frame);
+            GraphicsState saved = graphics.Save();
+            try
+            {
+                graphics.SetClip(clip, CombineMode.Intersect);
+                graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+                graphics.PixelOffsetMode = PixelOffsetMode.Half;
+                RectangleF destination = imageRect;
+                if(frame.SourceRect.Width > 0 && frame.SourceRect.Height > 0 && frame.SourceSize.Width > 0 && frame.SourceSize.Height > 0)
+                {
+                    float sx = destination.Width / frame.SourceSize.Width, sy = destination.Height / frame.SourceSize.Height;
+                    destination = new RectangleF(destination.X + frame.SourceRect.X * sx, destination.Y + frame.SourceRect.Y * sy,
+                        frame.SourceRect.Width * sx, frame.SourceRect.Height * sy);
+                }
+                graphics.DrawImage(image, destination, new RectangleF(0, 0, frame.Width, frame.Height), GraphicsUnit.Pixel);
+            }
+            finally { graphics.Restore(saved); }
         }
 
         private Bitmap GetCaptureBackgroundImage(int index, OverlayBlurFrame frame)
@@ -191,12 +204,11 @@ namespace MORT
             return regions;
         }
 
-        private void TrimCaptureBlurImages()
+        private void TrimCaptureBlurImages(HashSet<int> active)
         {
-            var active = _dataList?.Select(data => data.Index).ToHashSet() ?? new HashSet<int>();
             foreach(int key in _captureBlurImages.Keys.ToArray())
             {
-                if(AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.Restore || !active.Contains(key))
+                if(!active.Contains(key))
                 {
                     _captureBlurImages[key].Image.Dispose();
                     _captureBlurImages.Remove(key);
