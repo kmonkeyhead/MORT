@@ -778,7 +778,7 @@ namespace MORT
             data.OverlayRestoreLevel = SettingDataFactory.Create<int>(KeyOverlayRestoreLevel, data.ParseList, 2);
             data.OverlayBlurLevel = SettingDataFactory.Create<int>(KeyOverlayBlurLevel, data.ParseList, 5);
             data.OverlayTargetFps = SettingDataFactory.Create<int>(KeyOverlayTargetFps, data.ParseList, 60);
-            data.UseAutoSizeFont = SettingDataFactory.Create<bool>(KEY_FONT_AUTO_SIZE, data.ParseList, true);
+            data.UseAutoSizeFont = SettingDataFactory.Create<bool>(KEY_FONT_AUTO_SIZE, data.ParseList, false);
             data.MinAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MIN_SIZE, data.ParseList, 10);
             data.MaxAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MAX_SIZE, data.ParseList, 50);
             data.SnapShotRemainTime = SettingDataFactory.Create<int>(KEY_SNAP_SHOP_REMAIN_TIEM, data.ParseList, 5);

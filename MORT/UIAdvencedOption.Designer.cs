@@ -1664,8 +1664,6 @@ namespace MORT
             // cbOverlayAutoSize
             // 
             cbOverlayAutoSize.AutoSize = true;
-            cbOverlayAutoSize.Checked = true;
-            cbOverlayAutoSize.CheckState = System.Windows.Forms.CheckState.Checked;
             cbOverlayAutoSize.Font = new System.Drawing.Font("맑은 고딕", 9F);
             cbOverlayAutoSize.Location = new System.Drawing.Point(21, 42);
             cbOverlayAutoSize.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
