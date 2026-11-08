@@ -8,27 +8,33 @@
 <img src="https://github.com/kmonkeyhead/MORT/blob/main/MORT_LOGO.png" width="90%"></img>
 
 
-[![Video Label](https://img.youtube.com/vi/LHTErVnsaws/0.jpg)](https://youtu.be/LHTErVnsaws)
+# MORT #
+
+MORT extracts on-screen dialogue in real time using OCR and displays translations from a translation database or machine translation service.
+
+English and Japanese OCR are supported by default. MORT can also translate text from hooking programs through the clipboard.
+
+[Download the latest version and read the release notes](https://blog.naver.com/killkimno/70179867557)
+
+## Sample videos
+
+![MORT translation overlay demo](docs/images/korean-to-english-640-34.gif)
+
+![MORT translation overlay comparison: basic, blur, and adaptive](docs/images/overlay-comparison-640.png)
+
+https://www.youtube.com/watch?v=2qcYtWQdUu0
 
 https://youtu.be/LHTErVnsaws
 
-Sample video
-
-# MORT #
-
-MORT is a program that extracts dialogs from the screen in real time using OCR and outputs a translations using DB or machine translation.
-
-Currently, English and Japanese translation/extraction can be extracted by default, and it can also be translated by linking with a hooking program using the save to clipboard function.
-
-[Latest version download and release notes - https://blog.naver.com/killkimno/70179867557]
-
 ## Features ##
-* Realtime translate
-* OCR - TesseractOCR , Windows OCR, Google Cloud Vision OCR, Snipping Tool OCR, Easy OCR
-* Machine translation - Naver Papago, Google Web, Google Sheet, ezTrans, DeepL
-* Language Patch with using DB
+* Real-time translation
+* OCR - Tesseract OCR, Windows OCR, Google Cloud Vision OCR, Snipping Tool OCR, EasyOCR
+* Machine translation - Naver Papago, Google Web, Google Sheets, DeepL, Gemini
+* Local translation - hdTrans and Chrome local translator
+* Custom translation APIs over HTTP
+* Translation databases for game-specific translations
 * Multiple OCR areas
-* Img adjust
+* Image adjustments for OCR
 
 ## System Requirement ##
 * Windows 10 or higer
@@ -128,7 +134,6 @@ ex
 
 * Visaul Studio 2019 or higer
 * Tesseract OCR 5.2.0 
-* NHocr 0.21
 
 ### Create a build and run environment ###
 1. Set the project to Release mode. Set the target CPU to X64.
@@ -136,16 +141,13 @@ ex
 3. Can't run after build. The reason is that there are no essential files required for run
 4. Unzip the latest build files into the release folder to get the required files 
 - https://drive.google.com/drive/folders/0BxO-Nrmd-kR7dVp5TWpMQ09jMFU?resourcekey=0-bx6_8OEv3WAGzz9Au9fxNg
-5. MORT_CORE.DLL , nhocr.DLL To modify This dll, please refer to the related projects below
+5. To modify MORT_CORE.DLL, refer to the related project below.
 
 ### Related Project ###
 
 * MORT Core - MORT_CORE_DLL
   - https://github.com/kmonkeyhead/MORT_CORE
   
-* MORT NHocr - nhocr.DLL
-  - https://github.com/kmonkeyhead/MORT_NHOCR
-
 ## ETC ##
 ### Development Plans Trello ###
 

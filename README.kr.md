@@ -8,28 +8,33 @@
 <img src="https://github.com/kmonkeyhead/MORT/blob/main/MORT_LOGO.png" width="90%"></img>
 
 
-[![Video Label](https://img.youtube.com/vi/LHTErVnsaws/0.jpg)](https://youtu.be/LHTErVnsaws)
+# MORT #
+
+MORT는 OCR을 이용해 화면의 대사를 실시간으로 추출하고, 번역 DB나 기계번역으로 번역 결과를 보여주는 프로그램입니다.
+
+영어와 일본어 OCR을 기본 지원하며, 클립보드를 통해 후킹 프로그램에서 추출한 텍스트도 번역할 수 있습니다.
+
+[최신 버전 다운로드 및 릴리즈 노트](https://blog.naver.com/killkimno/70179867557)
+
+## 샘플 영상
+
+![MORT 번역 오버레이 데모](docs/images/korean-to-english-640-34.gif)
+
+![MORT 번역 오버레이 비교: 기본, 블러, 적응형](docs/images/overlay-comparison-640.png)
+
+https://www.youtube.com/watch?v=2qcYtWQdUu0
 
 https://youtu.be/LHTErVnsaws
 
-Sample video
-
-# MORT #
-
-MORT는 OCR을 이용해 화면상에 나온 대사를 추출 , DB나 기계번역을 이용해 번역본을 출력해주는 프로그램입니다.
-
-현재 영어와 일본어 번역/추출을 기본적으로 추출 가능하며, 클립보드에 저장 기능을 이용해 후킹 프로그램과 연동해 번역할 수도 있습니다.
-
-[최신 버전 다운로드 및 릴리즈 노트 - https://blog.naver.com/killkimno/70179867557]
-
 ## 지원 기능 ##
 * 실시간 번역
-* OCR - TesseractOCR , Windows OCR, Google Cloud Vision OCR, Snipping Tool OCR, Easy OCR
-* 번역기 - 네이버 파파고, 구글 웹, 구글 시트, 이지트랜스, 딥플
-* DB를 이용한 준한글화
+* OCR - Tesseract OCR, Windows OCR, Google Cloud Vision OCR, Snipping Tool OCR, EasyOCR
+* 번역기 - 네이버 파파고, 구글 웹, 구글 시트, DeepL, Gemini
+* 로컬 번역 - hdTrans, 크롬 로컬 번역기
+* HTTP 기반 커스텀 번역 API
+* 번역 DB를 이용한 게임별 번역
 * 다중 OCR 영역
-* 이미지 보정
-* 실시간 번역
+* OCR을 위한 이미지 보정
 
 ## 요구 사항 ##
 * 윈도우 10 이상
@@ -123,7 +128,6 @@ ex
 ### 개발 환경 ###
 * Visaul Studio 2019 or higer
 * Tesseract OCR 5.2.0 
-* NHocr 0.21
 
 ### 빌드 및 실행 환경 만들기 ###
 1. 프로젝트를 Release 모드로 설정합니다. 타겟 CPU는 X64로 합니다
@@ -131,16 +135,13 @@ ex
 3. 실행하면 에러가 뜹니다. 이유는 실행에 필요한 필수 파일이 없기 때문입니다
 4. 필수 파일을 받기 위해 최신 빌드 파일을 릴리즈 폴더에 압축을 풉니다 
 - https://drive.google.com/drive/folders/0BxO-Nrmd-kR7dVp5TWpMQ09jMFU?resourcekey=0-bx6_8OEv3WAGzz9Au9fxNg
-5. DLL 폴더의 MORT_CORE.DLL , nhocr.DLL 을 수정할려면 아래 관련된 프로젝트를 참고하시기 바랍니다
+5. MORT_CORE.DLL을 수정하려면 아래 관련 프로젝트를 참고하세요.
 
 ### 관련 프로젝트 ###
 
 * MORT Core - MORT_CORE_DLL
   - https://github.com/kmonkeyhead/MORT_CORE
   
-* MORT NHocr - nhocr.DLL
-  - https://github.com/kmonkeyhead/MORT_NHOCR
-
 ## 그 외 ##
 ### 개발 상황 트렐로 ###
 
