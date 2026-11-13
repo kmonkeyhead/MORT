@@ -8,7 +8,7 @@ namespace MORT.OpenCV
     internal sealed class BackgroundRestorer : IDisposable
     {
         //Covers both 2 * max morphology radius + detection padding (16), and
-        //detection + maximum dilation + repair padding (2 + 5 + 6 = 13).
+        //detection + maximum dilation + repair padding (2 + 6 + 6 = 14).
         internal const int InputPadding = 16;
         private const int DetectionPadding = 2, RepairPadding = 6;
         internal struct Region
@@ -97,7 +97,7 @@ namespace MORT.OpenCV
                     }
                 }
                 fixed(byte* temporary = _temporary)
-                    Morphology.Extreme(mask, width, expanded, temporary, width, height, Math.Clamp(strength, 1, 5), true);
+                    Morphology.Extreme(mask, width, expanded, temporary, width, height, Math.Clamp(strength, 1, 5) + 1, true);
                 new Span<byte>(expanded, width).Clear();
                 new Span<byte>(expanded + (height - 1) * width, width).Clear();
                 int left = width, right = 0, top = height, bottom = 0;
