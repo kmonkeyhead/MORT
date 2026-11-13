@@ -98,7 +98,9 @@ namespace MORT
                     AddArea(mask.Index, mask.ImageSize, mask.Words, GetCaptureScreenRect(mask.Index, false, _adaptiveCaptureOrigin));
             }
             if(areas.Count == 0) { StopAdaptiveBackground(); return; }
-            var scene = new OverlayAdaptiveScene(areas.ToArray(), AdvencedOptionManager.OverlayRestoreLevel, capture, SystemInformation.VirtualScreen, AdvencedOptionManager.OverlayTargetFps);
+            int quality = AdvencedOptionManager.OverlayBackgroundQuality;
+            var scene = new OverlayAdaptiveScene(areas.ToArray(), capture, SystemInformation.VirtualScreen,
+                AdvencedOptionManager.OverlayTargetFps, quality > 0, AdvencedOptionManager.OverlayBackgroundStrength);
             if(SameAdaptiveScene(_adaptiveScene, scene)) return;
             _adaptiveScene = scene;
             _adaptiveRefresh ??= Program.ServiceContainer?.GetService(typeof(OverlayAdaptiveRefreshService)) as OverlayAdaptiveRefreshService
@@ -108,7 +110,8 @@ namespace MORT
 
         private static bool SameAdaptiveScene(OverlayAdaptiveScene? first, OverlayAdaptiveScene second)
         {
-            if(first == null || first.TargetFps != second.TargetFps || first.Level != second.Level || first.DesktopBounds != second.DesktopBounds
+            if(first == null || first.UseHighQuality != second.UseHighQuality || first.BackgroundStrength != second.BackgroundStrength
+                || first.TargetFps != second.TargetFps || first.DesktopBounds != second.DesktopBounds
                 || !ReferenceEquals(first.Capture, second.Capture) || first.Areas.Length != second.Areas.Length) return false;
             for(int i = 0; i < first.Areas.Length; i++)
             {

@@ -1,0 +1,28 @@
+{
+  "version": "4.14.0",
+  "commit": "0654a42e19215ef25b1d367d822f3c630447e7c7",
+  "integration": "Pure C# subset: 8-bit gray/Otsu and radius-2 BGR Navier-Stokes inpainting; MORT SIMD morphology and OCR pipeline",
+  "nativeDependency": false,
+  "sources": {
+    "inpaint.cpp": {
+      "upstreamPath": "modules/photo/src/inpaint.cpp",
+      "sha256": "15c66e1f742fd8a08590996e80e06895c5355126bd9457ab613be03179019734",
+      "url": "https://github.com/opencv/opencv/blob/4.14.0/modules/photo/src/inpaint.cpp"
+    },
+    "color_rgb.simd.hpp": {
+      "upstreamPath": "modules/imgproc/src/color_rgb.simd.hpp",
+      "sha256": "99fd6213413232ea68af7c1340f92460b8df4472840b9fad3322b4393169ce90",
+      "url": "https://github.com/opencv/opencv/blob/4.14.0/modules/imgproc/src/color_rgb.simd.hpp"
+    },
+    "color.simd_helpers.hpp": {
+      "upstreamPath": "modules/imgproc/src/color.simd_helpers.hpp",
+      "sha256": "1888f75db0b5e64a9e0483b950fb3d232cfc5572f70a7b981c4ccf573a4af940",
+      "url": "https://github.com/opencv/opencv/blob/4.14.0/modules/imgproc/src/color.simd_helpers.hpp"
+    },
+    "thresh.cpp": {
+      "upstreamPath": "modules/imgproc/src/thresh.cpp",
+      "sha256": "ec40ffd08c842c946213cdd46c2b8036e43770445a4c4b797017c96fd3f91117",
+      "url": "https://github.com/opencv/opencv/blob/4.14.0/modules/imgproc/src/thresh.cpp"
+    }
+  }
+}

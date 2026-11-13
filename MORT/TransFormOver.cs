@@ -1,6 +1,7 @@
-using R3;
+﻿using R3;
 using System;
 using MORT.Model.Debug;
+using MORT.Service.Overlay;
 using MORT.Service.Debug;
 using MORT.Service.Overlay;
 using System.Collections.Generic;
@@ -193,6 +194,7 @@ namespace MORT
         private Rectangle _lastDisplayRect = Rectangle.Empty;
         private readonly Dictionary<int, OverlayDataCache> _overlayDataCache = new Dictionary<int, OverlayDataCache>();
         Bitmap bitmap = null;
+        private LayeredWindowSurface _layeredSurface;
 
         private readonly IDisposable _disposable;
 
@@ -738,6 +740,7 @@ namespace MORT
 
             foreach(var item in textPass)
             {
+                using var textTiming = OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.TextDraw);
                 using StringFormat format = (StringFormat)sf.Clone();
                 ConfigureStringFormat(format, item.Block.VerticalMode);
                 using Font font = new Font(overlayBaseFont.FontFamily, item.FontSize, overlayBaseFont.Style, GraphicsUnit.Point);
@@ -2006,6 +2009,7 @@ namespace MORT
             }
 
             isLockPaint = true;
+            using var paintTiming = OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.PaintTotal, Width, Height);
 
             //같은 내용을 다시 표시할 때 측정 결과를 재사용한다.
             _fitSizeCache ??= new Dictionary<TextMeasureKey, float>();
@@ -2023,12 +2027,12 @@ namespace MORT
             // Get device contexts
             IntPtr screenDc = IntPtr.Zero;
             IntPtr memDc = IntPtr.Zero;
-            IntPtr hBitmap = IntPtr.Zero;
-            IntPtr hOldBitmap = IntPtr.Zero;
+
             try
             {
                 var sectionWatch = measureTiming ? System.Diagnostics.Stopwatch.StartNew() : null;
-                CheckSizeAndLocation();
+                using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.SizeAndLocation))
+                    CheckSizeAndLocation();
                 if(measureTiming)
                 {
                     _checkSizeMs = sectionWatch.Elapsed.TotalMilliseconds;
@@ -2037,19 +2041,17 @@ namespace MORT
                 Util.ShowLog("Update paint + " + makeIndex);
 
                 screenDc = GetDC(IntPtr.Zero);
-                memDc = CreateCompatibleDC(screenDc);
 
 
-                if(bitmap == null || bitmap.Width != this.Width || bitmap.Height != Height)
+
+                if(_layeredSurface == null || bitmap.Width != Width || bitmap.Height != Height)
                 {
-                    //Bitmap 은 네이티브 GDI+ 자원을 들고 있어서 놓아주지 않으면 파이널라이저까지 남는다.
-                    //OCR 영역을 끌면 창 크기가 계속 바뀌어 큰 비트맵이 매번 새로 생기므로,
-                    //여기서 안 버리면 GDI+ 자원이 말라 그리기가 실패하고 창이 검게 남는다.
-                    bitmap?.Dispose();
-                    bitmap = new Bitmap(this.Width, this.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    var replacement = new LayeredWindowSurface(Width, Height);
+                    _layeredSurface?.Dispose();
+                    _layeredSurface = replacement;
+                    bitmap = replacement.Image;
                 }
-
-
+                memDc = _layeredSurface.DeviceContext;
 
                 Font textFont = FormManager.Instace.MyMainForm.MySettingManager.TextFont;
 
@@ -2075,7 +2077,8 @@ namespace MORT
                     sf.Alignment = stringFormat.Alignment;
                     sf.FormatFlags = stringFormat.FormatFlags;
                     Color backgroundColor = Color.FromArgb(alpha, Color.Red);
-                    g.Clear(backgroundColor);
+                    using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.ClearCanvas, bitmap.Width, bitmap.Height))
+                        g.Clear(backgroundColor);
 
                     Rectangle rectangle = ClientRectangle;
                     rectangle.X = this.Location.X;
@@ -2089,7 +2092,15 @@ namespace MORT
 
 
                     var layoutWatch = measureTiming ? System.Diagnostics.Stopwatch.StartNew() : null;
-                    AddText(gp, g, textFont, rectangle, sf);
+                    using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.LayoutAndDraw, bitmap.Width, bitmap.Height))
+                    {
+                        _directBackgroundPaint = true;
+                        try
+                        {
+                            AddText(gp, g, textFont, rectangle, sf);
+                        }
+                        finally { _directBackgroundPaint = false; }
+                    }
                     if(measureTiming)
                     {
                         _layoutAndDrawMs = layoutWatch.Elapsed.TotalMilliseconds;
@@ -2124,8 +2135,9 @@ namespace MORT
 
                 var presentWatch = measureTiming ? System.Diagnostics.Stopwatch.StartNew() : null;
 
-                hBitmap = bitmap.GetHbitmap(Color.FromArgb(0));  //Set the fact that background is transparent
-                hOldBitmap = SelectObject(memDc, hBitmap);
+                //공유 DIB에 그린 GDI+ 명령을 끝낸 뒤 같은 DC를 그대로 게시한다.
+                using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.SurfaceFlush, bitmap.Width, bitmap.Height))
+                    g.Flush(FlushIntention.Sync);
 
 
                 // Update the window.
@@ -2135,7 +2147,8 @@ namespace MORT
                     return;
                 }
 
-                UpdateLayeredWindow(
+                using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.UpdateLayeredWindow, bitmap.Width, bitmap.Height))
+                if(!UpdateLayeredWindow(
                     this.Handle,     // Handle to the layered window
                     screenDc,        // Handle to the screen DC
                     ref newLocation, // New screen position of the layered window
@@ -2145,7 +2158,7 @@ namespace MORT
                     0,               // Color key of the layered window
                     ref blend,       // Transparency of the layered window
                     ULW_ALPHA        // Use blend as the blend function
-                    );
+                    )) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
                 //SetWindowPos(this.Handle, HWND_TOPMOST, 0, 0, 0, 0, TOPMOST_FLAGS);
                 PresentWindowBlur();
 
@@ -2158,17 +2171,12 @@ namespace MORT
             {
                 // Release device context.
                 ReleaseDC(IntPtr.Zero, screenDc);
-                if(hBitmap != IntPtr.Zero)
-                {
-                    SelectObject(memDc, hOldBitmap);
-                    DeleteObject(hBitmap);
-                }
-                DeleteDC(memDc);
+                //DIB/DC는 창 크기가 바뀌거나 폼이 폐기될 때 해제한다.
 
                 //여기서 GC.Collect() 를 돌리지 않는다.
                 //페인트마다 전체 블로킹 GC 가 UI 스레드에서 돌아 번역 중 끊김의 원인이 된다.
                 //이 함수가 만드는 Bitmap / Graphics / 브러시는 위에서 직접 놓아주고
-                //GDI 핸들은 DeleteObject / DeleteDC 로 정리하므로 강제 수집이 필요 없다.
+                //공유 DIB/DC는 크기 변경과 Dispose에서 해제하므로 강제 수집이 필요 없다.
 
 
 

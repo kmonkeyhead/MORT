@@ -327,6 +327,8 @@ namespace MORT.ScreenCapture
                                 SharpDX.DXGI.SwapChainFlags.None);
 
                         }
+                        using(var readbackTiming = MORT.Service.Overlay.OverlayPerformanceProfiler.Measure(
+                            MORT.Service.Overlay.OverlayPerformanceStage.WgcReadback, frame.ContentSize.Width, frame.ContentSize.Height))
                         using(var backBuffer = swapChain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0))
                         {
                             using(var softwareBitmap = await SoftwareBitmap.CreateCopyFromSurfaceAsync(frame.Surface))

@@ -10,11 +10,105 @@ namespace MORT.Service.Overlay.Restoration
     //모든 OCR 글자를 제외한 주변 샘플로 배경을 연결한다. 복원 중인 픽셀은 참조하지 않는다.
     internal static class LegacyBackgroundRestoration
     {
-        public static OverlayBlurFrame CreateFrame(byte[] source, int width, int height, int channels, IReadOnlyList<Rectangle> wordRects, int restorationLevel = 2, bool compactOutput = false)
+        private static readonly (int X, int Y)[] Directions = { (1, 0), (0, 1), (1, 1), (1, -1), (2, 1), (1, 2), (2, -1), (1, -2) };
+
+        //호출자는 작업 공간을 단독 소유한다. UI에 게시한 출력 배열은 여기에 넣지 않는다.
+        internal sealed class Workspace
+        {
+            internal byte[] Mask = Array.Empty<byte>();
+            internal byte[] Background = Array.Empty<byte>();
+            internal float[] Scores = Array.Empty<float>();
+            private Rectangle[] _localWords = Array.Empty<Rectangle>();
+            private Rectangle[] _words = Array.Empty<Rectangle>();
+            private int _wordCount, _width, _height, _sourceWidth, _sourceHeight, _strength = 3;
+
+            internal IReadOnlyList<Rectangle> LocalWords(IReadOnlyList<Rectangle> words, Rectangle bounds, Point origin)
+            {
+                if(_localWords.Length < words.Count) _localWords = new Rectangle[Math.Max(words.Count, _localWords.Length * 2)];
+                int count = 0;
+                for(int i = 0; i < words.Count; i++)
+                {
+                    Rectangle word = words[i];
+                    if(word.Width <= 0 || word.Height <= 0) continue;
+                    Rectangle clipped = Rectangle.Intersect(word, bounds);
+                    if(clipped.Width <= 0 || clipped.Height <= 0) continue;
+                    clipped.Offset(-origin.X, -origin.Y);
+                    _localWords[count++] = clipped;
+                }
+                return new ArraySegment<Rectangle>(_localWords, 0, count);
+            }
+
+            internal bool Prepare(int width, int height, IReadOnlyList<Rectangle> words, int sourceWidth, int sourceHeight, int strength)
+            {
+                bool resized = _sourceWidth != sourceWidth || _sourceHeight != sourceHeight;
+                bool changed = resized || _strength != strength || _width != width || _height != height || _wordCount != words.Count;
+                for(int i = 0; !changed && i < words.Count; i++) changed = _words[i] != words[i];
+                if(!changed) return false;
+                int count = width * height;
+                if(resized || Mask.Length < count)
+                {
+                    //감지 글자 크기는 배열의 수명 기준이 아니다. 필요한 용량이 커질 때만 확장한다.
+                    int capacity = resized ? count : (int)Math.Max(count, Math.Min((long)sourceWidth * sourceHeight, (long)Mask.Length * 2));
+                    Mask = new byte[capacity];
+                    Background = new byte[capacity * 4];
+                    Scores = new float[capacity];
+                }
+                else
+                {
+                    //이전 글자가 썼던 행 구간만 지운다. stride가 바뀌어도 이전 좌표로 제거한다.
+                    var oldBounds = new Rectangle(0, 0, _width, _height);
+                    for(int i = 0; i < _wordCount; i++)
+                    {
+                        Rectangle outer = GetMaskBounds(_words[i], oldBounds, _strength);
+                        for(int y = outer.Top; y < outer.Bottom; y++)
+                            Mask.AsSpan(y * _width + outer.Left, outer.Width).Clear();
+                    }
+                }
+                if(_words.Length < words.Count) _words = new Rectangle[Math.Max(words.Count, _words.Length * 2)];
+                for(int i = 0; i < words.Count; i++) _words[i] = words[i];
+                _wordCount = words.Count;
+                _width = width;
+                _height = height;
+                _sourceWidth = sourceWidth;
+                _sourceHeight = sourceHeight;
+                _strength = strength;
+                return true;
+            }
+        }
+
+        private static Rectangle GetMaskBounds(Rectangle word, Rectangle bounds, int strength)
+        {
+            if(word.Width <= 0 || word.Height <= 0) return Rectangle.Empty;
+            Rectangle clipped = Rectangle.Intersect(word, bounds);
+            if(clipped.Width <= 0 || clipped.Height <= 0) return Rectangle.Empty;
+            Rectangle core = Rectangle.Intersect(Rectangle.Inflate(clipped, GetPadding(clipped, strength), GetPadding(clipped, strength)), bounds);
+            return Rectangle.Intersect(Rectangle.Inflate(core, 2, 2), bounds);
+        }
+
+        //변경 감지는 각 글자의 복원 샘플 범위만 사용한다. 떨어진 글자 사이의 빈 공간은 포함하지 않는다.
+        internal static Rectangle[] GetInputRegions(int width, int height, IReadOnlyList<Rectangle> words, int strength = 3)
+        {
+            var bounds = new Rectangle(0, 0, width, height);
+            var regions = new List<Rectangle>();
+            foreach(var word in words)
+            {
+                if(word.Width <= 0 || word.Height <= 0) continue;
+                var clipped = Rectangle.Intersect(word, bounds);
+                if(clipped.Width <= 0 || clipped.Height <= 0) continue;
+                regions.Add(GetProbeBounds(clipped, bounds, strength));
+            }
+            return regions.ToArray();
+        }
+
+        private static Rectangle GetProbeBounds(Rectangle word, Rectangle bounds, int strength) =>
+            Rectangle.Intersect(Rectangle.Inflate(word, GetPadding(word, strength) + 8, GetPadding(word, strength) + 8), bounds);
+
+        public static OverlayBlurFrame CreateFrame(byte[] source, int width, int height, int channels, IReadOnlyList<Rectangle> wordRects, bool compactOutput = false, Workspace workspace = null, OverlayFrameBufferPool outputPool = null, int strength = 3)
         {
             if(source == null || width <= 0 || height <= 0 || channels < 3
                 || (long)width * height > int.MaxValue / 4
                 || source.LongLength < (long)width * height * channels || wordRects == null) return null;
+            strength = Math.Clamp(strength, 1, 5);
             int sourceWidth = width, sourceHeight = height;
             Rectangle sourceBounds = new Rectangle(0, 0, width, height);
             Rectangle work = Rectangle.Empty;
@@ -24,8 +118,7 @@ namespace MORT.Service.Overlay.Restoration
                 Rectangle clipped = Rectangle.Intersect(word, sourceBounds);
                 if(clipped.Width <= 0 || clipped.Height <= 0) continue;
                 //색상 힌트의 padding + 8, 광선 양 끝과 3x3 샘플을 모두 보존한다.
-                int padding = GetPadding(clipped, restorationLevel);
-                Rectangle probe = Rectangle.Intersect(Rectangle.Inflate(clipped, padding + 8, padding + 8), sourceBounds);
+                Rectangle probe = GetProbeBounds(clipped, sourceBounds, strength);
                 work = work.IsEmpty ? probe : Rectangle.Union(work, probe);
             }
             if(work.IsEmpty && compactOutput) return null;
@@ -36,65 +129,79 @@ namespace MORT.Service.Overlay.Restoration
                 work = sourceBounds;
             else
             {
-                var localWords = new List<Rectangle>(wordRects.Count);
-                foreach(Rectangle word in wordRects)
-                {
-                    if(word.Width <= 0 || word.Height <= 0) continue;
-                    Rectangle clipped = Rectangle.Intersect(word, sourceBounds);
-                    if(clipped.Width <= 0 || clipped.Height <= 0) continue;
-                    clipped.Offset(-work.X, -work.Y);
-                    localWords.Add(clipped);
-                }
-                wordRects = localWords;
+                workspace ??= new Workspace();
+                wordRects = workspace.LocalWords(wordRects, sourceBounds, work.Location);
                 width = work.Width;
                 height = work.Height;
             }
-            //원본은 복사하지 않고 원래 stride로 참조한다. 작업 배열만 영역 크기로 대여한다.
-            //출력은 프레임이 소유하며 이전 화면이나 풀 버퍼와 수명을 공유하지 않는다.
-            int pixelCount = width * height;
-            byte[] mask = ArrayPool<byte>.Shared.Rent(pixelCount);
-            byte[]? background = null;
-            float[]? scores = null;
+            //원본은 복사하지 않고 원래 stride로 참조한다. 작업 배열은 영역 크기에 맞춰 재사용한다.
+            //일반 출력은 프레임이 소유한다. 실시간 출력은 읽기 대여가 끝난 풀 배열만 재사용한다.
+            workspace ??= new Workspace();
+            bool rebuildMask = workspace.Prepare(width, height, wordRects, sourceWidth, sourceHeight, strength);
+            byte[] mask = workspace.Mask;
+            byte[] background = workspace.Background;
+            float[] scores = workspace.Scores;
 
-            try
+            Rectangle bounds = new Rectangle(0, 0, width, height);
+            Rectangle active = Rectangle.Empty;
+            foreach(Rectangle word in wordRects)
             {
-                Array.Clear(mask, 0, pixelCount);
-                Rectangle bounds = new Rectangle(0, 0, width, height);
-                Rectangle active = Rectangle.Empty;
-                foreach(Rectangle word in wordRects)
+                if(word.Width <= 0 || word.Height <= 0) continue;
+                Rectangle clipped = Rectangle.Intersect(word, bounds);
+                if(clipped.Width <= 0 || clipped.Height <= 0) continue;
+                //획 검출만으로 남던 저대비 글자·외곽선·그림자를 모두 제외한다. 페더는 원문 밖에만 둔다.
+                int padding = GetPadding(clipped, strength);
+                Rectangle core = Rectangle.Intersect(Rectangle.Inflate(clipped, padding, padding), bounds);
+                Rectangle outer = Rectangle.Intersect(Rectangle.Inflate(core, 2, 2), bounds);
+                active = active.IsEmpty ? outer : Rectangle.Union(active, outer);
+                if(!rebuildMask) continue;
+                for(int y = outer.Top; y < outer.Bottom; y++)
                 {
-                    if(word.Width <= 0 || word.Height <= 0) continue;
-                    Rectangle clipped = Rectangle.Intersect(word, bounds);
-                    if(clipped.Width <= 0 || clipped.Height <= 0) continue;
-                    //획 검출만으로 남던 저대비 글자·외곽선·그림자를 모두 제외한다. 페더는 원문 밖에만 둔다.
-                    int padding = GetPadding(clipped, restorationLevel);
-                    Rectangle core = Rectangle.Intersect(Rectangle.Inflate(clipped, padding, padding), bounds);
-                    Rectangle outer = Rectangle.Intersect(Rectangle.Inflate(core, 2, 2), bounds);
-                    active = active.IsEmpty ? outer : Rectangle.Union(active, outer);
-                    for(int y = outer.Top; y < outer.Bottom; y++)
+                    for(int x = outer.Left; x < outer.Right; x++)
                     {
-                        for(int x = outer.Left; x < outer.Right; x++)
-                        {
-                            int distance = Math.Max(Math.Max(core.Left - x, x - core.Right + 1), Math.Max(core.Top - y, y - core.Bottom + 1));
-                            byte alpha = distance <= 0 ? (byte)255 : distance == 1 ? (byte)170 : (byte)85;
-                            int pixel = y * width + x;
-                            mask[pixel] = Math.Max(mask[pixel], alpha);
-                        }
+                        int distance = Math.Max(Math.Max(core.Left - x, x - core.Right + 1), Math.Max(core.Top - y, y - core.Bottom + 1));
+                        byte alpha = distance <= 0 ? (byte)255 : distance == 1 ? (byte)170 : (byte)85;
+                        int pixel = y * width + x;
+                        mask[pixel] = Math.Max(mask[pixel], alpha);
                     }
                 }
-                int outputWidth = compactOutput ? width : sourceWidth;
-                int outputHeight = compactOutput ? height : sourceHeight;
-                Point outputOrigin = compactOutput ? Point.Empty : work.Location;
-                byte[] pixels = new byte[outputWidth * outputHeight * 4];
-                background = ArrayPool<byte>.Shared.Rent(pixelCount * 4);
-                Array.Clear(background, 0, pixelCount * 4);
-                FindBackgroundHints(source, channels, width, height, mask, wordRects, background, restorationLevel, sourceWidth, work.Location);
-                scores = ArrayPool<float>.Shared.Rent(pixelCount);
-                for(int y = active.Top; y < active.Bottom; y++)
-                    Array.Fill(scores, float.PositiveInfinity, y * width + active.Left, active.Width);
+            }
+            int outputWidth = compactOutput ? width : sourceWidth;
+            int outputHeight = compactOutput ? height : sourceHeight;
+            Point outputOrigin = compactOutput ? Point.Empty : work.Location;
+            int outputLength = outputWidth * outputHeight * 4;
+            var lease = outputPool?.Rent(outputLength, sourceWidth * sourceHeight * 4);
+            if(outputPool != null && lease == null) return null;
+            bool transferred = false;
+            try
+            {
+                byte[] pixels = lease?.Pixels ?? new byte[outputLength];
+                if(lease != null)
+                {
+                    lease.SetStride(outputWidth);
+                    for(int i = 0; i < wordRects.Count; i++)
+                    {
+                        var dirty = GetMaskBounds(wordRects[i], bounds, strength);
+                        dirty.Offset(outputOrigin);
+                        lease.AddDirty(dirty);
+                    }
+                }
+                //색상 힌트/점수는 현재 글자가 사용하는 연속 행 구간만 초기화한다.
+                //글자 사이의 빈 공간과 작업 배열의 여유 용량은 건드리지 않는다.
+                for(int i = 0; i < wordRects.Count; i++)
+                {
+                    Rectangle outer = GetMaskBounds(wordRects[i], bounds, strength);
+                    for(int y = outer.Top; y < outer.Bottom; y++)
+                    {
+                        int offset = y * width + outer.Left;
+                        background.AsSpan(offset * 4, outer.Width * 4).Clear();
+                        scores.AsSpan(offset, outer.Width).Fill(float.PositiveInfinity);
+                    }
+                }
+                FindBackgroundHints(source, channels, width, height, mask, wordRects, background, sourceWidth, work.Location, strength);
 
                 //여덟 방향 중 양 끝 배경색이 잘 이어지는 방향을 선택해 대각선 경계의 번짐을 줄인다.
-                foreach(var direction in new (int X, int Y)[] { (1, 0), (0, 1), (1, 1), (1, -1), (2, 1), (1, 2), (2, -1), (1, -2) })
+                foreach(var direction in Directions)
                     FillDirection(source, channels, width, height, mask, background, pixels, scores, direction.X, direction.Y, sourceWidth, work.Location, (long)sourceWidth * sourceHeight >= 65536, outputWidth, outputOrigin);
                 for(int y = active.Top; y < active.Bottom; y++)
                 {
@@ -109,19 +216,17 @@ namespace MORT.Service.Overlay.Restoration
                         pixels[output + 3] = (byte)alpha;
                     }
                 }
-                return new OverlayBlurFrame(pixels, outputWidth, outputHeight)
+                var result = new OverlayBlurFrame(pixels, outputWidth, outputHeight)
                 {
+                    PixelLease = lease,
                     Mode = OverlayBlurMode.Restore,
                     SourceRect = compactOutput ? work : Rectangle.Empty,
                     SourceSize = new System.Drawing.Size(sourceWidth, sourceHeight)
                 };
+                transferred = true;
+                return result;
             }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(mask);
-                if(background != null) ArrayPool<byte>.Shared.Return(background);
-                if(scores != null) ArrayPool<float>.Shared.Return(scores);
-            }
+            finally { if(!transferred) lease?.Release(); }
         }
 
         private static void FillDirection(byte[] source, int channels, int width, int height, byte[] mask, byte[] background,
@@ -190,14 +295,14 @@ namespace MORT.Service.Overlay.Restoration
                 for(int start = 0; start < startCount; start++) FillRay(start);
         }
 
-        private static int GetPadding(Rectangle rect, int level)
+        private static int GetPadding(Rectangle rect, int strength)
         {
             int padding = Math.Clamp(Math.Min(rect.Width, rect.Height) / 4 + 4, 5, 20);
-            //3은 기존 출력과 동일하다. 원문은 항상 덮고 외곽선·그림자 제거 범위만 조절한다.
-            return Math.Max(1, (padding * (Math.Clamp(level, 1, 5) + 2) + 2) / 5);
+            //3단계는 기존 범위와 같고 단계마다 여백을 2픽셀씩 조절한다.
+            return Math.Max(1, (padding * 4 + 2) / 5 + (Math.Clamp(strength, 1, 5) - 3) * 2);
         }
 
-        private static void FindBackgroundHints(byte[] source, int channels, int width, int height, byte[] mask, IReadOnlyList<Rectangle> words, byte[] hints, int restorationLevel, int sourceWidth, Point origin)
+        private static void FindBackgroundHints(byte[] source, int channels, int width, int height, byte[] mask, IReadOnlyList<Rectangle> words, byte[] hints, int sourceWidth, Point origin, int strength)
         {
             Rectangle bounds = new Rectangle(0, 0, width, height);
             int Key(int offset) => (source[offset] >> 4) | ((source[offset + 1] >> 4) << 4) | ((source[offset + 2] >> 4) << 8);
@@ -215,8 +320,8 @@ namespace MORT.Service.Overlay.Restoration
                     if(word.Width <= 0 || word.Height <= 0) continue;
                     Rectangle rect = Rectangle.Intersect(word, bounds);
                     if(rect.Width <= 0 || rect.Height <= 0) continue;
-                    int padding = GetPadding(rect, restorationLevel);
-                    Rectangle probe = Rectangle.Intersect(Rectangle.Inflate(rect, padding + 8, padding + 8), bounds);
+                    int padding = GetPadding(rect, strength);
+                    Rectangle probe = GetProbeBounds(rect, bounds, strength);
                     for(int index = 0; index < touchedCount; index++)
                     {
                         int key = touched[index];

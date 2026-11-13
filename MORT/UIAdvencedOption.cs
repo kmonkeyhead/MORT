@@ -57,13 +57,20 @@ namespace MORT
                 (rbOverlayOutputDefault, "Adv Overlay Output Default"),
                 (rbOverlayOutputBlur, "Adv Overlay Output Blur"),
                 (rbOverlayOutputRestore, "Adv Overlay Output Restore"),
-                (lbOverlayRestoreLevel, "Adv Overlay Restore Level"),
                 (lbOverlayBlurLevel, "Adv Overlay Blur Level"),
-                (lbOverlayTargetFps, "Adv Overlay Target FPS")
+                (lbOverlayTargetFps, "Adv Overlay Target FPS"),
+                (lbOverlayBackgroundQuality, "Adv Overlay Background Quality"),
+                (lbOverlayBackgroundStrength, "Adv Overlay Restore Level")
             })
             {
                 string text = LocalizeString(item.Key);
                 if(!string.IsNullOrWhiteSpace(text) && text != item.Key) item.Control.Text = text;
+            }
+            string[] qualityKeys = { "Adv Overlay Background Quality Low", "Adv Overlay Background Quality High" };
+            for(int i = 0; i < qualityKeys.Length; i++)
+            {
+                string text = LocalizeString(qualityKeys[i]);
+                if(!string.IsNullOrWhiteSpace(text) && text != qualityKeys[i]) cbOverlayBackgroundQuality.Items[i] = text;
             }
         }
 
@@ -82,8 +89,9 @@ namespace MORT
         {
             cbOverlayUseBackgroundAlpha.Enabled = rbOverlayOutputDefault.Checked;
             lbOverlayBlurLevel.Enabled = udOverlayBlurLevel.Enabled = rbOverlayOutputBlur.Checked;
-            lbOverlayRestoreLevel.Enabled = udOverlayRestoreLevel.Enabled = rbOverlayOutputRestore.Checked;
+            lbOverlayBackgroundQuality.Enabled = cbOverlayBackgroundQuality.Enabled = rbOverlayOutputRestore.Checked;
             lbOverlayTargetFps.Enabled = udOverlayTargetFps.Enabled = rbOverlayOutputRestore.Checked;
+            lbOverlayBackgroundStrength.Enabled = udOverlayBackgroundStrength.Enabled = rbOverlayOutputRestore.Checked;
         }
 
         private void Init()
@@ -162,9 +170,10 @@ namespace MORT
             rbOverlayOutputDefault.Checked = AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.None;
             rbOverlayOutputBlur.Checked = AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.Window;
             rbOverlayOutputRestore.Checked = AdvencedOptionManager.OverlayOutputMode == Model.OverlayBlurMode.Restore;
-            udOverlayRestoreLevel.Value = AdvencedOptionManager.OverlayRestoreLevel;
             udOverlayBlurLevel.Value = AdvencedOptionManager.OverlayBlurLevel;
             udOverlayTargetFps.Value = AdvencedOptionManager.OverlayTargetFps;
+            cbOverlayBackgroundQuality.SelectedIndex = AdvencedOptionManager.OverlayBackgroundQuality;
+            udOverlayBackgroundStrength.Value = AdvencedOptionManager.OverlayBackgroundStrength;
             UpdateOverlayOutputControls();
             cbOverlayAutoSize.Checked = AdvencedOptionManager.IsAutoFontSize;
             cbOverlayAutoMerge.Checked = AdvencedOptionManager.UseAutoMerge;
@@ -466,9 +475,10 @@ namespace MORT
         {
             AdvencedOptionManager.SetOverlayOutputMode(rbOverlayOutputBlur.Checked ? Model.OverlayBlurMode.Window
                 : rbOverlayOutputRestore.Checked ? Model.OverlayBlurMode.Restore : Model.OverlayBlurMode.None);
-            AdvencedOptionManager.SetOverlayRestoreLevel((int)udOverlayRestoreLevel.Value);
             AdvencedOptionManager.SetOverlayBlurLevel((int)udOverlayBlurLevel.Value);
             AdvencedOptionManager.SetOverlayTargetFps((int)udOverlayTargetFps.Value);
+            AdvencedOptionManager.SetOverlayBackgroundQuality(cbOverlayBackgroundQuality.SelectedIndex);
+            AdvencedOptionManager.SetOverlayBackgroundStrength((int)udOverlayBackgroundStrength.Value);
             AdvencedOptionManager.SetOverLay(
                 cbOverlayAutoSize.Checked,
                 (int)udMinFontSize.Value, (int)udMaxSFontize.Value,

@@ -1,4 +1,4 @@
-using MORT.Model;
+﻿using MORT.Model;
 using MORT.Service.Overlay;
 using System;
 using System.Collections.Generic;
@@ -15,6 +15,8 @@ namespace MORT
         private OverlayBackdropWindow _windowBlur;
         private readonly List<Rectangle> _windowBlurRects = new();
         private readonly Dictionary<int, (OverlayBlurFrame Frame, Bitmap Image)> _captureBlurImages = new();
+        private readonly Dictionary<int, OverlayBackgroundCompositor> _backgroundCompositors = new();
+        private bool _directBackgroundPaint;
 
         public bool RefreshOverlayOutput()
         {
@@ -74,15 +76,16 @@ namespace MORT
             var drawn = new HashSet<int>();
             if(!hasDisplayedText) return drawn;
             //한 페인트 안에서는 모든 영역이 같은 완성 결과를 사용한다.
-            var live = _adaptiveRefresh?.Latest;
+            using var read = _adaptiveRefresh?.AcquireLatest() ?? default;
+            var live = read.Output;
             if(_adaptiveScene == null || live == null) return drawn;
 
             Point offset = new Point(-Location.X, -Location.Y);
-            foreach(var area in _adaptiveScene.Areas)
+            //새 마스크의 복원이 끝날 때까지 마지막 완성 배경을 원래 화면 좌표에 유지한다.
+            //현재 마스크와 다르다는 이유로 생략하면 투명한 프레임이 먼저 표시되어 깜빡인다.
+            foreach(var area in live.Scene.Areas)
             {
                 if(!live.Frames.TryGetValue(area.Index, out var frame)) continue;
-                var completedArea = live.Scene.Areas.First(oldArea => oldArea.Index == area.Index);
-                if(!SameAdaptiveArea(area, completedArea)) continue;
                 Rectangle imageRect = area.ScreenRect;
                 imageRect.Offset(offset);
                 Rectangle clip = Rectangle.Intersect(ClientRectangle, imageRect);
@@ -110,21 +113,37 @@ namespace MORT
 
         private void DrawRestoredBackground(Graphics graphics, int index, OverlayBlurFrame frame, Rectangle imageRect, Rectangle clip)
         {
+            using var timing = OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.BackgroundDraw, frame.Width, frame.Height);
+            RectangleF destination = imageRect;
+            if(frame.SourceRect.Width > 0 && frame.SourceRect.Height > 0 && frame.SourceSize.Width > 0 && frame.SourceSize.Height > 0)
+            {
+                float sx = destination.Width / frame.SourceSize.Width, sy = destination.Height / frame.SourceSize.Height;
+                destination = new RectangleF(destination.X + frame.SourceRect.X * sx, destination.Y + frame.SourceRect.Y * sy,
+                    frame.SourceRect.Width * sx, frame.SourceRect.Height * sy);
+            }
+            if(_directBackgroundPaint && _layeredSurface != null)
+            {
+                if(!_backgroundCompositors.TryGetValue(index, out var compositor))
+                    _backgroundCompositors[index] = compositor = new OverlayBackgroundCompositor();
+                //캔버스 초기화 등 앞선 GDI+ 명령을 완료한 뒤 같은 DIB 픽셀을 UI 스레드에서 쓴다.
+                graphics.Flush(FlushIntention.Sync);
+                compositor.Draw(_layeredSurface, frame, destination, clip);
+                return;
+            }
             Bitmap image = GetCaptureBackgroundImage(index, frame);
             GraphicsState saved = graphics.Save();
             try
             {
                 graphics.SetClip(clip, CombineMode.Intersect);
-                graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+                graphics.InterpolationMode = InterpolationMode.Bilinear;
                 graphics.PixelOffsetMode = PixelOffsetMode.Half;
-                RectangleF destination = imageRect;
-                if(frame.SourceRect.Width > 0 && frame.SourceRect.Height > 0 && frame.SourceSize.Width > 0 && frame.SourceSize.Height > 0)
-                {
-                    float sx = destination.Width / frame.SourceSize.Width, sy = destination.Height / frame.SourceSize.Height;
-                    destination = new RectangleF(destination.X + frame.SourceRect.X * sx, destination.Y + frame.SourceRect.Y * sy,
-                        frame.SourceRect.Width * sx, frame.SourceRect.Height * sy);
-                }
-                graphics.DrawImage(image, destination, new RectangleF(0, 0, frame.Width, frame.Height), GraphicsUnit.Pixel);
+                graphics.CompositingQuality = CompositingQuality.HighSpeed;
+                //원본 크기와 정수 위치가 같으면 확대/축소 경로를 거치지 않는다.
+                if(destination.Width == image.Width && destination.Height == image.Height
+                    && destination.X == (int)destination.X && destination.Y == (int)destination.Y)
+                    graphics.DrawImageUnscaled(image, (int)destination.X, (int)destination.Y);
+                else
+                    graphics.DrawImage(image, destination, new RectangleF(0, 0, frame.Width, frame.Height), GraphicsUnit.Pixel);
             }
             finally { graphics.Restore(saved); }
         }
@@ -133,6 +152,7 @@ namespace MORT
         {
             if(!_captureBlurImages.TryGetValue(index, out var cached) || !ReferenceEquals(cached.Frame, frame))
             {
+                using var timing = OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.BackgroundBitmapUpload, frame.Width, frame.Height);
                 var image = cached.Image;
                 _captureBlurImages.Remove(index);
                 if(image == null || image.Width != frame.Width || image.Height != frame.Height)
@@ -206,6 +226,8 @@ namespace MORT
 
         private void TrimCaptureBlurImages(HashSet<int> active)
         {
+            foreach(int key in _backgroundCompositors.Keys.ToArray())
+                if(!active.Contains(key)) _backgroundCompositors.Remove(key);
             foreach(int key in _captureBlurImages.Keys.ToArray())
             {
                 if(!active.Contains(key))
@@ -220,6 +242,7 @@ namespace MORT
         {
             foreach(var cached in _captureBlurImages.Values) cached.Image.Dispose();
             _captureBlurImages.Clear();
+            _backgroundCompositors.Clear();
         }
 
         protected override void OnVisibleChanged(EventArgs e)

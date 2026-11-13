@@ -127,10 +127,12 @@ namespace MORT
             rbOverlayOutputRestore = new System.Windows.Forms.RadioButton();
             lbOverlayBlurLevel = new System.Windows.Forms.Label();
             udOverlayBlurLevel = new System.Windows.Forms.NumericUpDown();
-            lbOverlayRestoreLevel = new System.Windows.Forms.Label();
-            udOverlayRestoreLevel = new System.Windows.Forms.NumericUpDown();
             lbOverlayTargetFps = new System.Windows.Forms.Label();
             udOverlayTargetFps = new System.Windows.Forms.NumericUpDown();
+            lbOverlayBackgroundQuality = new System.Windows.Forms.Label();
+            cbOverlayBackgroundQuality = new System.Windows.Forms.ComboBox();
+            lbOverlayBackgroundStrength = new System.Windows.Forms.Label();
+            udOverlayBackgroundStrength = new System.Windows.Forms.NumericUpDown();
             gbAutoColor = new System.Windows.Forms.GroupBox();
             cbAutoFontColor = new System.Windows.Forms.CheckBox();
             cbAutoBackgroundColor = new System.Windows.Forms.CheckBox();
@@ -234,8 +236,8 @@ namespace MORT
             gbOverlayGeneral.SuspendLayout();
             gbOverlayOutputMode.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)udOverlayBlurLevel).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)udOverlayRestoreLevel).BeginInit();
             ((System.ComponentModel.ISupportInitialize)udOverlayTargetFps).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)udOverlayBackgroundStrength).BeginInit();
             gbAutoColor.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)udSnapShotRemainTime).BeginInit();
             ((System.ComponentModel.ISupportInitialize)udMaxSFontize).BeginInit();
@@ -1162,7 +1164,7 @@ namespace MORT
             gbMemory.Controls.Add(lbMemoryCount);
             gbMemory.Controls.Add(udMemoryCount);
             gbMemory.Controls.Add(cbEnableMemory);
-            gbMemory.Location = new System.Drawing.Point(29, 1641);
+            gbMemory.Location = new System.Drawing.Point(29, 1691);
             gbMemory.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbMemory.Name = "gbMemory";
             gbMemory.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1243,7 +1245,7 @@ namespace MORT
             // 
             gbTransformLayer.Controls.Add(cbLayerAlignmentRight);
             gbTransformLayer.Controls.Add(cbLayerAlignmentBottom);
-            gbTransformLayer.Location = new System.Drawing.Point(29, 1255);
+            gbTransformLayer.Location = new System.Drawing.Point(29, 1305);
             gbTransformLayer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbTransformLayer.Name = "gbTransformLayer";
             gbTransformLayer.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1279,7 +1281,7 @@ namespace MORT
             // gbDark
             // 
             gbDark.Controls.Add(btnFont);
-            gbDark.Location = new System.Drawing.Point(29, 1110);
+            gbDark.Location = new System.Drawing.Point(29, 1160);
             gbDark.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbDark.Name = "gbDark";
             gbDark.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1308,7 +1310,7 @@ namespace MORT
             gbTransformGeneral.Controls.Add(cbAdvencedHideTransform);
             gbTransformGeneral.Controls.Add(cbTopMost);
             gbTransformGeneral.Controls.Add(cbIgonreEmpty);
-            gbTransformGeneral.Location = new System.Drawing.Point(29, 1436);
+            gbTransformGeneral.Location = new System.Drawing.Point(29, 1486);
             gbTransformGeneral.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbTransformGeneral.Name = "gbTransformGeneral";
             gbTransformGeneral.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -1374,7 +1376,7 @@ namespace MORT
             gbOverlay.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             gbOverlay.Name = "gbOverlay";
             gbOverlay.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            gbOverlay.Size = new System.Drawing.Size(1016, 1050);
+            gbOverlay.Size = new System.Drawing.Size(1016, 1100);
             gbOverlay.TabIndex = 67;
             gbOverlay.TabStop = false;
             gbOverlay.Text = "오버레이 번역창";
@@ -1395,13 +1397,15 @@ namespace MORT
             gbOverlayOutputMode.Controls.Add(rbOverlayOutputRestore);
             gbOverlayOutputMode.Controls.Add(lbOverlayBlurLevel);
             gbOverlayOutputMode.Controls.Add(udOverlayBlurLevel);
-            gbOverlayOutputMode.Controls.Add(lbOverlayRestoreLevel);
-            gbOverlayOutputMode.Controls.Add(udOverlayRestoreLevel);
             gbOverlayOutputMode.Controls.Add(lbOverlayTargetFps);
             gbOverlayOutputMode.Controls.Add(udOverlayTargetFps);
+            gbOverlayOutputMode.Controls.Add(lbOverlayBackgroundQuality);
+            gbOverlayOutputMode.Controls.Add(cbOverlayBackgroundQuality);
+            gbOverlayOutputMode.Controls.Add(lbOverlayBackgroundStrength);
+            gbOverlayOutputMode.Controls.Add(udOverlayBackgroundStrength);
             gbOverlayOutputMode.Location = new System.Drawing.Point(19, 620);
             gbOverlayOutputMode.Name = "gbOverlayOutputMode";
-            gbOverlayOutputMode.Size = new System.Drawing.Size(978, 400);
+            gbOverlayOutputMode.Size = new System.Drawing.Size(978, 450);
             gbOverlayOutputMode.TabIndex = 1;
             gbOverlayOutputMode.TabStop = false;
             gbOverlayOutputMode.Text = "출력 방식";
@@ -1460,40 +1464,53 @@ namespace MORT
             udOverlayBlurLevel.Value = 5;
             udOverlayBlurLevel.TabIndex = 3;
             //
-            // lbOverlayRestoreLevel
-            //
-            lbOverlayRestoreLevel.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            lbOverlayRestoreLevel.Location = new System.Drawing.Point(35, 292);
-            lbOverlayRestoreLevel.Name = "lbOverlayRestoreLevel";
-            lbOverlayRestoreLevel.Size = new System.Drawing.Size(120, 30);
-            lbOverlayRestoreLevel.Text = "적응형 강도";
-            //
-            // udOverlayRestoreLevel
-            //
-            udOverlayRestoreLevel.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            udOverlayRestoreLevel.Location = new System.Drawing.Point(160, 286);
-            udOverlayRestoreLevel.Name = "udOverlayRestoreLevel";
-            udOverlayRestoreLevel.Size = new System.Drawing.Size(85, 31);
-            udOverlayRestoreLevel.Minimum = 1;
-            udOverlayRestoreLevel.Maximum = 5;
-            udOverlayRestoreLevel.Value = 2;
-            udOverlayRestoreLevel.TabIndex = 5;
-            //
-            //
             // Adaptive background frame rate (OCR/translation speed remains independent).
             lbOverlayTargetFps.Font = new System.Drawing.Font("맑은 고딕", 9F);
             lbOverlayTargetFps.Location = new System.Drawing.Point(35, 340);
             lbOverlayTargetFps.Name = "lbOverlayTargetFps";
-            lbOverlayTargetFps.Size = new System.Drawing.Size(205, 30);
+            lbOverlayTargetFps.Size = new System.Drawing.Size(450, 30);
             lbOverlayTargetFps.Text = "배경 갱신 목표 FPS";
             udOverlayTargetFps.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            udOverlayTargetFps.Location = new System.Drawing.Point(250, 334);
+            udOverlayTargetFps.Location = new System.Drawing.Point(500, 334);
             udOverlayTargetFps.Name = "udOverlayTargetFps";
             udOverlayTargetFps.Size = new System.Drawing.Size(85, 31);
             udOverlayTargetFps.Minimum = 1;
             udOverlayTargetFps.Maximum = 120;
             udOverlayTargetFps.Value = 60;
             udOverlayTargetFps.TabIndex = 6;
+            //
+            // Adaptive background quality
+            //
+            lbOverlayBackgroundQuality.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            lbOverlayBackgroundQuality.Location = new System.Drawing.Point(35, 292);
+            lbOverlayBackgroundQuality.Name = "lbOverlayBackgroundQuality";
+            lbOverlayBackgroundQuality.Size = new System.Drawing.Size(300, 30);
+            lbOverlayBackgroundQuality.Text = "배경 품질";
+            cbOverlayBackgroundQuality.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            cbOverlayBackgroundQuality.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cbOverlayBackgroundQuality.Items.AddRange(new object[] { "저품질 : 빠름, 배경 처리 품질 낮음", "고품질 : 느림, 배경 처리 품질 높음" });
+            cbOverlayBackgroundQuality.Location = new System.Drawing.Point(350, 286);
+            cbOverlayBackgroundQuality.Name = "cbOverlayBackgroundQuality";
+            cbOverlayBackgroundQuality.Size = new System.Drawing.Size(600, 31);
+            cbOverlayBackgroundQuality.TabIndex = 5;
+            cbOverlayBackgroundQuality.SelectedIndex = 1;
+            cbOverlayBackgroundQuality.SelectedIndexChanged += OverlayOutputMode_CheckedChanged;
+            //
+            // 배경 처리 강도 (저품질/고품질 공통)
+            //
+            lbOverlayBackgroundStrength.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            lbOverlayBackgroundStrength.Location = new System.Drawing.Point(35, 388);
+            lbOverlayBackgroundStrength.Name = "lbOverlayBackgroundStrength";
+            lbOverlayBackgroundStrength.Size = new System.Drawing.Size(450, 30);
+            lbOverlayBackgroundStrength.Text = "배경 처리 강도";
+            udOverlayBackgroundStrength.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            udOverlayBackgroundStrength.Location = new System.Drawing.Point(500, 382);
+            udOverlayBackgroundStrength.Name = "udOverlayBackgroundStrength";
+            udOverlayBackgroundStrength.Size = new System.Drawing.Size(85, 31);
+            udOverlayBackgroundStrength.Minimum = 1;
+            udOverlayBackgroundStrength.Maximum = 5;
+            udOverlayBackgroundStrength.Value = 3;
+            udOverlayBackgroundStrength.TabIndex = 7;
             // gbAutoColor
             // 
             gbAutoColor.Controls.Add(cbAutoFontColor);
@@ -1611,6 +1628,7 @@ namespace MORT
             udSnapShotRemainTime.Location = new System.Drawing.Point(203, 198);
             udSnapShotRemainTime.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             udSnapShotRemainTime.Name = "udSnapShotRemainTime";
+            udSnapShotRemainTime.Minimum = new decimal(new int[] { 3, 0, 0, 0 });
             udSnapShotRemainTime.Size = new System.Drawing.Size(89, 31);
             udSnapShotRemainTime.TabIndex = 9;
             udSnapShotRemainTime.Value = new decimal(new int[] { 5, 0, 0, 0 });
@@ -2398,8 +2416,8 @@ namespace MORT
             gbOverlayGeneral.ResumeLayout(false);
             gbOverlayGeneral.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)udOverlayBlurLevel).EndInit();
-            ((System.ComponentModel.ISupportInitialize)udOverlayRestoreLevel).EndInit();
             ((System.ComponentModel.ISupportInitialize)udOverlayTargetFps).EndInit();
+            ((System.ComponentModel.ISupportInitialize)udOverlayBackgroundStrength).EndInit();
             gbOverlayOutputMode.ResumeLayout(false);
             gbOverlayOutputMode.PerformLayout();
             gbOverlay.ResumeLayout(false);
@@ -2466,10 +2484,12 @@ namespace MORT
         private System.Windows.Forms.GroupBox gbOverlayGeneral;
         private System.Windows.Forms.Label lbOverlayBlurLevel;
         private System.Windows.Forms.NumericUpDown udOverlayBlurLevel;
-        private System.Windows.Forms.Label lbOverlayRestoreLevel;
-        private System.Windows.Forms.NumericUpDown udOverlayRestoreLevel;
         private System.Windows.Forms.Label lbOverlayTargetFps;
         private System.Windows.Forms.NumericUpDown udOverlayTargetFps;
+        private System.Windows.Forms.Label lbOverlayBackgroundQuality;
+        private System.Windows.Forms.ComboBox cbOverlayBackgroundQuality;
+        private System.Windows.Forms.Label lbOverlayBackgroundStrength;
+        private System.Windows.Forms.NumericUpDown udOverlayBackgroundStrength;
         private System.Windows.Forms.GroupBox gbOverlayOutputMode;
         private System.Windows.Forms.RadioButton rbOverlayOutputDefault;
         private System.Windows.Forms.RadioButton rbOverlayOutputBlur;

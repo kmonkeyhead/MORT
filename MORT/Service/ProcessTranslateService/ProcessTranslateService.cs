@@ -270,7 +270,7 @@ namespace MORT.Service.ProcessTranslateService
                         .Where(rect => rect.Width > 0 && rect.Height > 0)
                         .Select(rect => ScaleSourceRect(rect, image)).ToList();
                     var restored = _textRestorationService?.CreateFrame(
-                        image.originalData, image.originalX, image.originalY, image.originalChannels, words, AdvencedOptionManager.OverlayRestoreLevel);
+                        image.originalData, image.originalX, image.originalY, image.originalChannels, words);
                     ocrResultData.BlurFrame = restored;
                 }
 

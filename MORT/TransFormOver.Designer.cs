@@ -1,4 +1,4 @@
-﻿namespace MORT
+namespace MORT
 {
     partial class TransFormOver
     {
@@ -16,6 +16,9 @@
             if(disposing)
             {
                 DisposeAdaptiveBackground();
+                _layeredSurface?.Dispose();
+                _layeredSurface = null;
+                bitmap = null;
                 _paintScheduler?.Dispose();
                 _paintScheduler = null;
                 ClearOverlayRenderCaches();
