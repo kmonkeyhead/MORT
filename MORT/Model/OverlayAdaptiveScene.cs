@@ -19,8 +19,8 @@ namespace MORT.Model
     }
 
     internal sealed record OverlayAdaptiveArea(int Index, Rectangle ScreenRect, Rectangle[] Words);
-    internal sealed record OverlayAdaptiveScene(OverlayAdaptiveArea[] Areas, int Level,
-        ScreenCapture.ScreenCapture? Capture, Rectangle DesktopBounds, int TargetFps = 60);
+    internal sealed record OverlayAdaptiveScene(OverlayAdaptiveArea[] Areas,
+        ScreenCapture.ScreenCapture? Capture, Rectangle DesktopBounds, int TargetFps = 60, bool UseHighQuality = false, int BackgroundStrength = 3);
     internal sealed class OverlayAdaptiveOutput
     {
         internal OverlayAdaptiveScene Scene { get; }

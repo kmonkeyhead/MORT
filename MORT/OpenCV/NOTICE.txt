@@ -1,0 +1,25 @@
+OpenCV-derived C# operations in MORT
+====================================
+Upstream: OpenCV 4.14.0
+Commit: 0654a42e19215ef25b1d367d822f3c630447e7c7
+Source: https://github.com/opencv/opencv/tree/4.14.0
+License: https://opencv.org/license/
+
+NavierStokesInpaint.cs is a direct C# adaptation of the 8-bit three-channel
+Navier-Stokes branch of modules/photo/src/inpaint.cpp, specialized to radius 2.
+MORT modifications: reusable flat state/time/result arrays, reusable stable
+binary heap, four-byte working pixels, precomputed radius-2 disk offsets,
+SSE4.1 channel-parallel arithmetic with a scalar fallback.
+The original scanning order, priority ties, border indexing and single/double
+precision arithmetic are preserved.
+
+BackgroundRestorer.cs uses the gray conversion coefficients and Otsu arithmetic
+from modules/imgproc/src/color_rgb.simd.hpp, color.simd_helpers.hpp and thresh.cpp.
+The OCR mask pipeline and SIMD rectangular min/max implementation are MORT code.
+No code from the previously evaluated translator is included.
+
+OpenCV Apache License 2.0 and copyright notices are in LICENSE.txt and COPYRIGHT.txt.
+Original source-file notices are reproduced in SOURCE-LICENSES.txt.
+The implementation was ported/modified for MORT on 2026-11-13.
+There is no native OpenCV SDK, native library, wrapper, or third-party SDK binary
+in this integration. Source identities are recorded in UPSTREAM.json.

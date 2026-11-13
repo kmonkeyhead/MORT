@@ -122,7 +122,7 @@ namespace MORT.Service.Overlay
                                 if(!unchanged)
                                 {
                                     using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.RestoreBackground, area.ScreenRect.Width, area.ScreenRect.Height))
-                                        patch = previous.Restoration.CreatePooledPatch(pixels, area.ScreenRect.Width, area.ScreenRect.Height, 4, area.Words, scene.Level, previous.OutputPool);
+                                        patch = previous.Restoration.CreatePooledPatch(pixels, area.ScreenRect.Width, area.ScreenRect.Height, 4, area.Words, previous.OutputPool);
                                     retryOutput |= patch == null;
                                 }
                                 if(patch != null && !ReferenceEquals(patch, previous.Patch))
@@ -260,7 +260,9 @@ namespace MORT.Service.Overlay
 
             internal void Configure(OverlayAdaptiveArea area, OverlayAdaptiveScene scene)
             {
-                _regions = OverlayTextRestorationService.GetComparisonRegions(area.ScreenRect.Width, area.ScreenRect.Height, area.Words, scene.Level);
+                Restoration.UseHighQuality = scene.UseHighQuality;
+                Restoration.BackgroundStrength = scene.BackgroundStrength;
+                _regions = OverlayTextRestorationService.GetComparisonRegions(area.ScreenRect.Width, area.ScreenRect.Height, area.Words, scene.UseHighQuality, scene.BackgroundStrength);
                 long sampleBytes = 0;
                 foreach(var rect in _regions) sampleBytes += (long)rect.Width * rect.Height * 4;
                 int fullBytes = checked(area.ScreenRect.Width * area.ScreenRect.Height * 4);
@@ -318,6 +320,7 @@ namespace MORT.Service.Overlay
                 Patch?.ReleasePixels();
                 Patch = null!;
                 OutputPool.Dispose();
+                Restoration.Dispose();
             }
         }
 

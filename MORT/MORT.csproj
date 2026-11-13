@@ -43,6 +43,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="OpenCV\LICENSE.txt;OpenCV\COPYRIGHT.txt;OpenCV\SOURCE-LICENSES.txt;OpenCV\NOTICE.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>Licenses\OpenCV\%(Filename)%(Extension)</TargetPath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- 크롬 번역기 브릿지 페이지. 로컬 서버가 이 리소스를 그대로 크롬에 내려준다. -->
     <EmbeddedResource Include="Service\ChromeBridge\Web\bridge.html" />
   </ItemGroup>

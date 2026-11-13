@@ -107,9 +107,10 @@ namespace MORT
         public const string KeyOverlayUseFontOutline = "@OverlayUseFontOutline ";
         public const string KeyOverlayUseBackgroundAlpha = "@OverlayUseBackgroundAlpha ";
         public const string KeyOverlayOutputMode = "@OverlayOutputMode ";
-        public const string KeyOverlayRestoreLevel = "@OverlayRestoreLevel ";
         public const string KeyOverlayBlurLevel = "@OverlayBlurLevel ";
         public const string KeyOverlayTargetFps = "@OverlayTargetFps ";
+        public const string KeyOverlayBackgroundQuality = "@OverlayBackgroundQuality ";
+        public const string KeyOverlayBackgroundStrength = "@OverlayBackgroundStrength ";
         public const string KEY_FONT_AUTO_SIZE = "@OVERLAY_FONT_AUTO_SIZE ";
         public const string KEY_FONT_AUTO_MIN_SIZE = "@OVERLAY_FONT_AUTO_MIN_SIZE ";
         public const string KEY_FONT_AUTO_MAX_SIZE = "@OVERLAY_FONT_AUTO_MAX_SIZE ";
@@ -192,9 +193,10 @@ namespace MORT
             public ISettingData<bool> OverlayUseFontOutline;
             public ISettingData<bool> OverlayUseBackgroundAlpha;
             public ISettingData<int> OverlayOutputMode;
-            public ISettingData<int> OverlayRestoreLevel;
             public ISettingData<int> OverlayBlurLevel;
             public ISettingData<int> OverlayTargetFps;
+            public ISettingData<int> OverlayBackgroundQuality;
+            public ISettingData<int> OverlayBackgroundStrength;
             public ISettingData<bool> EnableAdvencedHideTransform;
 
             public ISettingData<string> BasicFont;
@@ -415,6 +417,32 @@ namespace MORT
         public static bool OverlayUseBackgroundAlpha => data.OverlayUseBackgroundAlpha.Value;
         //기존 진단 값(0/1/3)을 보존한다. 누락된 설정은 적용형, 지원하지 않는 값은 기본 출력이다.
         public static Model.OverlayBlurMode OverlayOutputMode => NormalizeOverlayOutputMode(data.OverlayOutputMode?.Value ?? (int)Model.OverlayBlurMode.Restore);
+        //기존 0: 저품질, 1: 고품질을 유지하고 2/3/4에 고품질 A/B/C를 추가한다.
+        public static int OverlayBackgroundQuality => NormalizeOverlayBackgroundQuality(data.OverlayBackgroundQuality?.Value ?? 1);
+        public static int OverlayBackgroundStrength => Math.Clamp(data.OverlayBackgroundStrength?.Value ?? 3, 1, 5);
+        public static void SetOverlayBackgroundStrength(int strength) => data.OverlayBackgroundStrength.Value = Math.Clamp(strength, 1, 5);
+        private sealed class OverlayBackgroundStrengthSettingData : IntSettingData
+        {
+            internal OverlayBackgroundStrengthSettingData() : base(KeyOverlayBackgroundStrength, 3) { SetDefault(); }
+            public override void LoadValue(string fileData)
+            {
+                string text = Util.ParseString(fileData, KeyOverlayBackgroundStrength);
+                Value = int.TryParse(text, out int strength) ? Math.Clamp(strength, 1, 5) : 3;
+            }
+        }
+        private static int NormalizeOverlayBackgroundQuality(int quality) => quality == 0 ? 0 : 1;
+        public static void SetOverlayBackgroundQuality(int quality) => data.OverlayBackgroundQuality.Value = NormalizeOverlayBackgroundQuality(quality);
+        private sealed class OverlayBackgroundQualitySettingData : IntSettingData
+        {
+            internal OverlayBackgroundQualitySettingData() : base(KeyOverlayBackgroundQuality, 1) { SetDefault(); }
+
+            public override void LoadValue(string fileData)
+            {
+                //공통 정수 파서의 실패값 0을 사용자가 저장한 저품질로 오인하지 않는다.
+                string text = Util.ParseString(fileData, KeyOverlayBackgroundQuality);
+                Value = int.TryParse(text, out int quality) ? NormalizeOverlayBackgroundQuality(quality) : 1;
+            }
+        }
         public static int OverlayTargetFps
         {
             get
@@ -424,15 +452,6 @@ namespace MORT
             }
         }
         public static void SetOverlayTargetFps(int fps) => data.OverlayTargetFps.Value = Math.Clamp(fps, 1, 120);
-        public static int OverlayRestoreLevel
-        {
-            get
-            {
-                int level = data.OverlayRestoreLevel?.Value ?? 2;
-                //정수 파싱 실패나 아직 초기화하지 않은 설정의 0도 기본 강도로 처리한다.
-                return level == 0 ? 2 : Math.Clamp(level, 1, 5);
-            }
-        }
         public static int OverlayBlurLevel => Math.Clamp(data.OverlayBlurLevel?.Value ?? 5, 1, 5);
 
         public static void SetOverlayBlurLevel(int level)
@@ -440,10 +459,6 @@ namespace MORT
             data.OverlayBlurLevel.Value = Math.Clamp(level, 1, 5);
         }
 
-        public static void SetOverlayRestoreLevel(int level)
-        {
-            data.OverlayRestoreLevel.Value = Math.Clamp(level, 1, 5);
-        }
 
         private static Model.OverlayBlurMode NormalizeOverlayOutputMode(int value)
         {
@@ -474,10 +489,20 @@ namespace MORT
 
         public static int SnapShopRemainTime
         {
-            get => data.SnapShotRemainTime.Value;
-            set => data.SnapShotRemainTime.Value = value;
+            get => Math.Max(3, data.SnapShotRemainTime.Value);
+            set => data.SnapShotRemainTime.Value = Math.Max(3, value);
         }
 
+        private sealed class SnapShotRemainTimeSettingData : IntSettingData
+        {
+            internal SnapShotRemainTimeSettingData() : base(KEY_SNAP_SHOP_REMAIN_TIEM, 5) { SetDefault(); }
+
+            public override void LoadValue(string fileData)
+            {
+                base.LoadValue(fileData);
+                Value = Math.Max(3, Value);
+            }
+        }
 
         public static float GetResultAutoFontSize(float fontSize)
         {
@@ -524,7 +549,7 @@ namespace MORT
             data.UseAutoSizeFont.Value = isAutoSize;
             data.MinAutoSizeFont.Value = minSize;
             data.MaxAutoSizeFont.Value = maxSize;
-            data.SnapShotRemainTime.Value = snapShotRemainTime;
+            SnapShopRemainTime = snapShotRemainTime;
             data.UseAutoMerge.Value = autoMerge;
             data.OverlayKeepSourceDirection.Value = keepSourceDirection;
             data.OverlayAutoColor.Value = autoColor;
@@ -775,13 +800,17 @@ namespace MORT
             data.OverlayUseFontOutline = SettingDataFactory.Create<bool>(KeyOverlayUseFontOutline, data.ParseList, true);
             data.OverlayUseBackgroundAlpha = SettingDataFactory.Create<bool>(KeyOverlayUseBackgroundAlpha, data.ParseList, false);
             data.OverlayOutputMode = SettingDataFactory.Create<int>(KeyOverlayOutputMode, data.ParseList, (int)Model.OverlayBlurMode.Restore);
-            data.OverlayRestoreLevel = SettingDataFactory.Create<int>(KeyOverlayRestoreLevel, data.ParseList, 2);
             data.OverlayBlurLevel = SettingDataFactory.Create<int>(KeyOverlayBlurLevel, data.ParseList, 5);
             data.OverlayTargetFps = SettingDataFactory.Create<int>(KeyOverlayTargetFps, data.ParseList, 60);
+            data.OverlayBackgroundQuality = new OverlayBackgroundQualitySettingData();
+            data.ParseList.Add(data.OverlayBackgroundQuality);
+            data.OverlayBackgroundStrength = new OverlayBackgroundStrengthSettingData();
+            data.ParseList.Add(data.OverlayBackgroundStrength);
             data.UseAutoSizeFont = SettingDataFactory.Create<bool>(KEY_FONT_AUTO_SIZE, data.ParseList, false);
             data.MinAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MIN_SIZE, data.ParseList, 10);
             data.MaxAutoSizeFont = SettingDataFactory.Create<int>(KEY_FONT_AUTO_MAX_SIZE, data.ParseList, 50);
-            data.SnapShotRemainTime = SettingDataFactory.Create<int>(KEY_SNAP_SHOP_REMAIN_TIEM, data.ParseList, 5);
+            data.SnapShotRemainTime = new SnapShotRemainTimeSettingData();
+            data.ParseList.Add(data.SnapShotRemainTime);
 
             data.UseTopMostOptionWhenTranslate = SettingDataFactory.Create<bool>(KEY_USE_TOP_MOST_WHEN_TRANSLATE, data.ParseList, false);
             data.UseIgnoreEmptyTranslate = SettingDataFactory.Create<bool>(KEY_USE_IGONORE_EMPTY_TRANSLATE, data.ParseList, false);

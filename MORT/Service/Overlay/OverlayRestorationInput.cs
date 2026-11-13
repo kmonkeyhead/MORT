@@ -11,11 +11,13 @@ namespace MORT.Service.Overlay
         private byte[] _pixels = Array.Empty<byte>();
         private Rectangle[] _words = Array.Empty<Rectangle>();
         private Rectangle[] _regions = Array.Empty<Rectangle>();
-        private int _wordCount, _level;
+        private int _wordCount;
         private Size _sourceSize;
         private int[] _x0 = Array.Empty<int>(), _x1 = Array.Empty<int>(), _wx = Array.Empty<int>();
         private int[] _y0 = Array.Empty<int>(), _y1 = Array.Empty<int>(), _wy = Array.Empty<int>();
         private int _channels;
+        private bool _highQuality;
+        private int _strength = 3;
 
         internal static Size ProcessingSize(int width, int height)
         {
@@ -37,7 +39,7 @@ namespace MORT.Service.Overlay
         }
 
         internal byte[] Prepare(byte[] source, int width, int height, int channels,
-            IReadOnlyList<Rectangle> words, Size target, out IReadOnlyList<Rectangle> scaledWords, int level = 2)
+            IReadOnlyList<Rectangle> words, Size target, out IReadOnlyList<Rectangle> scaledWords, bool highQuality = false, int strength = 3)
         {
             var sourceSize = new Size(width, height);
             bool changed = sourceSize != _sourceSize || channels != _channels;
@@ -56,7 +58,7 @@ namespace MORT.Service.Overlay
                 MakeAxis(width, target.Width, channels, out _x0, out _x1, out _wx);
                 MakeAxis(height, target.Height, width * channels, out _y0, out _y1, out _wy);
             }
-            changed |= _wordCount != words.Count || _level != level;
+            changed |= _wordCount != words.Count || _highQuality != highQuality || _strength != strength;
             if(_words.Length < words.Count) _words = new Rectangle[Math.Max(words.Count, _words.Length * 2)];
             for(int i = 0; i < words.Count; i++)
             {
@@ -65,9 +67,11 @@ namespace MORT.Service.Overlay
                 _words[i] = word;
             }
             scaledWords = new ArraySegment<Rectangle>(_words, 0, words.Count);
-            if(changed) _regions = LegacyBackgroundRestoration.GetInputRegions(target.Width, target.Height, scaledWords, level);
+            if(changed) _regions = highQuality ? HighQualityBackgroundRestoration.GetInputRegions(target.Width, target.Height, scaledWords)
+                : LegacyBackgroundRestoration.GetInputRegions(target.Width, target.Height, scaledWords, strength);
+            _highQuality = highQuality;
+            _strength = strength;
             _wordCount = words.Count;
-            _level = level;
 
             //좌표와 가중치는 캡처 크기가 바뀔 때만 계산한다. 반복 루프는 연속 배열과 정수 연산만 사용한다.
             //복원에서 참조하는 글자 주변만 축소한다. 나머지 화면 픽셀은 처리하지 않는다.
