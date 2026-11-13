@@ -7,8 +7,8 @@ namespace MORT.OpenCV
     //OpenCV 4.14 arithmetic/provenance and notices: NOTICE.txt, SOURCE-LICENSES.txt.
     internal sealed class BackgroundRestorer : IDisposable
     {
-        //Covers both 2 * max morphology radius + detection padding (16), and
-        //detection + maximum dilation + repair padding (2 + 6 + 6 = 14).
+        //Covers 2 * max morphology radius + detection padding (16).
+        //Mask expansion must also leave enough detection/repair context within this padding.
         internal const int InputPadding = 16;
         private const int DetectionPadding = 2, RepairPadding = 6;
         internal struct Region
@@ -35,8 +35,10 @@ namespace MORT.OpenCV
         }
 
         internal unsafe void Restore(byte* source, int width, int height, int channels, int sourceStride,
-            Region[] words, byte* output, int outputStride, int[] rowSpans, int strength = 3)
+            Region[] words, byte* output, int outputStride, int[] rowSpans, int maskExpansion)
         {
+            if(maskExpansion < 1 || maskExpansion > InputPadding - DetectionPadding - RepairPadding)
+                throw new ArgumentOutOfRangeException(nameof(maskExpansion));
             if(width <= 0 || height <= 0 || (channels != 3 && channels != 4)
                 || (long)sourceStride < (long)width * channels || (long)outputStride < (long)width * 4
                 || rowSpans.Length < (long)height * 2)
@@ -97,7 +99,7 @@ namespace MORT.OpenCV
                     }
                 }
                 fixed(byte* temporary = _temporary)
-                    Morphology.Extreme(mask, width, expanded, temporary, width, height, Math.Clamp(strength, 1, 5) + 1, true);
+                    Morphology.Extreme(mask, width, expanded, temporary, width, height, maskExpansion, true);
                 new Span<byte>(expanded, width).Clear();
                 new Span<byte>(expanded + (height - 1) * width, width).Clear();
                 int left = width, right = 0, top = height, bottom = 0;

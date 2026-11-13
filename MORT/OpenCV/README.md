@@ -44,8 +44,10 @@ therefore include every source pixel used by restoration. The previous complete
 output is retained until the new result is ready. Scratch/output buffers are reused.
 
 Background processing strength has five stages, saved as @OverlayBackgroundStrength.
-The default is stage 3. High quality uses the stage plus one as its mask dilation
-radius: stages 1/2/3/4 match the former stages 2/3/4/5, and new stage 5 uses six
+The default is stage 3. MORT's HighQualityBackgroundRestoration selects the mask
+dilation radius from its preset table (2/3/4/5/6 pixels) and passes that pixel value
+to BackgroundRestorer. The OpenCV processing layer does not interpret user stages.
+Stages 1/2/3/4 match the former stages 2/3/4/5, and new stage 5 uses six
 pixels. Low-quality stage values are unchanged; it adjusts its previous OCR-box
 padding by two pixels per stage above/below 3 (at least one pixel).
 The old @OverlayRestoreLevel setting is not reused: it had a different scale.

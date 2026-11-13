@@ -9,6 +9,8 @@ namespace MORT.Service.Overlay.Restoration
     //OCR 글자 마스크를 OpenCV 기반 C# 코드로 복원하고 MORT 출력 풀에 직접 기록한다.
     internal sealed class HighQualityBackgroundRestoration : IDisposable
     {
+        //사용자 단계는 MORT에서 실제 처리값으로 변환한다. OpenCV 처리부에는 픽셀 수만 전달한다.
+        private static readonly int[] MaskExpansionByStrength = { 2, 3, 4, 5, 6 };
         private Rectangle[] _words = Array.Empty<Rectangle>();
         private Rectangle[] _regions = Array.Empty<Rectangle>();
         private BackgroundRestorer.Region[][] _text = Array.Empty<BackgroundRestorer.Region[]>();
@@ -71,6 +73,7 @@ namespace MORT.Service.Overlay.Restoration
         internal unsafe OverlayBlurFrame CreateFrame(byte[] source, int width, int height, int channels,
             IReadOnlyList<Rectangle> words, bool compact, OverlayFrameBufferPool pool, int strength = 3)
         {
+            int maskExpansion = MaskExpansionByStrength[Math.Clamp(strength, 1, 5) - 1];
             Configure(width, height, words);
             if(_regions.Length == 0) return null;
             var work = _regions[0];
@@ -93,7 +96,7 @@ namespace MORT.Service.Overlay.Restoration
                     dirty.Offset(-work.X, -work.Y);
                     _restorer.Restore(sourcePtr + (region.Y * width + region.X) * channels,
                         region.Width, region.Height, channels, width * channels, _text[i],
-                        outputPtr + (dirty.Y * work.Width + dirty.X) * 4, work.Width * 4, _rowSpans, strength);
+                        outputPtr + (dirty.Y * work.Width + dirty.X) * 4, work.Width * 4, _rowSpans, maskExpansion);
                     for(int y = 0; y < region.Height; y++)
                     {
                         int first = _rowSpans[y * 2], end = _rowSpans[y * 2 + 1];
