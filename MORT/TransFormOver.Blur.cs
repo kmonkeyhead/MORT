@@ -78,11 +78,11 @@ namespace MORT
             if(_adaptiveScene == null || live == null) return drawn;
 
             Point offset = new Point(-Location.X, -Location.Y);
-            foreach(var area in _adaptiveScene.Areas)
+            //새 마스크의 복원이 끝날 때까지 마지막 완성 배경을 원래 화면 좌표에 유지한다.
+            //현재 마스크와 다르다는 이유로 생략하면 투명한 프레임이 먼저 표시되어 깜빡인다.
+            foreach(var area in live.Scene.Areas)
             {
                 if(!live.Frames.TryGetValue(area.Index, out var frame)) continue;
-                var completedArea = live.Scene.Areas.First(oldArea => oldArea.Index == area.Index);
-                if(!SameAdaptiveArea(area, completedArea)) continue;
                 Rectangle imageRect = area.ScreenRect;
                 imageRect.Offset(offset);
                 Rectangle clip = Rectangle.Intersect(ClientRectangle, imageRect);

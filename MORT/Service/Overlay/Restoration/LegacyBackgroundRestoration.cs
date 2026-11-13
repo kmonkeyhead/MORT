@@ -10,6 +10,24 @@ namespace MORT.Service.Overlay.Restoration
     //모든 OCR 글자를 제외한 주변 샘플로 배경을 연결한다. 복원 중인 픽셀은 참조하지 않는다.
     internal static class LegacyBackgroundRestoration
     {
+        //변경 감지는 각 글자의 복원 샘플 범위만 사용한다. 떨어진 글자 사이의 빈 공간은 포함하지 않는다.
+        internal static Rectangle[] GetInputRegions(int width, int height, IReadOnlyList<Rectangle> words, int level)
+        {
+            var bounds = new Rectangle(0, 0, width, height);
+            var regions = new List<Rectangle>();
+            foreach(var word in words)
+            {
+                if(word.Width <= 0 || word.Height <= 0) continue;
+                var clipped = Rectangle.Intersect(word, bounds);
+                if(clipped.Width <= 0 || clipped.Height <= 0) continue;
+                regions.Add(GetProbeBounds(clipped, level, bounds));
+            }
+            return regions.ToArray();
+        }
+
+        private static Rectangle GetProbeBounds(Rectangle word, int level, Rectangle bounds) =>
+            Rectangle.Intersect(Rectangle.Inflate(word, GetPadding(word, level) + 8, GetPadding(word, level) + 8), bounds);
+
         public static OverlayBlurFrame CreateFrame(byte[] source, int width, int height, int channels, IReadOnlyList<Rectangle> wordRects, int restorationLevel = 2, bool compactOutput = false)
         {
             if(source == null || width <= 0 || height <= 0 || channels < 3
@@ -24,8 +42,7 @@ namespace MORT.Service.Overlay.Restoration
                 Rectangle clipped = Rectangle.Intersect(word, sourceBounds);
                 if(clipped.Width <= 0 || clipped.Height <= 0) continue;
                 //색상 힌트의 padding + 8, 광선 양 끝과 3x3 샘플을 모두 보존한다.
-                int padding = GetPadding(clipped, restorationLevel);
-                Rectangle probe = Rectangle.Intersect(Rectangle.Inflate(clipped, padding + 8, padding + 8), sourceBounds);
+                Rectangle probe = GetProbeBounds(clipped, restorationLevel, sourceBounds);
                 work = work.IsEmpty ? probe : Rectangle.Union(work, probe);
             }
             if(work.IsEmpty && compactOutput) return null;
@@ -216,7 +233,7 @@ namespace MORT.Service.Overlay.Restoration
                     Rectangle rect = Rectangle.Intersect(word, bounds);
                     if(rect.Width <= 0 || rect.Height <= 0) continue;
                     int padding = GetPadding(rect, restorationLevel);
-                    Rectangle probe = Rectangle.Intersect(Rectangle.Inflate(rect, padding + 8, padding + 8), bounds);
+                    Rectangle probe = GetProbeBounds(rect, restorationLevel, bounds);
                     for(int index = 0; index < touchedCount; index++)
                     {
                         int key = touched[index];
