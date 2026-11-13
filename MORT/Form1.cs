@@ -808,6 +808,7 @@ namespace MORT
 
                 //SetProcessDPIAware();
                 InitializeComponent();
+                InitializeOverlayPerformanceOption();
                 _mouseFollowOcrAreaService.Initialize(this);
 
                 this.Text = $"Monkeyhead's OCR RealTime Translator - {Properties.Settings.Default.MORT_VERSION}";

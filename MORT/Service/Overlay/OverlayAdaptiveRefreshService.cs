@@ -20,7 +20,6 @@ namespace MORT.Service.Overlay
         private readonly object _gate = new();
         private readonly CancellationTokenSource _stop = new();
         private readonly SemaphoreSlim _wake = new(0, 1);
-        private readonly OverlayTextRestorationService _restoration = new();
         private readonly Dictionary<int, CaptureBuffer> _buffers = new();
         private readonly Dictionary<int, RestoredInput> _restoredInputs = new();
         private readonly Func<OverlayAdaptiveScene, OverlayAdaptiveArea, OverlayCaptureFrame?, byte[]?>? _captureOverride;
@@ -29,7 +28,17 @@ namespace MORT.Service.Overlay
         private Task? _worker;
         private Action? _requestPaint;
         private bool _disposed;
-        internal OverlayAdaptiveOutput? Latest => Volatile.Read(ref _latest);
+        internal OverlayAdaptiveOutput.ReadLease AcquireLatest()
+        {
+            lock(_gate) return _latest?.Acquire() ?? default;
+        }
+        //호출자는 _gate를 소유한다. UI 읽기 대여가 있으면 이전 배열은 아직 반환되지 않는다.
+        private void ReplaceLatest(OverlayAdaptiveOutput? output)
+        {
+            var previous = _latest;
+            _latest = output;
+            previous?.Release();
+        }
         internal long CompletedFrames;
 
         public OverlayAdaptiveRefreshService() { }
@@ -54,7 +63,7 @@ namespace MORT.Service.Overlay
                 //마스크/영역 갱신 중에는 마지막 완성 배경을 유지한다. 수명이나 캡처 소스가 바뀌면 해제한다.
                 if(scene == null || _scene == null || !ReferenceEquals(_scene.Capture, scene.Capture)
                     || _scene.DesktopBounds != scene.DesktopBounds)
-                    Volatile.Write(ref _latest, null);
+                    ReplaceLatest(null);
                 Volatile.Write(ref _scene, scene);
                 if(scene != null) _worker ??= Task.Factory.StartNew(Run, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                 if(_wake.CurrentCount == 0) _wake.Release();
@@ -84,27 +93,43 @@ namespace MORT.Service.Overlay
                     long start = Stopwatch.GetTimestamp();
                     try
                     {
-                        //마스크·강도·좌표·소스가 바뀌면 같은 픽셀이어도 다시 복원한다.
-                        if(!ReferenceEquals(scene, lastScene)) _restoredInputs.Clear();
+                        //OCR 결과가 바뀌어도 캡처 영역별 작업 버퍼는 유지한다.
                         var capture = scene.Capture?.LatestAdaptiveFrame;
                         //WGC의 같은 최신 프레임은 재처리하지 않는다. OCR 소비 플래그와 분리한다.
                         if(scene.Capture == null || !ReferenceEquals(scene, lastScene) || !ReferenceEquals(capture, lastCapture))
                         {
                             var frames = new Dictionary<int, OverlayBlurFrame>();
+                            bool retryOutput = false;
                             foreach(var area in scene.Areas)
                             {
                                 if(token.IsCancellationRequested || !ReferenceEquals(scene, Volatile.Read(ref _scene))) break;
-                                byte[]? pixels = _captureOverride != null ? _captureOverride(scene, area, capture) : Capture(scene, area, capture);
+                                byte[]? pixels;
+                                using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.CaptureArea, area.ScreenRect.Width, area.ScreenRect.Height))
+                                    pixels = _captureOverride != null ? _captureOverride(scene, area, capture) : Capture(scene, area, capture);
                                 if(pixels == null) continue;
                                 _restoredInputs.TryGetValue(area.Index, out var previous);
-                                var patch = previous != null && previous.Matches(pixels, area.ScreenRect.Width)
-                                    ? previous.Patch
-                                    : _restoration.CreatePatch(pixels, area.ScreenRect.Width, area.ScreenRect.Height, 4, area.Words, scene.Level);
-                                if(patch != null && !ReferenceEquals(patch, previous?.Patch))
+                                if(previous == null)
                                 {
-                                    previous ??= new RestoredInput(LegacyBackgroundRestoration.GetInputRegions(
-                                        area.ScreenRect.Width, area.ScreenRect.Height, area.Words, scene.Level));
-                                    previous.Save(pixels, area.ScreenRect.Width, patch);
+                                    previous = new RestoredInput();
+                                    _restoredInputs[area.Index] = previous;
+                                }
+                                if(!ReferenceEquals(previous.Scene, scene))
+                                    previous.Configure(area, scene);
+                                bool unchanged;
+                                using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.ComparePixels))
+                                    unchanged = previous.Matches(pixels, area.ScreenRect.Width);
+                                var patch = previous.Patch;
+                                if(!unchanged)
+                                {
+                                    using(OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.RestoreBackground, area.ScreenRect.Width, area.ScreenRect.Height))
+                                        patch = previous.Restoration.CreatePooledPatch(pixels, area.ScreenRect.Width, area.ScreenRect.Height, 4, area.Words, scene.Level, previous.OutputPool);
+                                    retryOutput |= patch == null;
+                                }
+                                if(patch != null && !ReferenceEquals(patch, previous.Patch))
+                                {
+                                    using var saveTiming = OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.SaveComparison);
+                                    try { previous.Save(pixels, area.ScreenRect.Width, patch); }
+                                    catch { patch.ReleasePixels(); throw; }
                                     _restoredInputs[area.Index] = previous;
                                 }
                                 if(patch != null) frames[area.Index] = patch;
@@ -122,15 +147,19 @@ namespace MORT.Service.Overlay
                                         || frames.Any(frame => !latest.Frames.TryGetValue(frame.Key, out var old)
                                             || !ReferenceEquals(frame.Value, old)))
                                     {
-                                        Volatile.Write(ref _latest, new OverlayAdaptiveOutput(scene, frames));
+                                        ReplaceLatest(new OverlayAdaptiveOutput(scene, frames));
                                         Interlocked.Increment(ref CompletedFrames);
                                         notify = _requestPaint;
                                     }
                                 }
                             }
                             notify?.Invoke();
-                            lastScene = scene;
+                            //출력 배열을 모두 읽고 있었으면 같은 WGC 프레임도 반환 후 다시 시도한다.
+                            //정지 화면에서 다음 캡처가 올 때까지 갱신이 막히지 않도록 한다.
+                            lastScene = retryOutput ? null : scene;
                             lastCapture = capture;
+                            foreach(int index in _restoredInputs.Keys.ToArray())
+                                if(!scene.Areas.Any(area => area.Index == index)) { _restoredInputs[index].Dispose(); _restoredInputs.Remove(index); }
                             foreach(int index in _buffers.Keys.ToArray())
                                 if(!scene.Areas.Any(area => area.Index == index)) { _buffers[index].Dispose(); _buffers.Remove(index); }
                         }
@@ -193,6 +222,7 @@ namespace MORT.Service.Overlay
 
         private void ClearBuffers()
         {
+            foreach(var input in _restoredInputs.Values) input.Dispose();
             _restoredInputs.Clear();
             foreach(var buffer in _buffers.Values) buffer.Dispose();
             _buffers.Clear();
@@ -208,7 +238,7 @@ namespace MORT.Service.Overlay
                 _requestPaint = null;
                 _scene?.Capture?.SetAdaptiveCapture(false);
                 Volatile.Write(ref _scene, null);
-                Volatile.Write(ref _latest, null);
+                ReplaceLatest(null);
                 _stop.Cancel();
                 worker = _worker;
             }
@@ -217,41 +247,77 @@ namespace MORT.Service.Overlay
             else _ = worker.ContinueWith(_ => { _stop.Dispose(); _wake.Dispose(); }, TaskScheduler.Default);
         }
 
-        private sealed class RestoredInput
+        private sealed class RestoredInput : IDisposable
         {
-            private readonly Rectangle[] _regions;
-            private readonly byte[][] _pixels;
+            internal readonly OverlayTextRestorationService Restoration = new();
+            internal readonly OverlayFrameBufferPool OutputPool = new();
+            private Rectangle[] _regions = Array.Empty<Rectangle>();
+            private byte[] _pixels = Array.Empty<byte>();
+            private Size _captureSize;
+            private bool _valid, _packed;
+            internal OverlayAdaptiveScene? Scene { get; private set; }
             internal OverlayBlurFrame Patch { get; private set; } = null!;
 
-            internal RestoredInput(Rectangle[] regions)
+            internal void Configure(OverlayAdaptiveArea area, OverlayAdaptiveScene scene)
             {
-                _regions = regions;
-                _pixels = regions.Select(rect => new byte[checked(rect.Width * rect.Height * 4)]).ToArray();
+                _regions = OverlayTextRestorationService.GetComparisonRegions(area.ScreenRect.Width, area.ScreenRect.Height, area.Words, scene.Level);
+                long sampleBytes = 0;
+                foreach(var rect in _regions) sampleBytes += (long)rect.Width * rect.Height * 4;
+                int fullBytes = checked(area.ScreenRect.Width * area.ScreenRect.Height * 4);
+                _packed = sampleBytes < fullBytes;
+                int length = (int)Math.Min(sampleBytes, fullBytes);
+                bool resized = _captureSize != area.ScreenRect.Size;
+                if(resized) OutputPool.Reset();
+                if(resized || _pixels.Length < length)
+                    _pixels = new byte[resized ? length : (int)Math.Min(fullBytes, Math.Max(length, (long)_pixels.Length * 2))];
+                _captureSize = area.ScreenRect.Size;
+                _valid = false;
+                Scene = scene;
             }
 
             internal bool Matches(byte[] source, int width)
             {
-                for(int i = 0; i < _regions.Length; i++)
+                if(!_valid) return false;
+                int offset = 0;
+                foreach(var rect in _regions)
                 {
-                    var rect = _regions[i];
+                    int rowBytes = rect.Width * 4;
                     for(int row = 0; row < rect.Height; row++)
-                        if(!source.AsSpan(((rect.Y + row) * width + rect.X) * 4, rect.Width * 4)
-                            .SequenceEqual(_pixels[i].AsSpan(row * rect.Width * 4, rect.Width * 4))) return false;
+                    {
+                        int sourceOffset = ((rect.Y + row) * width + rect.X) * 4;
+                        if(!source.AsSpan(sourceOffset, rowBytes)
+                            .SequenceEqual(_pixels.AsSpan(_packed ? offset : sourceOffset, rowBytes))) return false;
+                        if(_packed) offset += rowBytes;
+                    }
                 }
                 return true;
             }
 
             internal void Save(byte[] source, int width, OverlayBlurFrame patch)
             {
-                //캡처 버퍼와 수명을 분리하고 OCR 주변의 비교 대상 픽셀만 보관한다.
-                for(int i = 0; i < _regions.Length; i++)
+                //비교 픽셀은 하나의 연속 버퍼에 모은다. 글자마다 큰 배열을 다시 만들지 않는다.
+                int offset = 0;
+                foreach(var rect in _regions)
                 {
-                    var rect = _regions[i];
+                    int rowBytes = rect.Width * 4;
                     for(int row = 0; row < rect.Height; row++)
-                        source.AsSpan(((rect.Y + row) * width + rect.X) * 4, rect.Width * 4)
-                            .CopyTo(_pixels[i].AsSpan(row * rect.Width * 4, rect.Width * 4));
+                    {
+                        int sourceOffset = ((rect.Y + row) * width + rect.X) * 4;
+                        source.AsSpan(sourceOffset, rowBytes)
+                            .CopyTo(_pixels.AsSpan(_packed ? offset : sourceOffset, rowBytes));
+                        if(_packed) offset += rowBytes;
+                    }
                 }
+                var previous = Patch;
                 Patch = patch;
+                _valid = true;
+                previous?.ReleasePixels();
+            }
+            public void Dispose()
+            {
+                Patch?.ReleasePixels();
+                Patch = null!;
+                OutputPool.Dispose();
             }
         }
 
