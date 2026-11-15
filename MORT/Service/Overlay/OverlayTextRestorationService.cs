@@ -33,28 +33,42 @@ namespace MORT.Service.Overlay
         public OverlayBlurFrame CreatePatch(byte[] source, int width, int height, int channels, IReadOnlyList<Rectangle> wordRects)
         {
             lock(_gate)
-                return CreatePatchCore(source, width, height, channels, wordRects, null);
+                return CreatePatchCore(source, width, height, channels, wordRects, null,
+                    OverlayRestorationInput.ProcessingSize(width, height), UseHighQuality, BackgroundStrength);
+        }
+        internal OverlayBlurFrame CreateSnapshotFrame(byte[] source, int width, int height, int channels,
+            IReadOnlyList<Rectangle> wordRects, double ocrZoom)
+        {
+            using var timing = OverlayPerformanceProfiler.Measure(OverlayPerformanceStage.RestoreBackground, width, height);
+            if(!double.IsFinite(ocrZoom) || ocrZoom <= 0 || width <= 0 || height <= 0) return null;
+            //MORT_CORE의 getOriginal도 OCR 확대를 적용한다. 복원 강도/커널은 화면 원본 픽셀 기준으로 맞춘다.
+            int captureWidth = (int)Math.Clamp(Math.Round(width / ocrZoom), 1, int.MaxValue);
+            int captureHeight = (int)Math.Clamp(Math.Round(height / ocrZoom), 1, int.MaxValue);
+            var target = OverlayRestorationInput.ProcessingSize(captureWidth, captureHeight);
+            lock(_gate)
+                return CreatePatchCore(source, width, height, channels, wordRects, null, target,
+                    AdvencedOptionManager.OverlayBackgroundQuality > 0, AdvencedOptionManager.OverlayBackgroundStrength);
         }
         //반환 프레임의 초기 소유권은 호출자가 저장하거나 ReleasePixels로 해제한다.
         internal OverlayBlurFrame CreatePooledPatch(byte[] source, int width, int height, int channels,
             IReadOnlyList<Rectangle> wordRects, OverlayFrameBufferPool pool)
         {
             lock(_gate)
-                return CreatePatchCore(source, width, height, channels, wordRects, pool);
+                return CreatePatchCore(source, width, height, channels, wordRects, pool,
+                    OverlayRestorationInput.ProcessingSize(width, height), UseHighQuality, BackgroundStrength);
         }
         private OverlayBlurFrame CreatePatchCore(byte[] source, int width, int height, int channels,
-            IReadOnlyList<Rectangle> words, OverlayFrameBufferPool pool)
+            IReadOnlyList<Rectangle> words, OverlayFrameBufferPool pool, Size target, bool highQuality, int strength)
         {
             if(source == null || width <= 0 || height <= 0 || channels < 3 || words == null
                 || (long)width * height > int.MaxValue / 4
                 || source.LongLength < (long)width * height * channels) return null;
-            Size target = OverlayRestorationInput.ProcessingSize(width, height);
-            var input = _input.Prepare(source, width, height, channels, words, target, out var scaledWords, UseHighQuality, BackgroundStrength);
-            if(UseHighQuality)
-                return _highQuality.CreateFrame(input, target.Width, target.Height, channels, scaledWords, true, pool, BackgroundStrength);
+            var input = _input.Prepare(source, width, height, channels, words, target, out var scaledWords, highQuality, strength);
+            if(highQuality)
+                return _highQuality.CreateFrame(input, target.Width, target.Height, channels, scaledWords, true, pool, strength);
             //SourceRect/SourceSize는 작업 해상도 좌표계다. 렌더러가 원본 캡처 위치/크기에 맞춰 표시한다.
             return LegacyBackgroundRestoration.CreateFrame(input, target.Width, target.Height, channels,
-                scaledWords, compactOutput: true, workspace: _workspace, outputPool: pool, strength: BackgroundStrength);
+                scaledWords, compactOutput: true, workspace: _workspace, outputPool: pool, strength: strength);
         }
 
         internal static Rectangle[] GetComparisonRegions(int width, int height, IReadOnlyList<Rectangle> words, bool highQuality = false, int strength = 3)

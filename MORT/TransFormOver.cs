@@ -344,6 +344,11 @@ namespace MORT
                 int originY = areaRect.Y - FormManager.BorderHeight / 2;
                 if(_attchedCapture)
                 {
+                    //OCR의 창 캡처는 선택 영역과 실제 창의 교집합만 반환한다.
+                    //원래 선택 크기를 유지하면 좌표 배율이 틀어지고 적응형 캡처의 범위 검사도 실패한다.
+                    var frame = FormManager.Instace.screenCaptureUI?.AdaptiveCaptureSource?.LatestAdaptiveFrame;
+                    if(frame != null)
+                        return Rectangle.Intersect(new Rectangle(originX, originY, areaRect.Width, areaRect.Height), frame.ScreenBounds);
                     originX = Math.Max(originX, captureOrigin.X);
                     originY = Math.Max(originY, captureOrigin.Y);
                 }
@@ -2278,8 +2283,19 @@ namespace MORT
 
         public void StopTrans()
         {
+            StopTrans(false);
+        }
+
+        internal void StopTrans(bool keepSnapshotBackground)
+        {
             TranslateStatusType = TranslateStatusType.Stop;
-            ClearAdaptiveMasks();
+            if(keepSnapshotBackground)
+            {
+                //OCR/번역은 끝나도 표시 중인 스냅샷의 고정 영역으로 배경만 계속 갱신한다.
+                _holdSnapshotBackground = true;
+                RequestOverlayPaint();
+            }
+            else ClearAdaptiveMasks();
         }
 
         public void ApplyTopMost()
@@ -2472,7 +2488,7 @@ namespace MORT
         public void setVisibleBackground()
         {
             isLockPaint = false;
-            StopAdaptiveBackground();
+            ClearAdaptiveMasks();
             _isStart = false;
             _forceLock = false;
             alpha = 190;

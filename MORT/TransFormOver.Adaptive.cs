@@ -16,6 +16,7 @@ namespace MORT
         private OverlayAdaptiveMask[] _adaptiveMasks = Array.Empty<OverlayAdaptiveMask>();
         private Point _adaptiveCaptureOrigin;
         private bool _allowLiveAdaptive;
+        private bool _holdSnapshotBackground;
 
         internal void SetAdaptiveLiveEnabled(bool enabled)
         {
@@ -34,6 +35,7 @@ namespace MORT
 
         private void ClearAdaptiveMasks()
         {
+            _holdSnapshotBackground = false;
             _adaptiveMasks = Array.Empty<OverlayAdaptiveMask>();
             StopAdaptiveBackground();
         }
@@ -54,8 +56,8 @@ namespace MORT
 
         private void UpdateAdaptiveScene(List<OverlayRenderBlock>? displayedBlocks = null)
         {
-            if(!_allowLiveAdaptive || !isActiveGDI || !_isStart || !Visible || !IsHandleCreated || _forceLock
-                || TranslateStatusType != TranslateStatusType.Translate
+            if((!_allowLiveAdaptive && !_holdSnapshotBackground) || !isActiveGDI || !_isStart || !Visible || !IsHandleCreated || _forceLock
+                || (TranslateStatusType != TranslateStatusType.Translate && !_holdSnapshotBackground)
                 || AdvencedOptionManager.OverlayOutputMode != OverlayBlurMode.Restore)
             {
                 StopAdaptiveBackground();

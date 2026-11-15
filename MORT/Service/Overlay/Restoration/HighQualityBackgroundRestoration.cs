@@ -58,16 +58,43 @@ namespace MORT.Service.Overlay.Restoration
             var bounds = new Rectangle(Point.Empty, _size);
             for(int i = 0; i < _regions.Length; i++)
             {
-                var text = new List<BackgroundRestorer.Region>();
+                var text = new List<Rectangle>();
                 foreach(var word in words)
                 {
                     var clipped = Rectangle.Intersect(word, bounds);
                     if(clipped.Width <= 0 || clipped.Height <= 0 || !_regions[i].IntersectsWith(clipped)) continue;
-                    text.Add(new BackgroundRestorer.Region(clipped.X - _regions[i].X, clipped.Y - _regions[i].Y,
-                        clipped.Width, clipped.Height));
+                    AddTextRegion(text, clipped);
                 }
-                _text[i] = text.ToArray();
+                _text[i] = new BackgroundRestorer.Region[text.Count];
+                for(int j = 0; j < text.Count; j++)
+                {
+                    var box = text[j];
+                    _text[i][j] = new BackgroundRestorer.Region(box.X - _regions[i].X, box.Y - _regions[i].Y,
+                        box.Width, box.Height);
+                }
             }
+        }
+
+        private static void AddTextRegion(List<Rectangle> regions, Rectangle box)
+        {
+            //Snipping Tool OCR의 글자별 경계 사이에 실제 획/외곽선이 남을 수 있다.
+            //같은 줄의 가까운 감지 영역만 연결한다. OCR 결과와 번역 배치는 변경하지 않는다.
+            for(int i = 0; i < regions.Count;)
+            {
+                var other = regions[i];
+                int overlap = Math.Min(box.Bottom, other.Bottom) - Math.Max(box.Top, other.Top);
+                int gap = Math.Max(0, Math.Max(box.Left, other.Left) - Math.Min(box.Right, other.Right));
+                //입력 여백 두 개보다 작게 제한하여 기존 준비/변경 감지 영역 안에서만 연결한다.
+                int maxGap = Math.Min(BackgroundRestorer.InputPadding * 2 - 2, Math.Min(box.Height, other.Height) / 2);
+                if(overlap * 3 >= Math.Max(box.Height, other.Height) * 2 && gap <= maxGap)
+                {
+                    box = Rectangle.Union(box, other);
+                    regions.RemoveAt(i);
+                    i = 0;
+                }
+                else i++;
+            }
+            regions.Add(box);
         }
 
         internal unsafe OverlayBlurFrame CreateFrame(byte[] source, int width, int height, int channels,

@@ -2084,7 +2084,10 @@ namespace MORT
 
             if (transform != null)
             {
-                transform.StopTrans();
+                if(isOnceTrans && transform is TransFormOver overlay)
+                    overlay.StopTrans(keepSnapshotBackground: true);
+                else
+                    transform.StopTrans();
             }
 
             if (MySettingManager.NowSkin != SettingManager.Skin.dark)

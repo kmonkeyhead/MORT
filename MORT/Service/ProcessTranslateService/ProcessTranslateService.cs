@@ -269,8 +269,8 @@ namespace MORT.Service.ProcessTranslateService
                         .SelectMany(line => line.wordRectList.Count > 0 ? line.wordRectList : new List<Rectangle> { line.lineRect })
                         .Where(rect => rect.Width > 0 && rect.Height > 0)
                         .Select(rect => ScaleSourceRect(rect, image)).ToList();
-                    var restored = _textRestorationService?.CreateFrame(
-                        image.originalData, image.originalX, image.originalY, image.originalChannels, words);
+                    var restored = _textRestorationService?.CreateSnapshotFrame(
+                        image.originalData, image.originalX, image.originalY, image.originalChannels, words, _settingManager.ImgZoomSize);
                     ocrResultData.BlurFrame = restored;
                 }
 

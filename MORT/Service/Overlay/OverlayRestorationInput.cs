@@ -13,6 +13,7 @@ namespace MORT.Service.Overlay
         private Rectangle[] _regions = Array.Empty<Rectangle>();
         private int _wordCount;
         private Size _sourceSize;
+        private Size _targetSize;
         private int[] _x0 = Array.Empty<int>(), _x1 = Array.Empty<int>(), _wx = Array.Empty<int>();
         private int[] _y0 = Array.Empty<int>(), _y1 = Array.Empty<int>(), _wy = Array.Empty<int>();
         private int _channels;
@@ -42,11 +43,12 @@ namespace MORT.Service.Overlay
             IReadOnlyList<Rectangle> words, Size target, out IReadOnlyList<Rectangle> scaledWords, bool highQuality = false, int strength = 3)
         {
             var sourceSize = new Size(width, height);
-            bool changed = sourceSize != _sourceSize || channels != _channels;
+            bool changed = sourceSize != _sourceSize || target != _targetSize || channels != _channels;
             if(changed)
             {
                 _pixels = Array.Empty<byte>();
                 _sourceSize = sourceSize;
+                _targetSize = target;
                 _channels = channels;
             }
             if(target == sourceSize) { scaledWords = words; return source; }
