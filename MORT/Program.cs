@@ -206,6 +206,7 @@ namespace MORT
                     ConfigureServices(services);
 
                     ServiceContainer = services.BuildServiceProvider();
+                    ServiceContainer.GetRequiredService<MORT.Service.Plamo.PlamoService>().CleanupPreviousServers();
 
                     // ServiceContainer 변수를 사용하여 scope 생성
                     using (IServiceScope scope = ServiceContainer.CreateScope())
@@ -245,6 +246,7 @@ namespace MORT
             services.AddSingleton<MORT.Service.ChromeBridge.ChromeBridgeService>();
             services.AddSingleton<ChromeBridgeTranslateAPI>();
             services.AddSingleton<HdTransAPI>();
+            services.AddSingleton<MORT.Service.Plamo.PlamoService>();
             services.AddSingleton<MouseFollowOcrAreaService>();
             //using System.Diagnostics 와 이름이 겹쳐서 네임스페이스를 그대로 적는다
             services.AddSingleton<Service.Debug.OcrDebugSnapshotService>();

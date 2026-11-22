@@ -1,4 +1,4 @@
-﻿using MORT.TransAPI;
+using MORT.TransAPI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -238,6 +238,7 @@ namespace MORT
             LoadFormerResultFile(SettingManager.TransType.deeplApi);
             LoadFormerResultFile(SettingManager.TransType.gemini);
             LoadFormerResultFile(SettingManager.TransType.chromeBridge);
+            LoadFormerResultFile(SettingManager.TransType.plamo);
         }
 
         private void MakeFormerDic(Dictionary<SettingManager.TransType, Dictionary<string, string>> dic)
@@ -270,6 +271,7 @@ namespace MORT
             dic.Add(SettingManager.TransType.deeplApi, deeplapiDic);
             dic.Add(SettingManager.TransType.gemini, geminiDic);
             dic.Add(SettingManager.TransType.chromeBridge, chromeBridgeDic);
+            dic.Add(SettingManager.TransType.plamo, new Dictionary<string,string>());
 
             if (saveResultDic == null)
             {
@@ -290,6 +292,7 @@ namespace MORT
             saveResultDic.Add(SettingManager.TransType.deeplApi, new List<KeyValuePair<string, string>>());
             saveResultDic.Add(SettingManager.TransType.gemini, new List<KeyValuePair<string, string>>());
             saveResultDic.Add(SettingManager.TransType.chromeBridge, new List<KeyValuePair<string, string>>());
+            saveResultDic.Add(SettingManager.TransType.plamo, new List<KeyValuePair<string, string>>());
         }
 
         private void LoadFormerResultFile(SettingManager.TransType transType)
@@ -540,7 +543,7 @@ namespace MORT
                 string spliteToken = textList.Count > 1 ? Util.GetSpliteToken(transType) : "";
                 List<string> ocrTexts = new();
 
-                if (transType == SettingManager.TransType.db || transType == SettingManager.TransType.hdTrans)
+                if (transType == SettingManager.TransType.db || transType == SettingManager.TransType.hdTrans || transType == SettingManager.TransType.plamo)
                 {
                     isUseMemoryDic = false;
                 }
@@ -701,6 +704,24 @@ namespace MORT
                             }
                         }
                        
+                    }
+                }
+                else if (transType == SettingManager.TransType.plamo)
+                {
+                    // Each OCR block is translated independently: LLMs need not preserve synthetic split markers.
+                    var service = (MORT.Service.Plamo.PlamoService)Program.ServiceContainer.GetService(typeof(MORT.Service.Plamo.PlamoService));
+                    var settings = FormManager.Instace.MyMainForm.MySettingManager;
+                    string source = settings.GoogleTransCode, target = settings.GoogleResultCode;
+                    foreach (var obj in textDic)
+                    {
+                        _cts.Token.ThrowIfCancellationRequested();
+                        obj.Value.result = GetUserTransResult(obj.Value.text);
+                        if (obj.Value.result == null)
+                        {
+                            try { obj.Value.result = await service.TranslateAsync(obj.Value.text, source, target, _cts.Token); }
+                            catch (OperationCanceledException) { throw; }
+                            catch (Exception ex) { return ex.Message; }
+                        }
                     }
                 }
                 else if (transType == SettingManager.TransType.hdTrans)

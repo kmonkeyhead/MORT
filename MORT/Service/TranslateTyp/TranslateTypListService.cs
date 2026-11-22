@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MORT.Model.CustomApi;
@@ -115,6 +115,7 @@ public class TranslateTypListService
             LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE CUSTOM API"),
             SettingManager.TransType.customApi));
 
+        _modelList.Add(new TranslateTypeModel(_modelList.Count, "TRANSLATE PLAMO", MORT.LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE PLAMO"), SettingManager.TransType.plamo));
         InitializeCustomApi();
     }
 
