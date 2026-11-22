@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../MORT/LocalizeManager/LocalizeManager.cs" Link="LocalizeManager.cs" />
+    <EmbeddedResource Include="../../MORT/Resources/plamo-localize.csv" LogicalName="MORT.PlamoLocalization" />
+    <Compile Include="../../MORT/Service/Plamo/PlamoService.cs" Link="PlamoService.cs" />
+    <Compile Include="../../MORT/Service/Plamo/PlamoSettingsForm.cs" Link="PlamoSettingsForm.cs" />
+  </ItemGroup>
+</Project>

@@ -16,6 +16,7 @@ namespace MORT.Service.TranslateLanguage
         Naver,
         Google,
         DeepL,
+        Plamo,
     }
 
     /// <summary>
@@ -221,6 +222,8 @@ namespace MORT.Service.TranslateLanguage
                 case SettingManager.TransType.deeplApi:
                     return TranslateEngineFamily.DeepL;
 
+                case SettingManager.TransType.plamo:
+                    return TranslateEngineFamily.Plamo;
                 case SettingManager.TransType.google:
                 case SettingManager.TransType.google_url:
                 case SettingManager.TransType.gemini:
@@ -272,6 +275,11 @@ namespace MORT.Service.TranslateLanguage
 
         public bool IsSupported(string key, TranslateEngineFamily family)
         {
+            if (family == TranslateEngineFamily.Plamo)
+            {
+                try { MORT.Service.Plamo.PlamoService.NormalizeLanguage(ToEngineCode(key, TranslateEngineFamily.Google)); return true; }
+                catch (ArgumentException) { return false; }
+            }
             if (family == TranslateEngineFamily.None)
             {
                 return true;

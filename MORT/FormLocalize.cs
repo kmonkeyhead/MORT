@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows.Forms;
@@ -156,6 +156,10 @@ namespace MORT
             //크롬 번역기
             lbChromeBridgeInformation.LocalizeLabel("Chrome Bridge Information");
             btChromeBridgeRun.LocalizeLabel("Chrome Bridge Run");
+            pnPlamo.Controls["PlamoInfo"].LocalizeLabel("PLAMO INFO");
+            pnPlamo.Controls["PlamoSettings"].LocalizeLabel("PLAMO SETTINGS");
+            lbPlamoNotice.Text = MORT.Service.Plamo.PlamoService.InitializationNotice;
+            RefreshPlamoStatus();
 
 
             //이미지 보정

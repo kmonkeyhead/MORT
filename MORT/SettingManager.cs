@@ -117,7 +117,8 @@ namespace MORT
             gemini,
             hdTrans,
             customApi,
-            chromeBridge
+            chromeBridge,
+            plamo
         }; //앞 소문자 바꾸며 안 됨! -> 기존 버전과 호환성. 새 항목은 반드시 맨 뒤에만 추가한다.
 
         public enum OcrType
@@ -1479,6 +1480,10 @@ namespace MORT
                             else if (resultString.CompareTo("gemini") == 0)
                             {
                                 nowTransType = TransType.gemini;
+                            }
+                            else if (resultString.CompareTo("plamo") == 0)
+                            {
+                                nowTransType = TransType.plamo;
                             }
                             else if (resultString.CompareTo("chromeBridge") == 0)
                             {

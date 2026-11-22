@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.VisualBasic.FileIO;
 using System.Collections.Generic;
 using System.Globalization;
@@ -54,7 +54,9 @@ namespace MORT.LocalizeManager
         public static void Init(string data, AppLanguage language)
         {
             Language = language;
-            using(TextReader sr = new StringReader(data))
+            using var stream = typeof(LocalizeManager).Assembly.GetManifestResourceStream("MORT.PlamoLocalization");
+            using var plamo = new StreamReader(stream);
+            using(TextReader sr = new StringReader(data + "\n" + plamo.ReadToEnd()))
             using(TextFieldParser parser = new TextFieldParser(sr))
             {
                 parser.TextFieldType = FieldType.Delimited;

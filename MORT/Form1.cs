@@ -1,4 +1,4 @@
-﻿//만든이 : 몽키해드
+//만든이 : 몽키해드
 //블로그 주소 : https://blog.naver.com/killkimno
 
 using MORT.Logger;
@@ -792,8 +792,9 @@ namespace MORT
 
         //폼 생성
         public Form1(GeminiConfigMaker geminiConfigMaker, TranslateTypListService translateTypListService, MouseFollowOcrAreaService mouseFollowOcrAreaService,
-            TranslateLanguageService translateLanguageService)
+            TranslateLanguageService translateLanguageService, Service.Plamo.PlamoService plamoService)
         {
+            _plamoService = plamoService;
             _translateTypListService = translateTypListService;
             //설정 파일을 읽기 전에 언어 표가 있어야 예전 설정을 통합 값으로 옮길 수 있다.
             //그래서 생성자 인자로 받는다. 나중에 꺼내 쓰면 SettingManager가 먼저 읽어 버린다.
@@ -808,6 +809,7 @@ namespace MORT
 
                 //SetProcessDPIAware();
                 InitializeComponent();
+                InitializePlamoPanel();
                 _mouseFollowOcrAreaService.Initialize(this);
 
                 this.Text = $"Monkeyhead's OCR RealTime Translator - {Properties.Settings.Default.MORT_VERSION}";
@@ -906,7 +908,7 @@ namespace MORT
                 //GDI+ 동작 여부 검사.
                 CheckGDI();
 
-                _processTranslateService = new ProcessTranslateService(this, _translateResultMemoryService, MySettingManager, loader, isAvailableWinOCR, isOnceTrans => StopTrans(isOnceTrans));
+                _processTranslateService = new ProcessTranslateService(this, _translateResultMemoryService, MySettingManager, _plamoService, loader, isAvailableWinOCR, isOnceTrans => StopTrans(isOnceTrans));
 
                 MakeLogo();
 
@@ -1893,6 +1895,7 @@ namespace MORT
             //로컬 서버는 MORT 프로세스 안에서 돌고 브릿지 창은 그 서버가 없으면 아무것도 못 한다.
             //Form1_FormClosing 이 종료를 취소하고 이 경로로 오기 때문에 정리는 여기서 해야 한다.
             StopChromeBridge();
+            StopPlamo();
 
             foreach (Form frm in Application.OpenForms)
             {
@@ -3287,6 +3290,7 @@ namespace MORT
             pnDeepLAPI.Visible = false;
             pnGemini.Visible = false;
             pnChromeBridge.Visible = false;
+            pnPlamo.Visible = false;
 
             var translateType = _translateTypListService.GetTransType(_cbTranslateType.SelectedIndex);
 
@@ -3324,6 +3328,10 @@ namespace MORT
                     pnCustomApi.Visible = true;
                     break;
 
+                case SettingManager.TransType.plamo:
+                    pnPlamo.Visible = true;
+                    RefreshPlamoStatus();
+                    break;
                 case SettingManager.TransType.chromeBridge:
                     pnChromeBridge.Visible = true;
                     RefreshChromeBridgeStatus();
@@ -3687,6 +3695,7 @@ namespace MORT
             //강제 종료(Program.IS_FORCE_QUITE)로 여기까지 오는 경로도 있어서 한 번 더 정리한다.
             //이미 정리했으면 아무 일도 하지 않는다.
             StopChromeBridge();
+            StopPlamo();
 
             _mouseFollowOcrAreaService.Dispose();
             notifyIcon1.Visible = false;

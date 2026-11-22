@@ -1,3 +1,4 @@
+using MORT.Service.Plamo;
 using MORT.Manager;
 using MORT.Model;
 using System;
@@ -11,10 +12,12 @@ namespace MORT.Service.ProcessTranslateService
     internal sealed class TranslationProcessInitializationService
     {
         private readonly SettingManager _settingManager;
+        private readonly PlamoService _plamoService;
 
-        public TranslationProcessInitializationService(SettingManager settingManager)
+        public TranslationProcessInitializationService(SettingManager settingManager, PlamoService plamoService)
         {
             _settingManager = settingManager;
+            _plamoService = plamoService;
         }
 
         public TranslationProcessInitializationResult Initialize(OcrMethodType ocrMethodType)
@@ -48,6 +51,11 @@ namespace MORT.Service.ProcessTranslateService
                 useGoogleOcr = true;
             }
 
+            if (_settingManager.NowTransType == TransType.plamo && !_plamoService.IsInstalled)
+            {
+                FormManager.ShowPopupMessage("PLaMo", LocalizeString("PLAMO FIRST DOWNLOAD"));
+                return new TranslationProcessInitializationResult(false, isOnce, false, requireOriginalScreen);
+            }
             PrepareChromeBridge();
             PrepareTranslationWindow(!isOnce);
             return new TranslationProcessInitializationResult(true, isOnce, useGoogleOcr, requireOriginalScreen);

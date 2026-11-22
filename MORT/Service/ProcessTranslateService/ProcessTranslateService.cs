@@ -65,6 +65,7 @@ namespace MORT.Service.ProcessTranslateService
         volatile bool isEndFlag = false; //번역 끝내는 플레그
         private readonly Form _parent;
         private readonly SettingManager _settingManager;
+        private readonly Plamo.PlamoService _plamoService;
         private readonly TranslateResultMemoryService _memoryService;
         private readonly WindowOcr _winOcr;
         private readonly OneOcr _oneOcr;
@@ -82,15 +83,16 @@ namespace MORT.Service.ProcessTranslateService
         }
 
         //TODO : DI 를 이용해보자?
-        public ProcessTranslateService(Form parent, TranslateResultMemoryService memoryService, SettingManager settingManager, WindowOcr loader, bool isAvailableWinOCR, Action<bool> OnStopTranslate)
+        public ProcessTranslateService(Form parent, TranslateResultMemoryService memoryService, SettingManager settingManager, Plamo.PlamoService plamoService, WindowOcr loader, bool isAvailableWinOCR, Action<bool> OnStopTranslate)
         {
             _parent = parent;
             _memoryService = memoryService;
             _settingManager = settingManager;
+            _plamoService = plamoService;
             _winOcr = loader;
             _oneOcr = new OneOcr();
             _isAvailableWinOCR = isAvailableWinOCR;
-            _initializationService = new TranslationProcessInitializationService(settingManager);
+            _initializationService = new TranslationProcessInitializationService(settingManager, plamoService);
             _imageModelService = new TranslationImageModelService(
                 () => isEndFlag,
                 () => isEndFlag = true);
@@ -504,6 +506,12 @@ namespace MORT.Service.ProcessTranslateService
             int lastIdleRepaintTick = 0;
             try
             {
+                if (_settingManager.NowTransType == SettingManager.TransType.plamo)
+                {
+                    // Keep loading on the dedicated worker, never on the UI thread.
+                    _plamoService.StartAsync(token).GetAwaiter().GetResult();
+                    ThrowIfStopped();
+                }
                 while (isEndFlag == false)
                 {
                     Logger.Logger.IncrementOcr();
