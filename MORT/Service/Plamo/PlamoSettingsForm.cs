@@ -17,7 +17,7 @@ public sealed class PlamoSettingsForm : Form
     private readonly PlamoService _service;
     private readonly Button _models = MakeButton("", false);
     private readonly ContextMenuStrip _modelMenu = new();
-    private PlamoModel _selectedModel = PlamoService.Models[1];
+    private PlamoModel _selectedModel;
     private bool _showBusy;
     private readonly CheckBox _cuda = new() { Text = MORT.LocalizeManager.LocalizeManager.GetLocalizeString("PLAMO CUDA"), AutoSize = true, Margin = new Padding(0,12,0,0) };
     private readonly Label _status = new() { AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0,10,0,0) };
@@ -36,6 +36,7 @@ public sealed class PlamoSettingsForm : Form
     {
         SuspendLayout();
         _service = service;
+        _selectedModel = service.SelectedModel;
         Text = "MORT · " + MORT.LocalizeManager.LocalizeManager.GetLocalizeString("TRANSLATE PLAMO");
         Font = new Font("맑은 고딕", 10F);
         AutoScaleDimensions = new SizeF(96,96); AutoScaleMode = AutoScaleMode.Dpi;
@@ -101,6 +102,7 @@ public sealed class PlamoSettingsForm : Form
         var actions = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Dock = DockStyle.Top, WrapContents = true, Margin = new Padding(0,18,0,0) };
         actions.Controls.AddRange(new Control[] { _download,_cancel }); AddRow(model, actions); Add(model);
 
+        Add(CreateModelComparison());
         scroll.Controls.Add(layout);
         var footer = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(24,12,24,16), Margin = Padding.Empty, WrapContents = false };
         var modelLink = new LinkLabel { Text = MORT.LocalizeManager.LocalizeManager.GetLocalizeString("PLAMO HUB"), AutoSize = true, LinkColor = Accent, ActiveLinkColor = TextColor, VisitedLinkColor = Accent, Margin = new Padding(0,8,20,0) };
@@ -124,6 +126,41 @@ public sealed class PlamoSettingsForm : Form
         RefreshControls();
         ResumeLayout(true);
     }
+    private TableLayoutPanel CreateModelComparison()
+    {
+        string TextFor(string key) => MORT.LocalizeManager.LocalizeManager.GetLocalizeString("PLAMO COMP " + key);
+        var section = Section(TextFor("COMPARE"));
+        var table = new TableLayoutPanel { ColumnCount = 3, AutoSize = true, Margin = Padding.Empty };
+        foreach (float width in new[] { 40f, 25f, 35f })
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, width));
+
+        void Row(string model, string speed, string quality, bool header = false)
+        {
+            int row = table.RowCount++;
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            int col = 0;
+            foreach (string value in new[] { model, speed, quality })
+                table.Controls.Add(new Label { Text = value, AutoSize = true, Dock = DockStyle.Fill,
+                    ForeColor = header ? Dim : TextColor, BackColor = header ? InputColor : PanelColor,
+                    Padding = new Padding(8,5,8,5), Margin = Padding.Empty }, col++, row);
+        }
+        Row(TextFor("MODEL"), TextFor("SPEED"), TextFor("QUALITY"), true);
+        foreach (var model in PlamoService.Models) {
+            var (speed, quality) = model.Id switch {
+                "0.8b" => ("FAST", "BASIC"),
+                "2b" => ("MEDIUM", "BALANCED"),
+                "8b" => ("SLOW", "HIGH"),
+                _ => (null, null)
+            };
+            string name = model.Id.ToUpperInvariant();
+            if (model.Id == PlamoSettings.DefaultModel)
+                name = string.Format(TextFor("DEFAULT MODEL"), name);
+            Row(name, speed == null ? "—" : TextFor(speed), quality == null ? "—" : TextFor(quality));
+        }
+        AddRow(section, table);
+        return section;
+    }
+
     private void SelectModel(PlamoModel model)
     {
         _selectedModel = model;

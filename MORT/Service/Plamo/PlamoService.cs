@@ -24,7 +24,8 @@ public sealed record PlamoModel(string Id, string Title, long Bytes, string Sha2
 }
 public sealed class PlamoSettings
 {
-    public string Model { get; set; } = "8b";
+    public const string DefaultModel = "2b";
+    public string Model { get; set; } = DefaultModel;
     public bool UseCuda { get; set; } = true;
 }
 
@@ -32,6 +33,7 @@ public sealed class PlamoSettings
 public sealed class PlamoService : IDisposable
 {
     public static readonly PlamoModel[] Models = {
+        new("0.8b", "PLaMo 3 Translate 0.8B · 573 MB", 573126848, "70891ec70dc7ab4205745a38307867c2881b99239f20327927633abfe4bc9ec6", "7de4409f84a9d70e3a5e87b81e84883d49f77b58"),
         new("2b", "PLaMo 3 Translate 2B · 1.81 GB", 1807203040, "1ffd9073afcc70e35ccc942428aa2b73d7aa2b9ea779bf504b775369e0276c13", "4f672106b847200bfdc0f6af6c321cd94eba1aed"),
         new("8b", "PLaMo 3 Translate 8B · 5.28 GB", 5280445728, "94e5d3f91b421f7c8900ddaac27b11a19f7441426c954bbb25a2fd60a1640187", "c67efa4eefdc14d3c97bf8f4f35ee58e2ecd2f42")
     };
@@ -70,7 +72,7 @@ public sealed class PlamoService : IDisposable
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("MORT-Plamo/1.0");
         try { Settings = JsonSerializer.Deserialize<PlamoSettings>(File.ReadAllText(SettingsPath)) ?? new(); }
         catch { Settings = new(); }
-        if (!Models.Any(m => m.Id == Settings.Model)) Settings.Model = "8b";
+        if (!Models.Any(m => m.Id == Settings.Model)) Settings.Model = PlamoSettings.DefaultModel;
     }
     private void Report(string value) { Status = value; StatusChanged?.Invoke(value); }
     public void Configure(string model, bool cuda)
