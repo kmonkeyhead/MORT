@@ -32,7 +32,7 @@ public sealed class PlamoSettingsForm : Form
     private bool _syncingSelection;
     private string? _operationError;
 
-    public PlamoSettingsForm(PlamoService service)
+    public PlamoSettingsForm(PlamoService service, bool promptForDownload = false)
     {
         SuspendLayout();
         _service = service;
@@ -114,13 +114,26 @@ public sealed class PlamoSettingsForm : Form
         frame.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         frame.Controls.Add(scroll,0,0); frame.Controls.Add(footer,0,1);
         Controls.Add(frame);
-        _download.Click += async (_,_) => await Run(service.InstallAsync);
+        async Task DownloadSelection()
+        {
+            bool installed = await Run(service.InstallAsync);
+            if (promptForDownload && installed && !IsDisposed)
+                DialogResult = DialogResult.OK;
+        }
+        _download.Click += async (_,_) => await DownloadSelection();
         _cancel.Click += (_,_) => { _operation?.Cancel(); _cancel.Enabled = false; };
 
         _cuda.CheckedChanged += async (_,_) => await SaveSelectionAsync();
         service.StatusChanged += StatusChanged;
         _timer.Tick += (_,_) => { if (_operation == null) RefreshControls(); };
-        Shown += (_,_) => _timer.Start();
+        Shown += async (_,_) => {
+            _timer.Start();
+            if (!promptForDownload || service.IsInstalled) return;
+            Refresh();
+            string question = string.Format(MORT.LocalizeManager.LocalizeManager.GetLocalizeString("PLAMO CONFIRM DOWNLOAD"), service.SelectedModel.Title);
+            if (MessageBox.Show(this, question, Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                await DownloadSelection();
+        };
         FormClosing += (_,e) => { if (_operation != null) { _closeAfterCancel = true; _operation.Cancel(); e.Cancel = true; } };
         FormClosed += (_,_) => { _timer.Stop(); _timer.Dispose(); service.StatusChanged -= StatusChanged; _modelMenu.Dispose(); };
         RefreshControls();
@@ -286,9 +299,9 @@ public sealed class PlamoSettingsForm : Form
         _installed.Text = installed ? MORT.LocalizeManager.LocalizeManager.GetLocalizeString("PLAMO INSTALLED") : MORT.LocalizeManager.LocalizeManager.GetLocalizeString("PLAMO NEED FILES");
         RefreshSummary();
     }
-    private async Task Run(Func<CancellationToken, Task> action, bool configure = true)
+    private async Task<bool> Run(Func<CancellationToken, Task> action, bool configure = true)
     {
-        if (_operation != null || _syncingSelection) return;
+        if (_operation != null || _syncingSelection) return false;
         try {
             _operationError = null;
             if (configure) _service.Configure(_selectedModel.Id, _cuda.Checked);
@@ -300,8 +313,9 @@ public sealed class PlamoSettingsForm : Form
                 RefreshControls();
             }
             await operation;
-        } catch (OperationCanceledException) { }
-        catch (Exception ex) { _operationError = ex.Message; }
+            return !_closeAfterCancel;
+        } catch (OperationCanceledException) { return false; }
+        catch (Exception ex) { _operationError = ex.Message; return false; }
         finally {
             _syncingSelection = true;
             try { SelectModel(_service.SelectedModel); _cuda.Checked = _service.Settings.UseCuda; }

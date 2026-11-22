@@ -53,8 +53,9 @@ namespace MORT.Service.ProcessTranslateService
 
             if (_settingManager.NowTransType == TransType.plamo && !_plamoService.IsInstalled)
             {
-                FormManager.ShowPopupMessage("PLaMo", LocalizeString("PLAMO FIRST DOWNLOAD"));
-                return new TranslationProcessInitializationResult(false, isOnce, false, requireOriginalScreen);
+                using var settings = new PlamoSettingsForm(_plamoService, promptForDownload: true);
+                if (settings.ShowDialog(FormManager.Instace.MyMainForm) != DialogResult.OK || !_plamoService.IsInstalled)
+                    return new TranslationProcessInitializationResult(false, isOnce, false, requireOriginalScreen);
             }
             PrepareChromeBridge();
             PrepareTranslationWindow(!isOnce);
