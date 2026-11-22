@@ -175,7 +175,7 @@ $fileOverrides = Get-Content -LiteralPath $fileOverridesPath -Raw -Encoding UTF8
 $excluded = "[\\/](bin|obj|\.git|packages)[\\/]"
 $sourceFiles = @(
     Get-ChildItem -LiteralPath $RepositoryRoot -Recurse -File -Filter "*.cs" |
-        Where-Object { $_.FullName -notmatch $excluded -and (Get-RelativePath $RepositoryRoot $_.FullName) -notlike 'PipeClient/*' } |
+        Where-Object { $_.FullName -notmatch $excluded -and (Get-RelativePath $RepositoryRoot $_.FullName) -notlike 'PipeClient/*' -and (Get-RelativePath $RepositoryRoot $_.FullName) -notlike 'tests/*' } |
         Sort-Object FullName
 )
 
