@@ -46,6 +46,9 @@
     <Compile Update="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Form1.Plamo.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Form1Button.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -92,6 +95,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="SearchOptionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Service\Plamo\PlamoSettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="SettingBrowser\SettingBrowserUI.cs">
