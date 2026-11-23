@@ -24,7 +24,7 @@ public sealed record PlamoModel(string Id, string Title, long Bytes, string Sha2
 }
 public sealed class PlamoSettings
 {
-    public const string DefaultModel = "2b";
+    public const string DefaultModel = "0.8b";
     public string Model { get; set; } = DefaultModel;
     public bool UseCuda { get; set; } = true;
 }

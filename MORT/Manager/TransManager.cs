@@ -715,12 +715,25 @@ namespace MORT
                     foreach (var obj in textDic)
                     {
                         _cts.Token.ThrowIfCancellationRequested();
-                        obj.Value.result = GetUserTransResult(obj.Value.text);
-                        if (obj.Value.result == null)
+                        //다른 번역기와 같이 사용자 번역 사전, 번역 기억하기(원문 키) 순으로 본다. 블록 단위로 조회·기록한다.
+                        obj.Value.result = GetFormerResult(transType, obj.Value.text);
+                        if (!string.IsNullOrEmpty(obj.Value.result))
                         {
-                            try { obj.Value.result = await service.TranslateAsync(obj.Value.text, source, target, _cts.Token); }
-                            catch (OperationCanceledException) { throw; }
-                            catch (Exception ex) { return ex.Message; }
+                            if (Form1.IsDebugShowFormerResultLog)
+                            {
+                                obj.Value.result = "[기억 결과 " + resultDic[transType].Count.ToString() + " ] " + obj.Value.result;
+                            }
+                            continue;
+                        }
+
+                        try { obj.Value.result = await service.TranslateAsync(obj.Value.text, source, target, _cts.Token); }
+                        catch (OperationCanceledException) { throw; }
+                        catch (Exception ex) { return ex.Message; }
+
+                        //오류는 예외로 위에서 바로 반환하므로 여기까지 온 결과만 기억한다.
+                        if (!string.IsNullOrEmpty(obj.Value.result))
+                        {
+                            AddFormerResult(transType, obj.Value.text, obj.Value.result);
                         }
                     }
                 }

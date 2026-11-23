@@ -200,6 +200,8 @@ namespace MORT.ScreenCapture
         {
             _disposed = true;
             isStartCapture = false;
+            _deferTimer?.Dispose();
+            System.Threading.Interlocked.Exchange(ref _pendingFrame, null)?.Dispose();
             session?.Dispose();
             framePool?.Dispose();
             swapChain?.Dispose();
@@ -231,7 +233,9 @@ namespace MORT.ScreenCapture
                     return true;
                 }
 
-                if(array != null && array.Length > 1 && !isWait && _dtLastUpdate.AddSeconds(0.1f) <= DateTime.Now)
+                //아직 복사하지 않은 더 새 프레임이 있으면 이전 배열을 돌려주지 않는다. 요청 처리로 곧 복사된다.
+                if(array != null && array.Length > 1 && !isWait && _dtLastUpdate.AddSeconds(0.1f) <= DateTime.Now
+                    && System.Threading.Volatile.Read(ref _pendingFrame) == null)
                 {
                     return true;
                 }
@@ -257,60 +261,248 @@ namespace MORT.ScreenCapture
         private int _remainbackupFrameCount = 5;
         private int _autoCaptureFrameCounter = 0;
 
-        private async void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
+        //아직 복사하지 않은 프레임 중 가장 최신 한 장. 복사 조건이 아니어도 버리지 않고 들고 있다가
+        //조건이 되면(진행 중 복사 완료, 적응형 주기 도래, OCR 요청) 처리한다.
+        //화면이 바뀔 때만 프레임을 보내는 앱은 마지막 프레임 뒤로 다음 프레임이 오지 않기 때문이다.
+        //최신 한 장만 들고 있으므로 버퍼 2개짜리 풀에서 새 프레임을 받을 자리는 항상 남는다.
+        private Direct3D11CaptureFrame? _pendingFrame;
+        //프레임 처리는 FrameArrived 를 받는 스레드(UI)에서 한다. 타이머/OCR 요청도 이 컨텍스트로 돌려보낸다.
+        private readonly System.Threading.SynchronizationContext? _frameContext = System.Threading.SynchronizationContext.Current;
+        private System.Threading.Timer? _deferTimer;
+        private int _pumping;
+        private int _pumpRequested;
+        private bool _autoCaptureRequested;
+
+        //OCR이 새 화면을 요청한다. 들고 있는 최신 프레임이 있으면 바로 복사한다.
+        internal void RequestDataCapture()
         {
-            if(_disposed || isWait) return;
+            isStartCapture = true;
+            //아직 복사하지 않은 더 새 프레임이 있으면 이전에 복사해 둔 결과를 넘기지 않고 새 복사를 기다린다.
+            if(System.Threading.Volatile.Read(ref _pendingFrame) != null)
+            {
+                isDataSuccess = false;
+            }
+            RequestPump();
+        }
+
+        private void RequestPump()
+        {
+            if(_disposed)
+            {
+                return;
+            }
+
+            var context = _frameContext;
+            if(context != null)
+            {
+                context.Post(_ => PumpFrames(), null);
+            }
+            else
+            {
+                PumpFrames();
+            }
+        }
+
+        private void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
+        {
+            if(_disposed)
+            {
+                return;
+            }
+
+            Direct3D11CaptureFrame? frame;
+            try
+            {
+                frame = sender.TryGetNextFrame();
+            }
+            catch(Exception ex)
+            {
+                if(!_disposed)
+                {
+                    Util.ShowLog($"Screen capture frame failed: {ex.Message}");
+                }
+                return;
+            }
+
+            if(frame == null)
+            {
+                return;
+            }
+
+            _dtLastUpdate = DateTime.Now;
+            //Console.WriteLine($"arrive : {TestIndex} isStartCapture {isStartCapture} isDataSuccess {isDataSuccess}");
+            if(!isStartCapture)
+            {
+                _autoCaptureFrameCounter++;
+                if(_autoCaptureFrameCounter >= 10)
+                {
+                    _autoCaptureRequested = true;
+                    _autoCaptureFrameCounter = 0;
+                }
+            }
+            else
+            {
+                _autoCaptureFrameCounter = 0;
+            }
+
+            //복사 중이어도 프레임은 반드시 꺼낸다. 꺼내지 않고 돌아가면 버퍼 2개짜리 풀이 막히고,
+            //화면이 바뀔 때만 프레임을 보내는 앱에서는 바뀌기 전 화면이 OCR에 계속 전달된다.
+            //새 프레임이 우선이며 들고 있던 이전 프레임은 버린다.
+            System.Threading.Interlocked.Exchange(ref _pendingFrame, frame)?.Dispose();
+            if(_disposed)
+            {
+                System.Threading.Interlocked.Exchange(ref _pendingFrame, null)?.Dispose();
+                return;
+            }
+
+            PumpFrames();
+        }
+
+        private async void PumpFrames()
+        {
+            System.Threading.Volatile.Write(ref _pumpRequested, 1);
+            while(!_disposed && System.Threading.Volatile.Read(ref _pumpRequested) == 1)
+            {
+                //이미 처리 중이면 그 루프가 요청 플래그를 보고 이어서 처리한다.
+                if(System.Threading.Interlocked.CompareExchange(ref _pumping, 1, 0) != 0)
+                {
+                    return;
+                }
+
+                try
+                {
+                    await PumpPendingFramesAsync();
+                }
+                catch(Exception ex)
+                {
+                    if(!_disposed)
+                    {
+                        Util.ShowLog($"Screen capture frame failed: {ex.Message}");
+                    }
+                }
+                finally
+                {
+                    System.Threading.Volatile.Write(ref _pumping, 0);
+                }
+            }
+
+            if(_disposed)
+            {
+                System.Threading.Interlocked.Exchange(ref _pendingFrame, null)?.Dispose();
+            }
+        }
+
+        private async System.Threading.Tasks.Task PumpPendingFramesAsync()
+        {
+            while(!_disposed)
+            {
+                System.Threading.Volatile.Write(ref _pumpRequested, 0);
+                if(System.Threading.Volatile.Read(ref _pendingFrame) == null)
+                {
+                    return;
+                }
+
+                if(!TryBeginCopy(out int retryMs))
+                {
+                    //적응형 주기 전이면 그 시각에 다시 처리한다. 그 외에는 다음 프레임이나 OCR 요청을 기다린다.
+                    if(retryMs > 0)
+                    {
+                        ScheduleDeferredPump(retryMs);
+                    }
+                    return;
+                }
+
+                var frame = System.Threading.Interlocked.Exchange(ref _pendingFrame, null);
+                if(frame == null)
+                {
+                    return;
+                }
+
+                await CopyFrameAsync(frame);
+            }
+        }
+
+        //지금 복사할지 정한다. 조건은 기존과 같다: OCR 요청, 읽은 뒤 백업 프레임, 10프레임마다 자동, 적응형 주기.
+        private bool TryBeginCopy(out int retryMs)
+        {
+            retryMs = 0;
+            bool adaptive = AdaptiveCapture;
+            int adaptiveFps = Math.Clamp(AdaptiveTargetFps, 1, 120);
+            if(adaptiveFps != _lastAdaptiveFps)
+            {
+                _nextAdaptiveCopy = 0;
+                _lastAdaptiveFps = adaptiveFps;
+            }
+
+            long frequency = System.Diagnostics.Stopwatch.Frequency;
+            long copyTick = System.Diagnostics.Stopwatch.GetTimestamp();
+            bool adaptiveDue = adaptive && copyTick + frequency / 1000 >= _nextAdaptiveCopy;
+            bool autoCapture = _autoCaptureRequested && !adaptive;
+            if(!(isStartCapture || _remainbackupFrameCount >= 0 || autoCapture || adaptiveDue))
+            {
+                if(adaptive)
+                {
+                    long wait = _nextAdaptiveCopy - copyTick;
+                    retryMs = (int)Math.Clamp(wait * 1000 / frequency + 1, 1, 1000);
+                }
+                return false;
+            }
+
+            _autoCaptureRequested = false;
+            _remainbackupFrameCount--;
+            if(_remainbackupFrameCount < -1)
+            {
+                _remainbackupFrameCount = -1;
+            }
+
+            if(adaptive)
+            {
+                _nextAdaptiveCopy += frequency / adaptiveFps;
+                if(_nextAdaptiveCopy <= copyTick)
+                {
+                    _nextAdaptiveCopy = copyTick + frequency / adaptiveFps;
+                }
+            }
+            return true;
+        }
+
+        private void ScheduleDeferredPump(int delayMs)
+        {
+            if(_disposed)
+            {
+                return;
+            }
+
+            var timer = _deferTimer;
+            if(timer == null)
+            {
+                timer = new System.Threading.Timer(_ => RequestPump(), null, System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+                _deferTimer = timer;
+            }
+
+            try
+            {
+                timer.Change(delayMs, System.Threading.Timeout.Infinite);
+            }
+            catch(ObjectDisposedException)
+            {
+                //정지 중에는 예약하지 않는다.
+            }
+        }
+
+        private async System.Threading.Tasks.Task CopyFrameAsync(Direct3D11CaptureFrame capturedFrame)
+        {
             bool ownsCopy = false;
             try
             {
                 var newSize = false;
 
-                using(var frame = sender.TryGetNextFrame())
+                using(var frame = capturedFrame)
                 {
-                    if(frame == null) return;
-                    _dtLastUpdate = DateTime.Now;
-                    //Console.WriteLine($"arrive : {TestIndex} isStartCapture {isStartCapture} isDataSuccess {isDataSuccess}");
-
-                    bool autoCapture = false;
-                    if(!isStartCapture)
+                    if(!_disposed)
                     {
-                        _autoCaptureFrameCounter++;
-                        if(_autoCaptureFrameCounter >= 10)
-                        {
-                            autoCapture = true;
-                            _autoCaptureFrameCounter = 0;
-                        }
-                    }
-                    else
-                    {
-                        _autoCaptureFrameCounter = 0;
-                    }
-
-                    int adaptiveFps = Math.Clamp(AdaptiveTargetFps, 1, 120);
-                    if(adaptiveFps != _lastAdaptiveFps) { _nextAdaptiveCopy = 0; _lastAdaptiveFps = adaptiveFps; }
-                    long copyTick = System.Diagnostics.Stopwatch.GetTimestamp();
-                    bool adaptiveDue = AdaptiveCapture && copyTick + System.Diagnostics.Stopwatch.Frequency / 1000 >= _nextAdaptiveCopy;
-                    if(AdaptiveCapture) autoCapture = false;
-                    if(isStartCapture || _remainbackupFrameCount >= 0 || autoCapture || adaptiveDue)
-                    {
-                        if(isWait)
-                        {
-                            return;
-                        }
-                        _remainbackupFrameCount--;
-
-                        if(_remainbackupFrameCount < -1)
-                        {
-                            _remainbackupFrameCount = -1;
-                        }
-
                         isWait = true;
                         ownsCopy = true;
-                        if(AdaptiveCapture)
-                        {
-                            _nextAdaptiveCopy += System.Diagnostics.Stopwatch.Frequency / adaptiveFps;
-                            if(_nextAdaptiveCopy <= copyTick) _nextAdaptiveCopy = copyTick + System.Diagnostics.Stopwatch.Frequency / adaptiveFps;
-                        }
                         if(frame.ContentSize.Width != lastSize.Width || frame.ContentSize.Height != lastSize.Height)
                         {
                             // The thing we have been capturing has changed size.
