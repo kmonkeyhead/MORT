@@ -68,7 +68,10 @@ namespace MORT.ScreenCapture
         public void StartDataCapture()
         {
             var current = capture;
-            if(current != null) current.isStartCapture = true;
+            if(current != null)
+            {
+                current.RequestDataCapture();
+            }
         }
 
         public bool GetData(ref byte[] array, ref int x, ref int y, ref int positionX, ref int positionY)
