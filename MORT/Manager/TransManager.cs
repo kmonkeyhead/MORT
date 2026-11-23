@@ -419,12 +419,6 @@ namespace MORT
             return result;
         }
 
-        //PLaMo 번역 기억 키. 모델·리비전·언어 쌍이 다르면 다른 결과로 보고 재사용하지 않는다.
-        private static string MakePlamoMemoryKey(MORT.Service.Plamo.PlamoModel model, string source, string target, string text)
-        {
-            return $"[plamo {model.Id}@{model.Revision} {source}>{target}] {text}";
-        }
-
         private void AddFormerResult(SettingManager.TransType transType, string ocrValue, string result)
         {
             if (!isSaving)
@@ -721,21 +715,13 @@ namespace MORT
                     foreach (var obj in textDic)
                     {
                         _cts.Token.ThrowIfCancellationRequested();
-                        obj.Value.result = GetUserTransResult(obj.Value.text);
-                        if (obj.Value.result != null)
+                        //다른 번역기와 같이 사용자 번역 사전, 번역 기억하기(원문 키) 순으로 본다. 블록 단위로 조회·기록한다.
+                        obj.Value.result = GetFormerResult(transType, obj.Value.text);
+                        if (!string.IsNullOrEmpty(obj.Value.result))
                         {
-                            continue;
-                        }
-
-                        //번역 기억하기: 모델·언어 쌍별 키로 블록 단위 조회·기록한다.
-                        string memoryKey = MakePlamoMemoryKey(service.SelectedModel, source, target, obj.Value.text);
-                        if (!isSaving && resultDic.TryGetValue(transType, out var plamoMemory)
-                            && plamoMemory.TryGetValue(memoryKey, out string? remembered) && !string.IsNullOrEmpty(remembered))
-                        {
-                            obj.Value.result = remembered;
                             if (Form1.IsDebugShowFormerResultLog)
                             {
-                                obj.Value.result = "[기억 결과 " + plamoMemory.Count.ToString() + " ] " + obj.Value.result;
+                                obj.Value.result = "[기억 결과 " + resultDic[transType].Count.ToString() + " ] " + obj.Value.result;
                             }
                             continue;
                         }
@@ -747,7 +733,7 @@ namespace MORT
                         //오류는 예외로 위에서 바로 반환하므로 여기까지 온 결과만 기억한다.
                         if (!string.IsNullOrEmpty(obj.Value.result))
                         {
-                            AddFormerResult(transType, memoryKey, obj.Value.result);
+                            AddFormerResult(transType, obj.Value.text, obj.Value.result);
                         }
                     }
                 }
