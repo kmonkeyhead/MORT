@@ -19,9 +19,9 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Apis" Version="1.78.0" />
-    <PackageReference Include="Google.Apis.Auth" Version="1.75.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.78.0" />
     <PackageReference Include="Google.Apis.Core" Version="1.78.0" />
-    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.74.0.4061" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.78.0.4330" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 </Project>
