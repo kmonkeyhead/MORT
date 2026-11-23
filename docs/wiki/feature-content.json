@@ -22,7 +22,7 @@
     "MORT/Service/ProcessTranslateService/TranslationProcessInitializationService.cs"
   ],
   "operation": [
-    "모델과 CUDA/CPU를 선택하고 다운로드한다. 기본값은 2B이며 기존 선택은 유지한다. 0.8B는 약 573MB, 2B는 약 1.81GB, 8B는 약 5.28GB이며 실행 엔진과 압축 파일에 추가 공간이 필요하다.",
+    "모델과 CUDA/CPU를 선택하고 다운로드한다. 기본값은 0.8B이며 기존 선택은 유지한다. 0.8B는 약 573MB, 2B는 약 1.81GB, 8B는 약 5.28GB이며 실행 엔진과 압축 파일에 추가 공간이 필요하다.",
     "모델 선택 후 MORT에서 번역을 시작하면 자동으로 로딩한다.",
     "앱 종료 시 모델을 종료하고 다음 앱 시작 시 이전에 남은 MORT 관리 서버를 정리한다."
   ],
