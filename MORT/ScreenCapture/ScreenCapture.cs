@@ -57,11 +57,10 @@ namespace MORT.ScreenCapture
 
         public void PrepareStart()
         {
-            if (capture != null)
+            var current = capture;
+            if (current != null)
             {
-                capture.isDataSuccess = false;
-                capture.isWait = false;
-                capture.isStartCapture = false;
+                current.PrepareDataCapture();
             }
         }
 
