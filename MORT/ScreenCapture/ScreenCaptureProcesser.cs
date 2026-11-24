@@ -219,40 +219,58 @@ namespace MORT.ScreenCapture
         private MORT.Model.OverlayCaptureFrame? _adaptiveFrame;
         internal MORT.Model.OverlayCaptureFrame? LatestAdaptiveFrame => System.Threading.Volatile.Read(ref _adaptiveFrame);
 
-        public bool isWait = false;
-        public bool isStartCapture = false;
-        public bool isDataSuccess = false;
+        //OCR 스레드와 프레임 처리 스레드가 함께 읽고 쓴다. 최적화 빌드에서도 최신 값을 읽도록 volatile로 둔다.
+        public volatile bool isWait = false;
+        public volatile bool isStartCapture = false;
+        public volatile bool isDataSuccess = false;
 
-        private DateTime _dtLastUpdate = DateTime.MinValue;
+        //프레임 도착 순번. OCR 결과가 요청 시점보다 오래된 화면인지 시간 대신 순번으로 판단한다.
+        //복사 시간·OCR 확인 간격은 PC마다 다르므로 특정 시간 안에 처리된다고 가정하지 않는다.
+        private long _arrivedSequence;
+        //이번 OCR 주기에서 넘겨야 하는 최소 순번. -1은 아직 요청이 없다는 뜻이다.
+        private long _requiredSequence = -1;
+        //마지막으로 복사를 마친 프레임의 순번. _adaptiveFrame을 게시한 뒤에 기록한다.
+        private long _copiedSequence;
+
         public bool AvailableGetData
         {
             get
             {
-                if(isDataSuccess)
+                long required = System.Threading.Volatile.Read(ref _requiredSequence);
+                long copied = System.Threading.Volatile.Read(ref _copiedSequence);
+                //요청 시점에 도착해 있던 프레임 이상을 복사했으면 넘긴다.
+                //요청 뒤에 도착한 프레임은 기준을 올리지 않으므로 화면이 계속 바뀌어도 결과가 확정된다.
+                if(required >= 0 && copied < required)
                 {
-                    return true;
+                    return false;
                 }
 
-                //아직 복사하지 않은 더 새 프레임이 있으면 이전 배열을 돌려주지 않는다. 요청 처리로 곧 복사된다.
-                if(array != null && array.Length > 1 && !isWait && _dtLastUpdate.AddSeconds(0.1f) <= DateTime.Now
-                    && System.Threading.Volatile.Read(ref _pendingFrame) == null)
-                {
-                    return true;
-                }
-
-
-                return false;
+                return LatestAdaptiveFrame != null;
             }
+        }
+
+        //이번 OCR 주기를 시작한다. 기준 순번은 첫 요청에서 정한다.
+        internal void PrepareDataCapture()
+        {
+            isDataSuccess = false;
+            isWait = false;
+            isStartCapture = false;
+            System.Threading.Volatile.Write(ref _requiredSequence, -1);
         }
 
         public void GetLastData(ref int x, ref int y, ref int positionX, ref int positionY, ref byte[] dataArray)
         {
             isDataSuccess = false;
-            x = lastX;
-            y = lastY;
-            positionX = lastPositionX;
-            positionY = lastPositionY;
-            dataArray = array;
+            //복사 스레드가 다음 프레임을 쓰는 중이어도 크기·위치·픽셀이 한 프레임에서 나오도록 게시된 묶음을 읽는다.
+            var frame = LatestAdaptiveFrame;
+            if(frame != null)
+            {
+                x = frame.Width;
+                y = frame.Height;
+                positionX = frame.ScreenBounds.X;
+                positionY = frame.ScreenBounds.Y;
+                dataArray = frame.Pixels;
+            }
             _remainbackupFrameCount = 5;
         }
 
@@ -265,23 +283,41 @@ namespace MORT.ScreenCapture
         //조건이 되면(진행 중 복사 완료, 적응형 주기 도래, OCR 요청) 처리한다.
         //화면이 바뀔 때만 프레임을 보내는 앱은 마지막 프레임 뒤로 다음 프레임이 오지 않기 때문이다.
         //최신 한 장만 들고 있으므로 버퍼 2개짜리 풀에서 새 프레임을 받을 자리는 항상 남는다.
-        private Direct3D11CaptureFrame? _pendingFrame;
+        private PendingCaptureFrame? _pendingFrame;
         //프레임 처리는 FrameArrived 를 받는 스레드(UI)에서 한다. 타이머/OCR 요청도 이 컨텍스트로 돌려보낸다.
         private readonly System.Threading.SynchronizationContext? _frameContext = System.Threading.SynchronizationContext.Current;
         private System.Threading.Timer? _deferTimer;
         private int _pumping;
         private int _pumpRequested;
+        private int _pumpPosted;
         private bool _autoCaptureRequested;
+
+        //프레임과 도착 순번을 함께 보관한다.
+        private sealed class PendingCaptureFrame : IDisposable
+        {
+            internal PendingCaptureFrame(Direct3D11CaptureFrame frame, long sequence)
+            {
+                Frame = frame;
+                Sequence = sequence;
+            }
+
+            internal Direct3D11CaptureFrame Frame { get; }
+            internal long Sequence { get; }
+
+            public void Dispose()
+            {
+                Frame.Dispose();
+            }
+        }
 
         //OCR이 새 화면을 요청한다. 들고 있는 최신 프레임이 있으면 바로 복사한다.
         internal void RequestDataCapture()
         {
             isStartCapture = true;
-            //아직 복사하지 않은 더 새 프레임이 있으면 이전에 복사해 둔 결과를 넘기지 않고 새 복사를 기다린다.
-            if(System.Threading.Volatile.Read(ref _pendingFrame) != null)
-            {
-                isDataSuccess = false;
-            }
+            //주기의 첫 요청 때만 기준을 정한다. OCR이 반복 확인할 때마다 기준을 올리면
+            //프레임을 계속 보내는 앱에서 복사가 끝나기 전에 기준이 앞서 나가 결과를 받지 못한다.
+            System.Threading.Interlocked.CompareExchange(ref _requiredSequence,
+                System.Threading.Volatile.Read(ref _arrivedSequence), -1);
             RequestPump();
         }
 
@@ -295,7 +331,17 @@ namespace MORT.ScreenCapture
             var context = _frameContext;
             if(context != null)
             {
-                context.Post(_ => PumpFrames(), null);
+                //처리되지 않은 게시가 있으면 더 쌓지 않는다. 느린 PC에서 UI 메시지 큐가 밀리지 않게 한다.
+                if(System.Threading.Interlocked.Exchange(ref _pumpPosted, 1) != 0)
+                {
+                    return;
+                }
+
+                context.Post(_ =>
+                {
+                    System.Threading.Volatile.Write(ref _pumpPosted, 0);
+                    PumpFrames();
+                }, null);
             }
             else
             {
@@ -329,7 +375,7 @@ namespace MORT.ScreenCapture
                 return;
             }
 
-            _dtLastUpdate = DateTime.Now;
+            long sequence = System.Threading.Interlocked.Increment(ref _arrivedSequence);
             //Console.WriteLine($"arrive : {TestIndex} isStartCapture {isStartCapture} isDataSuccess {isDataSuccess}");
             if(!isStartCapture)
             {
@@ -348,7 +394,7 @@ namespace MORT.ScreenCapture
             //복사 중이어도 프레임은 반드시 꺼낸다. 꺼내지 않고 돌아가면 버퍼 2개짜리 풀이 막히고,
             //화면이 바뀔 때만 프레임을 보내는 앱에서는 바뀌기 전 화면이 OCR에 계속 전달된다.
             //새 프레임이 우선이며 들고 있던 이전 프레임은 버린다.
-            System.Threading.Interlocked.Exchange(ref _pendingFrame, frame)?.Dispose();
+            System.Threading.Interlocked.Exchange(ref _pendingFrame, new PendingCaptureFrame(frame, sequence))?.Dispose();
             if(_disposed)
             {
                 System.Threading.Interlocked.Exchange(ref _pendingFrame, null)?.Dispose();
@@ -438,7 +484,10 @@ namespace MORT.ScreenCapture
             long copyTick = System.Diagnostics.Stopwatch.GetTimestamp();
             bool adaptiveDue = adaptive && copyTick + frequency / 1000 >= _nextAdaptiveCopy;
             bool autoCapture = _autoCaptureRequested && !adaptive;
-            if(!(isStartCapture || _remainbackupFrameCount >= 0 || autoCapture || adaptiveDue))
+            //요청 당시 복사 중이던 프레임이 기준보다 오래됐으면 OCR의 다음 확인을 기다리지 않고 이어서 복사한다.
+            bool requiredPending = System.Threading.Volatile.Read(ref _copiedSequence)
+                < System.Threading.Volatile.Read(ref _requiredSequence);
+            if(!(isStartCapture || requiredPending || _remainbackupFrameCount >= 0 || autoCapture || adaptiveDue))
             {
                 if(adaptive)
                 {
@@ -490,14 +539,14 @@ namespace MORT.ScreenCapture
             }
         }
 
-        private async System.Threading.Tasks.Task CopyFrameAsync(Direct3D11CaptureFrame capturedFrame)
+        private async System.Threading.Tasks.Task CopyFrameAsync(PendingCaptureFrame capturedFrame)
         {
             bool ownsCopy = false;
             try
             {
                 var newSize = false;
 
-                using(var frame = capturedFrame)
+                using(var frame = capturedFrame.Frame)
                 {
                     if(!_disposed)
                     {
@@ -567,6 +616,8 @@ namespace MORT.ScreenCapture
 
                                             System.Threading.Volatile.Write(ref _adaptiveFrame, new MORT.Model.OverlayCaptureFrame(
                                                 arr, lastX, lastY, new System.Drawing.Rectangle(lastPositionX, lastPositionY, lastX, lastY)));
+                                            //프레임을 먼저 게시하고 순번을 기록한다. 순번을 본 OCR은 그 이상의 프레임을 읽는다.
+                                            System.Threading.Volatile.Write(ref _copiedSequence, capturedFrame.Sequence);
                                             isDataSuccess = true;
 
                                         }
